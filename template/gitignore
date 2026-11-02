@@ -1,0 +1,21 @@
+# Recordings and everything generated from them
+data/
+reports/
+outputs/
+models/
+*.npy
+*.npz
+*.pkl
+*.joblib
+*.pt
+
+# Literature PDFs (cited, not redistributed)
+docs/literature/*.pdf
+inputs/*.pdf
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
