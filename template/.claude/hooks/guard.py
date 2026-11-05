@@ -270,11 +270,30 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
     for body in body_list:
       check_raw_text(body)
   branch = None
+  try:
+    rel_cwd = Path(cwd).resolve().relative_to(root.resolve()).as_posix()
+  except (OSError, ValueError):
+    rel_cwd = ""
+  # which protected folder the shell is in: from the session's cwd, then each cd/pushd
+  where = {"raw": rel_cwd.startswith("data/raw"), "harness": rel_cwd.startswith((".harness", "eegharness"))}
   for seg in segs:
     name, args, targets, heredocs = parse_segment(seg)
+    if name in ("cd", "pushd"):
+      dest = next((a for a in args if not a.startswith("-")), "~")
+      fresh = dest.startswith(("/", "~", ".."))
+      where["raw"] = "data/raw" in dest or (where["raw"] and not fresh)
+      where["harness"] = (in_dir(dest, ".harness", root) or in_dir(dest, "eegharness", root)
+                          or (where["harness"] and not fresh))
+      continue
     for t in targets:
-      if "data/raw" in t:
+      if "data/raw" in t or (where["raw"] and not t.startswith("/dev/")):
         block("recordings in data/raw/ are read-only; never write into them.")
+    is_mut = name in MUTATING or name == "xargs" or (name == "sed" and any(a.startswith(("-i", "--in-place")) for a in args))
+    if is_mut and where["raw"]:
+      block("recordings in data/raw/ may be read by project code only; never modify, copy, move or upload them "
+            "(this command runs inside data/raw/).")
+    if is_mut and where["harness"] and not raw_only:
+      block(".harness/ and eegharness/ are frozen harness code; never change them (this command runs inside one).")
     if name in ("python", "python3") and "-c" in args:
       check_raw_text(" ".join(args))
     if name in SHELLS or name == "eval":

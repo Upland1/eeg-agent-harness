@@ -89,6 +89,11 @@ BLOCK = [
   ("bash -c 'cp data/raw/S1/a.edf /tmp/'", "data/raw"),
   ("sh -c \"git push origin work\"", "push"),
   ("eval git push", "push"),
+  ("cd data/raw && rm S1/a.edf", "data/raw"),
+  ("cd data/raw/S1; tar czf /tmp/s1.tgz .", "data/raw"),
+  ("pushd data/raw && echo x > notes.txt", "data/raw"),
+  ("cd .harness && rm -rf tools", "frozen"),
+  ("cd eegharness; sed -i 's/a/b/' outputs.py", "frozen"),
 ]
 
 
@@ -113,6 +118,19 @@ def test_commit_on_main_blocked_by_current_branch(tmp_path):
   new_project.main([str(p), "--name", "p", "--allow-dirty"])
   assert guard(p, "Bash", {"command": "git commit -m 'x'"})[0] == 2
   assert guard(p, "Bash", {"command": "ls data/raw && .venv/bin/python scripts/run.py --data data/raw"})[0] == 0
+
+
+def test_cwd_inside_protected_folders(proj):
+  """Known answer: a shell whose cwd is already inside data/raw cannot change files there; reading is fine;
+  cd back out to the project resets it."""
+  raw = proj / "data" / "raw" / "S1"
+  raw.mkdir(parents=True, exist_ok=True)
+  ev = {"tool_name": "Bash", "cwd": str(raw)}
+  run = lambda cmd: subprocess.run([sys.executable, str(proj / ".claude" / "hooks" / "guard.py")],
+                                   input=json.dumps({**ev, "tool_input": {"command": cmd}}), capture_output=True,
+                                   text=True, env={"CLAUDE_PROJECT_DIR": str(proj), "PATH": "/usr/bin:/bin"}).returncode
+  assert run("rm a.edf") == 2 and run("ls -la && head -c 100 a.edf") == 0
+  assert run(f"cd {proj} && rm -f build/x.txt") == 0
 
 
 def test_unparseable_command_falls_back_to_conservative_checks(proj):
