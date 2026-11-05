@@ -15,6 +15,20 @@
           { "type": "command", "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/run_tests.py\"", "timeout": 180 }
         ]
       }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/log_cost.py\"", "timeout": 30 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/log_cost.py\"", "timeout": 30 }
+        ]
+      }
     ]
   }
 }
