@@ -57,6 +57,17 @@ windows (length, step). -->
 
 ## 8. Metrics and chance level
 
+## 8b. Label sanity check (frozen before it runs)
+
+<!-- A classifier-free check that the labels mean what section 5 says (e.g. the
+class-average response differs as section 7 expects). Written and frozen here, before it
+touches data (G10); run by the engineer as a measurement request (section 12); reported
+per participant and session (G14). -->
+
+| What is computed | Pass criterion (fixed now) | Per | Comparison set |
+|---|---|---|---|
+| | | | |
+
 ## 9. Typical mistakes for this paradigm
 
 | Mistake | Why it matters here | Source |
@@ -65,13 +76,27 @@ windows (length, step). -->
 
 ## 10. UNKNOWN — questions only a human can answer
 
-| # | Question | What was measured | Options seen |
-|---|---|---|---|
-| | | | |
+<!-- Only after the four written sources were searched (CLAUDE.md G16): inputs in full
+(appendices, tables), documents in the data folder, documentation the inputs point to,
+and the profile or a requested measurement. List each source and what it said. -->
+
+| # | Question | Sources checked → what each said | What was measured | Options seen |
+|---|---|---|---|---|
+| | | | | |
 
 ## 11. Contamination flags
 
 <!-- "None", or which public dataset these recordings resemble and why. -->
+
+## 12. Measurement requests
+
+<!-- Measurements you need but cannot make yourself (you do not open data). Each is a
+spec the orchestrator routes engineer → tester → run; you revise this file with the
+logged outputs ("## Revision N"). -->
+
+| # | What to measure | On which files | Output expected | Why (which claim it settles) |
+|---|---|---|---|---|
+| | | | | |
 
 ## Sources
 

@@ -4,7 +4,7 @@ description: Implements an approved 02_plan.md (or, during onboarding, a reader 
 model: opus
 ---
 You implement changes exactly as an approved plan describes. Follow CLAUDE.md
-(rules G1–G8 and any G9+, Data handling, Never do, Deliverable conventions),
+(rules G1–G16 and any G17+, Data handling, Never do, Deliverable conventions),
 `docs/PARADIGM.md` and `docs/DATA_PROFILE.md`.
 
 ## Before starting
@@ -37,6 +37,15 @@ You implement changes exactly as an approved plan describes. Follow CLAUDE.md
   have not measured.
 - Read recordings only through project code. Never modify, copy or move
   anything in `data/raw/`.
+- Every script that writes results uses
+  `eegharness.outputs.new_output_dir` (`eegharness/`, G9): a new
+  folder per run, provenance written, nothing overwritten. Never edit
+  `eegharness/`.
+- Run a new measurement, check or statistic on real data only after the
+  tester's known-answer tests for it pass (G12); checks and thresholds are
+  committed before that run (G10).
+- Committed code and docs cite commits and output paths, never files in
+  `agent_runs/` or a scratchpad (G15).
 - Smoke-test only: synthetic data or one file, under ~5 minutes. Never
   full-cohort runs or GPU training; those go to "What Sebastian will run".
 - A hook runs `pytest tests/` after each edit; if it reports failures, fix
@@ -54,3 +63,6 @@ You implement changes exactly as an approved plan describes. Follow CLAUDE.md
   sources. Set Status: READY.
 - On a fix round, read `05_audit.md`, fix only the required items, and append
   `## Round N` to `03_changes.md`.
+
+## Always
+Never start background work you do not wait for; collect every job before you finish.

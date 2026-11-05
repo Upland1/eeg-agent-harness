@@ -47,6 +47,7 @@ def dataset(tmp_path):
   write_syn(root / "S2" / "07-01-19" / "run 5.syn", ev, flat=1)
   write_syn(root / "S10" / "02-17-2020" / "Run 5-F.syn", ev)
   (root / "S10" / "02-17-2020" / "notes.xyz").write_text("not a recording")
+  (root / "lab_log.txt").write_text("session notes")
   (root / "S2" / "07-01-19" / "Broken 5.syn").write_bytes(b"garbage")
   plug = tmp_path / "plugins" / "syn.py"
   plug.parent.mkdir()
@@ -76,11 +77,13 @@ def test_event_counts_intervals_transitions(dataset):
 
 
 def test_structure_spelling_and_failures(dataset):
-  """Known answer: 3 profiled, 1 reader error, 1 file without reader; shapes S#/S##; spelling variants Run 5 / run 5 found; flat channel flagged."""
+  """Known answer: 3 profiled, 1 reader error, 1 file without reader, 1 document (lab log, not a missing reader); shapes S#/S##; spelling variants Run 5 / run 5 found; flat channel flagged."""
   root, plug = dataset
   prof = profile_dataset(root, plugins=[plug], use_mne=False)
   s = prof["summary"]
-  assert (s["n_files"], s["n_profiled"], s["n_unreadable"], s["n_no_reader"]) == (5, 3, 1, 1)
+  assert (s["n_files"], s["n_profiled"], s["n_unreadable"], s["n_no_reader"], s["n_documents"]) == (6, 3, 1, 1, 1)
+  doc = next(x for x in prof["files"] if x["path"] == "lab_log.txt")
+  assert doc["kind"] == "document" and doc["reader"] is None and doc["size_bytes"] == len("session notes")
   lvl0 = {x["shape"] for x in prof["structure"]["folder_levels"][0]["name_shapes"]}
   lvl1 = {x["shape"] for x in prof["structure"]["folder_levels"][1]["name_shapes"]}
   assert lvl0 == {"S#", "S##"} and lvl1 == {"##-##-##", "##-##-####"}
@@ -124,6 +127,8 @@ def test_cli_writes_outputs_and_refuses_inside_data(dataset, tmp_path):
   out = tmp_path / "docs" / "DATA_PROFILE"
   assert run_profile.main(["--data", str(root), "--out", str(out), "--plugin", str(plug), "--no-mne"]) == 0
   assert json.loads(out.with_suffix(".json").read_text())["summary"]["n_profiled"] == 3
-  assert "| 1 | 3 | 30 | 250.0 |" in out.with_suffix(".md").read_text()
+  md = out.with_suffix(".md").read_text()
+  assert "| 1 | 3 | 30 | 250.0 |" in md
+  assert "## Documents in the data folder" in md and "| `lab_log.txt` | 13 |" in md
   with pytest.raises(SystemExit):
     run_profile.main(["--data", str(root), "--out", str(root / "p"), "--no-mne"])

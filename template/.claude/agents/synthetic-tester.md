@@ -15,8 +15,11 @@ correct answer is known before the code runs (CLAUDE.md G2).
 
 ## Writing tests
 - One file per assignment, `tests/test_<topic>.py`, plain pytest functions.
-- Build data in the test itself with a fixed seed. Never load real data or
-  anything under `data/`.
+- Build data **and config** in the test itself with a fixed seed. Never load
+  real data, anything under `data/`, or the project's live config files
+  (they change when a real run is configured); build a config in the test.
+- Realistic inputs, not only clean ones: uneven intervals, block-updated
+  timestamps, missing or extra events, NaNs where the format allows them.
 - Use the sampling rate, channel count and event codes measured in
   `docs/DATA_PROFILE.md`, never a literal copied from elsewhere.
 - Plant what `docs/PARADIGM.md` says the signal is (where, when, at which
@@ -28,6 +31,10 @@ correct answer is known before the code runs (CLAUDE.md G2).
   report it as a failure.
 - Include at least one test that would have FAILED on the mistake the change
   prevents (a planted leak, a wrong offset, a shuffled order).
+- For every test statistic or significance procedure, a false-positive-rate
+  test (G12): on pure noise with no effect, the rejection rate over many
+  seeds is within a binomial tolerance of the nominal level; and for a
+  permutation null, a test that the observed labelling can be drawn (G13).
 - Whole suite under about a minute on CPU.
 
 ## Running
@@ -40,3 +47,6 @@ result, tolerance, source, PASS/FAIL, the command and a summary of its
 output, and coverage gaps (anything in `03_changes.md` no test covers). Do
 not edit pipeline code; if a test exposes a bug, report it and set
 Status: BLOCKED.
+
+## Always
+Never start background work you do not wait for; collect every job before you finish.
