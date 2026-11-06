@@ -11,6 +11,8 @@ these; nothing is estimated. -->
 
 Data source of these results (files, participant, session, preprocessing, protocol):
 Data source of the comparison numbers:
+Output folders (versioned, G9) and the regression check against the previous run, if any
+(`python -m eegharness.compare_runs`, its exit status and summary):
 
 <!-- Compare like with like. If the comparison is with the reference paper, state
 how its data, preprocessing and evaluation protocol differ from ours before the
@@ -27,6 +29,16 @@ table. -->
 | Criterion | Met? | Evidence |
 |---|---|---|
 | | | |
+
+## Rejection and data quality (G14)
+
+<!-- Required. Per participant and session: units in, units rejected per criterion
+(count and %), units kept, from the run's logged output. A high rejection rate is an
+anomaly: diagnose it before interpreting the results above. -->
+
+| Participant | Session | Units in | Rejected (criterion: n, %) | Kept | Output file |
+|---|---|---|---|---|---|
+| | | | | | |
 
 ## Regressions and anomalies
 

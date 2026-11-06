@@ -80,13 +80,43 @@ def write_build(dest: Path, info: dict, mode: str, eval_dir, case):
 
 def make_control(dest: Path, a, info):
   (dest / ".claude" / "hooks").mkdir(parents=True, exist_ok=True)
+  # only protection; tokens and time come from the transcripts after the run (cost_report.py),
+  # so nothing in the control arm's setup or behaviour changes
   shutil.copy2(KIT / "template" / ".claude" / "hooks" / "guard.py", dest / ".claude" / "hooks" / "guard.py")
   s = settings(a.eval_dir)
-  s["hooks"].pop("PostToolUse", None)
+  for event in ("PostToolUse", "SubagentStop", "Stop"):
+    s["hooks"].pop(event, None)
   (dest / ".claude" / "settings.json").write_text(json.dumps(s, indent=2) + "\n")
   write_build(dest, info, "control", a.eval_dir, a.case)
   copy_inputs(a.case, dest)
   ensure_git(dest, EXCLUDE_CONTROL)
+
+
+def vendor(dest: Path) -> bool:
+  """Copy tools/eegharness to <dest>/eegharness (committed project code, L11). True if it changed."""
+  src, dst = KIT / "tools" / "eegharness", dest / "eegharness"
+  ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
+  if dst.exists():
+    same = all((dst / f.relative_to(src)).is_file() and (dst / f.relative_to(src)).read_bytes() == f.read_bytes()
+               for f in src.rglob("*.py")) and len(list(dst.rglob("*.py"))) == len(list(src.rglob("*.py")))
+    if same:
+      return False
+    shutil.rmtree(dst)
+  shutil.copytree(src, dst, ignore=ignore)
+  return True
+
+
+def first_commit(dest: Path, info: dict):
+  """Commit the project skeleton on main, so agents start from a clean tree."""
+  paths = [p for p in (".gitignore", "README.md", "docs/DECISIONS.md", "tests/conftest.py", "eegharness", "inputs")
+           if (dest / p).exists()]
+  git = ["git", "-C", str(dest)]
+  subprocess.run(git + ["add", "--", *paths], check=True)
+  r = subprocess.run(git + ["commit", "-q", "-m", f"chore: project skeleton (eegharness {info['version']})"],
+                     capture_output=True, text=True)
+  if r.returncode != 0:
+    print(f"could not make the first commit ({r.stderr.strip() or r.stdout.strip()}); "
+          f"commit {', '.join(paths)} yourself before /onboard.")
 
 
 def make_harness(dest: Path, a, info):
@@ -114,6 +144,9 @@ def make_harness(dest: Path, a, info):
   (h / "build.json").write_text(json.dumps(info, indent=1) + "\n")
   for d in ("docs", "readers", "tests"):
     (dest / d).mkdir(exist_ok=True)
+  vendored = vendor(dest)
+  if not (dest / "tests" / "conftest.py").exists():
+    shutil.copy2(t / "tests" / "conftest.py", dest / "tests" / "conftest.py")
   if not (dest / "docs" / "DECISIONS.md").exists():
     shutil.copy2(t / "docs" / "DECISIONS.md", dest / "docs" / "DECISIONS.md")
   if not (dest / ".gitignore").exists():
@@ -121,7 +154,12 @@ def make_harness(dest: Path, a, info):
   if not (dest / "README.md").exists():
     (dest / "README.md").write_text(f"# {a.name}\n")
   copy_inputs(a.case, dest)
+  fresh = not (dest / ".git").exists()
   ensure_git(dest, EXCLUDE_HARNESS)
+  if fresh:
+    first_commit(dest, info)
+  elif vendored:
+    print(f"eegharness/ was updated to {info['version']}: review and commit it (git add eegharness).")
 
 
 def main(argv=None):

@@ -35,6 +35,25 @@ reference implementation the engineer should study for each change. -->
 |---|---|---|---|---|
 | | | | | |
 
+## Evaluation unit and exchangeability (G1, G13)
+
+<!-- What counts as an unseen sample; the exchangeable unit of every evaluation and
+resampling procedure (epoch, trial, block, session, participant), argued from event
+timing vs epoch length (overlap, shared trials or blocks). For a permutation test: what
+is permuted, and that the observed labelling is in the null set. "N/A" with a reason if
+there is no evaluation. -->
+
+## Checks frozen before real data (G10, G12, G14)
+
+<!-- Every gate, screening rule, threshold, quality or label-sanity check this run will
+apply to real recordings: its code path, threshold, the known-answer test (and
+false-positive-rate test for a test statistic) that must pass first, and how results are
+reported per participant/session with a comparison set. -->
+
+| Check | Threshold / rule | Test that must pass first | Reported per | Comparison set |
+|---|---|---|---|---|
+| | | | | |
+
 ## Methodological risks
 
 <!-- For each rule this change could break, say how the plan prevents it. -->
@@ -42,6 +61,7 @@ reference implementation the engineer should study for each change. -->
 | Rule | Risk | Prevention |
 |---|---|---|
 | G1 | | |
+| G13 | | |
 
 ## Tests required
 
@@ -60,7 +80,7 @@ Agents never run these. -->
 
 ```
 
-Outputs to drop into this folder:
+Outputs to drop into this folder (each a versioned folder `<out>/<UTC>_<commit>/`, G9):
 
 ## Sources
 

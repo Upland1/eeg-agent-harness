@@ -22,6 +22,7 @@ def to_markdown(p: dict) -> str:
     f"| Files found | {s['n_files']} |",
     f"| Profiled | {s['n_profiled']} |",
     f"| No reader for the format | {s['n_no_reader']} |",
+    f"| Documents (not recordings; read them, G16) | {s.get('n_documents', 0)} |",
     f"| Reader errors | {s['n_unreadable']} |",
     f"| Extensions | {', '.join(f'`{k}` {v}' for k, v in st['extensions'].items())} |",
     f"| Sampling rates (Hz: files) | {', '.join(f'{k}: {v}' for k, v in s['sampling_rates_hz'].items()) or '—'} |",
@@ -58,10 +59,19 @@ def to_markdown(p: dict) -> str:
   out += ["", "## Events per file, by file-name shape", "", "| Name shape | Events per file: files |", "|---|---|"]
   out += [f"| `{k}` | {', '.join(f'{n}: {c}' for n, c in sorted(v.items()))} |"
           for k, v in s["n_events_by_file_name_shape"].items()]
+  docs = [f for f in p["files"] if f.get("kind") == "document"]
+  if docs:
+    out += ["", "## Documents in the data folder", "",
+            "Written files that are not recordings (lab logs, READMEs, protocol sheets, tables). "
+            "They are not interpreted here; agents read them before asking a human (G16).", "",
+            "| File | Size (bytes) |", "|---|---|"]
+    out += [f"| `{f['path']}` | {f['size_bytes']} |" for f in docs]
   out += ["", "## Per file", "",
           "| File | Reader | fs | Channels | Duration (s) | Events | Codes | Flat / NaN channels | Error |",
           "|---|---|---|---|---|---|---|---|---|"]
   for f in p["files"]:
+    if f.get("kind") == "document":
+      continue
     pr = f.get("profile")
     if pr:
       bad = [c["name"] for c in pr["channels"] if c["flat"] or c["n_nan"]]

@@ -21,9 +21,23 @@ Verdict: PASS / FAIL
 | G6 Copied lines marked `# adapted from [n]`, license compatible | | |
 | G7 Every number traces to a logged run | | |
 | G8 Decisions recorded in docs/DECISIONS.md | | |
-| G9+ Rules added from earlier incidents | | |
+| G9 Outputs in new versioned folders with provenance; nothing overwritten | | |
+| G10 Checks and thresholds committed before their first real-data run; later changes recorded as deviations | | |
+| G11 Every derived number comes from a committed script's logged output | | |
+| G12 Known-answer tests before the first real-data run; false-positive-rate test on noise for each test statistic | | |
+| G13 Exchangeability unit stated and argued; nulls can draw the observed labelling | | |
+| G14 Quality/rejection/label claims per participant and session, with comparison set and absolute measures | | |
+| G15 No committed file references an uncommitted file (`agent_runs/`, scratchpads) | | |
+| G16 Questions to Sebastian list the written sources checked | | |
+| G17+ Rules added from later incidents | | |
+| 02b_plan_audit.md required changes were made | | |
 | Tests cover every change in 03 | | |
 | Changes match 02_plan.md | | |
+
+### Commands run
+
+<!-- Every command you ran (git diff/show/log, pytest, compare_runs) and a summary of its
+output. "Verified" means a command here, not another agent's claim. -->
 
 ### Required fixes
 

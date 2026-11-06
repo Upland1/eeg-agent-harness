@@ -12,6 +12,7 @@ from . import __version__
 from .registry import Registry
 
 SKIP_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
+from .formats import DOCUMENT_EXTS  # noqa: F401  (re-exported)
 
 
 def shape_of(name: str) -> str:
@@ -134,7 +135,8 @@ def summarize(per_file) -> dict:
   return {
     "n_files": len(per_file), "n_profiled": len(ok),
     "n_unreadable": sum(1 for p in per_file if "error" in p),
-    "n_no_reader": sum(1 for p in per_file if p.get("reader") is None),
+    "n_no_reader": sum(1 for p in per_file if p.get("reader") is None and p.get("kind") != "document"),
+    "n_documents": sum(1 for p in per_file if p.get("kind") == "document"),
     "sampling_rates_hz": {str(k): v for k, v in fs.items()},
     "channel_sets": [{"channels": list(k), "n_files": v} for k, v in chsets.most_common()],
     "duration_s": _stats([p["profile"]["duration_s"] for p in ok]),
@@ -160,6 +162,9 @@ def profile_dataset(root, plugins=(), max_files=None, use_mne=True) -> dict:
     rel = str(f.relative_to(root))
     reader = registry.reader_for(f)
     entry = {"path": rel, "reader": Registry.name(reader) if reader else None}
+    if reader is None and f.suffix.lower() in DOCUMENT_EXTS:
+      entry["kind"] = "document"
+      entry["size_bytes"] = f.stat().st_size
     if reader is not None and (max_files is None or i < max_files):
       try:
         entry["profile"] = profile_recording(reader.read(f))

@@ -31,10 +31,21 @@ papers named there. Use them; cite them (G6).
 - Recognize what the evidence supports, and stop where it ends. Write **UNKNOWN —
   needs a human** instead of forcing a fit: an unexplained event code, a paradigm
   that matches no family you can justify, a contradiction between the notes and the data.
-- Only facts that cannot be measured or found in the literature are questions for
-  Sebastian (what a code means when nothing in the data or notes says it, how the
-  experiment was run). Ask them once, grouped, in the handoff file, with what you
-  measured and the options you see.
+- **Investigate before you ask (G16).** Before a question goes to Sebastian, search, in
+  this order: (1) every input in full, including appendices, supplementary material,
+  tables and figure captions; (2) every document in the data folder (through
+  `.harness/tools/read_document.py`, which refuses recordings) and in `inputs/` (lab logs,
+  READMEs, protocol sheets); (3) the documentation the inputs
+  point to (a named public dataset's description, a device or software manual, a cited
+  paper); (4) a measurement with project code. Record what each source said, including
+  "searched, not found".
+- Only facts that none of these sources answers are questions for Sebastian (what a
+  code means when nothing written says it, how the experiment was run). Ask them once,
+  grouped, in the handoff file, each with the sources you checked, what you measured and
+  the options you see.
+- Every contact with Sebastian (a question, an approval, a request to run something) is
+  logged in the run's `human_contacts.md` (G16). The agent proposes the category;
+  Sebastian confirms it.
 - If you recognize these recordings as a specific public dataset, say so in your handoff
   ("contamination flag") and do not use what you remember about it; work only from
   the files, the inputs and sources you open.
@@ -78,8 +89,72 @@ run (command, commit, output file). Nothing estimated or retyped.
 **G8. Decisions are written down.** Each design decision goes into `docs/DECISIONS.md`:
 the question, the options considered, the choice, the evidence, and the sources.
 
+**G9. Outputs are never overwritten.** Every script that writes results creates a new
+folder `<out>/<UTC time>_<commit>[_dirty]/` with `provenance.json` (command, commit,
+dirty flag, versions, SHA-256 of inputs), using `eegharness.outputs.new_output_dir`
+(`eegharness/`). Superseded outputs are kept; the run log says which output a
+reported number comes from. *Incident: evaluation round 1, a gate's first output was
+overwritten and survived only in a transcript (harness lesson L1).*
+
+**G10. Checks are frozen before they see real data.** Any gate, screening rule, quality
+check, threshold or selection rule is fixed and committed (code and threshold) before it
+runs on real recordings. A change after that is a deviation, recorded with the output
+that had been seen. *Incident: evaluation round 1, a statistic was changed after seeing
+one file's output (L2).*
+
+**G11. Derived numbers come from scripts too.** Differences, ratios, p-values, means and
+any other number derived from results are computed by a committed script and written to
+a logged output; nothing is calculated inside a write-up, and evidence scripts are never
+left in a scratchpad. Extends G7. *Incident: evaluation round 1, reports traced only part
+of their sampled numbers, mostly values computed in markdown (L3, L4).*
+
+**G12. Test a measurement before it measures.** Every new measurement, estimator,
+screening statistic or test statistic ships with known-answer tests (G2) that pass
+**before** its first run on real data, on realistic inputs (e.g. block-updated
+timestamps, uneven intervals, missing events). Every test statistic also gets a
+false-positive-rate test: on pure noise with no effect, it rejects at about its nominal
+rate, within a binomial tolerance stated in the test. *Incident: a survey script and a
+rate estimator gave wrong numbers on real data before any test existed (L5, L6, L17).*
+
+**G13. State the exchangeability unit.** Every evaluation and every resampling procedure
+(permutation, bootstrap, cross-validation) names its exchangeable unit (epoch, trial,
+block, session, participant) and argues it from event timing versus epoch length (do
+segments overlap or share a trial or block?). Permutation nulls draw from the full set
+of labellings, the observed one included (p = (1 + #{null ≥ observed}) / (1 + n)).
+*Incident: an approved plan contained a null that could not draw the observed
+labelling; it was anti-conservative and caught only after it was built (L9, L17, L21).*
+
+**G14. Quality claims are per unit, comparative and absolute.** Data-quality, rejection
+and label-sanity claims are reported per participant and session (a pooled pass can hide
+a reversed participant), state their comparison set (which other participants or
+sessions), and give absolute as well as relative measures. Check the same participant's
+other sessions before calling an effect session-specific. Every run reports its
+rejection rate per criterion; a high rate is an anomaly to diagnose before interpreting
+results. *Incident: a pooled label check passed with one participant reversed; a
+"bad session" claim rested on a relative measure only (L15, L18, L19).*
+
+**G15. Committed files cite committed things.** Committed code, decisions and docs never
+reference uncommitted files (`agent_runs/`, scratchpads, local notes). They cite commit
+hashes and committed or reproducible output paths. *Incident: audits found committed
+decisions pointing at local run files (L22).*
+
+**G16. Use every written source before asking a human.** Before any question goes to
+Sebastian, the agents check, and record what each said ("searched, not found" included):
+(a) every input in full, including appendices, supplementary material, tables and figure
+captions; (b) every document in the data folder that is not a recording (lab logs,
+READMEs, protocol sheets, spreadsheets), read through
+`.harness/tools/read_document.py`; (c) the documentation the inputs point to (a named
+dataset's description, a device or software manual, a cited paper); (d) a measurement
+with project code. A question goes to Sebastian only if none of these answers it, and it
+lists the sources checked. Every human contact (question, approval, request) is logged
+in the run's `human_contacts.md` as **approval**, **human-only fact** or
+**should-have-found** (the answer was in a source in reach); the agent proposes the
+category and Sebastian confirms it. *Incident: in onboarding, several questions sent to
+Sebastian were answered by the input paper's appendix, the public documentation the
+paper names, or the lab log in the data folder (L25).*
+
 **Rules grow from experience.** When a test or the auditor catches a new kind of mistake,
-the orchestrator writes up the incident and proposes a new rule (G9, G10, …). Sebastian
+the orchestrator writes up the incident and proposes a new rule (G17, G18, …). Sebastian
 approves it before it is added here, with a one-line reference to the incident. Rules
 that apply to any EEG study are also proposed to the harness (next version, never the
 running one).
@@ -88,7 +163,11 @@ running one).
 
 - Recordings live in `data/raw/` (git-ignored, read-only). Agents may **read** them
   through project code; never modify, copy elsewhere, upload or commit them.
-- Processed arrays, models and reports are generated, git-ignored, and rebuilt by script.
+- Processed arrays, models and reports are generated, git-ignored, and rebuilt by script,
+  each run into a new versioned folder (G9).
+- Shared tools are vendored, committed code in `eegharness/` (versioned output
+  folders and provenance, `python -m eegharness.compare_runs` for regression checks).
+  Project code imports only committed files, never `.harness/`.
 - Long runs (more than about 10 minutes, or anything on GPU) are listed in the plan's
   "What Sebastian will run" section; Sebastian runs them locally or on Colab.
 
@@ -98,7 +177,9 @@ running one).
 - Never commit data, `CLAUDE.md`, `.claude/`, `.harness/` or `agent_runs/`, and never
   mention Claude in commit messages or committed files.
 - Never loosen a test tolerance without saying so explicitly in the handoff.
-- Never edit files in `reports/` or `.harness/` by hand.
+- Never edit files in `reports/`, `.harness/` or `eegharness/` by hand.
+- Never start background work (background shells, detached jobs) that you do not wait for
+  and collect before you finish.
 - Never look for answer keys, evaluation material or other projects' results outside this
   folder.
 
@@ -113,10 +194,14 @@ running one).
 ## Multi-agent workflow
 
 1. **Onboarding first** (`/onboard`): profiler → reader plugin if a format is unreadable →
-   paradigm-analyst writes `docs/PARADIGM.md` → Sebastian approves.
+   paradigm-analyst writes `docs/PARADIGM.md` (with a frozen label sanity check) →
+   Sebastian approves → approved docs are committed.
 2. **Then one run per assignment** (`/assignment`): 00_assignment → 01_brief → 02_plan →
-   [Sebastian approves] → 03_changes → 04_tests → 05_audit → [Sebastian runs long jobs]
-   → 06_results.
+   02b_plan_audit → [Sebastian approves] → 03_changes → 04_tests → 05_audit →
+   [Sebastian runs long jobs] → 06_results.
+
+Every run keeps `log.md` (one row per agent call, with tokens and time),
+`human_contacts.md` (G16) and `cost.jsonl` (written by a hook).
 
 Agents hand work to each other through `agent_runs/<YYYY-MM-DD>_<slug>/` following
 `agent_runs/README.md`. Subagents don't see the conversation; everything they need is in

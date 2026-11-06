@@ -88,12 +88,57 @@ def test_guard_workflow_rules_only_in_harness(made):
   assert guard(c, "Write", {"file_path": str(c / "src" / "a.py")}, agent="methods-auditor") == 0
 
 
-def test_eval_requires_frozen_kit_without_allow_dirty(tmp_path):
-  """Known answer: an evaluation project from an untagged kit is refused."""
+def _kit_copy(tmp_path, tag):
+  """A committed copy of the kit, tagged or not (the real kit's state must not decide the test)."""
+  import shutil
+  k = tmp_path / "kit"
+  shutil.copytree(KIT, k, ignore=shutil.ignore_patterns(".git", "__pycache__", ".pytest_cache"))
+  g = ["git", "-C", str(k), "-c", "user.name=t", "-c", "user.email=t@t"]
+  for c in (["init", "-q", "-b", "main"], ["add", "-A"], ["commit", "-q", "-m", "kit"]) + ((["tag", "v0"],) if tag else ()):
+    subprocess.run(g + c, check=True, capture_output=True)
+  return k
+
+
+@pytest.mark.parametrize("tag", [False, True])
+def test_eval_requires_frozen_kit_without_allow_dirty(tmp_path, tag):
+  """Known answer: an evaluation project from an untagged kit is refused; from a clean tagged kit it is made."""
+  k = _kit_copy(tmp_path, tag)
   ev = tmp_path / "eval"
   ev.mkdir()
-  with pytest.raises(SystemExit):
-    new_project.main([str(tmp_path / "p"), "--name", "p", "--eval-dir", str(ev)])
+  r = subprocess.run([sys.executable, str(k / "new_project.py"), str(tmp_path / "p"), "--name", "p", "--eval-dir", str(ev)],
+                     capture_output=True, text=True)
+  assert (r.returncode == 0) == tag, r.stderr
+
+
+def test_vendored_package_conftest_and_first_commit(made):
+  """Known answer: eegharness/ is an exact copy of tools/eegharness, committed with the skeleton on main;
+  the tree is clean; tests/conftest.py never puts .harness on the path; cost hooks registered."""
+  _, h, c = made
+  src = KIT / "tools" / "eegharness"
+  for f in src.glob("*.py"):
+    assert (h / "eegharness" / f.name).read_bytes() == f.read_bytes()
+  tracked = subprocess.run(["git", "-C", str(h), "ls-files"], capture_output=True, text=True).stdout.split()
+  assert {"eegharness/outputs.py", "tests/conftest.py", ".gitignore", "docs/DECISIONS.md"} <= set(tracked)
+  assert subprocess.run(["git", "-C", str(h), "status", "--porcelain"], capture_output=True, text=True).stdout == ""
+  assert ".harness" not in (h / "tests" / "conftest.py").read_text().split('"""')[2]
+  hooks = json.loads((h / ".claude" / "settings.json").read_text())["hooks"]
+  assert "SubagentStop" in hooks and "Stop" in hooks and (h / ".claude" / "hooks" / "log_cost.py").exists()
+  hooks_c = json.loads((c / ".claude" / "settings.json").read_text())["hooks"]
+  assert set(hooks_c) == {"PreToolUse"} and not (c / ".claude" / "hooks" / "log_cost.py").exists()  # cost: after the run
+  assert not (c / "eegharness").exists()
+
+
+def test_templates_carry_v02_rules_and_files():
+  """Known answer: CLAUDE.md defines G1-G16; run templates include the plan audit and the human-contact log."""
+  claude = (KIT / "template" / "CLAUDE.md").read_text()
+  assert all(f"**G{n}." in claude for n in range(1, 17))
+  tpl = KIT / "template" / "agent_runs" / "_templates"
+  assert (tpl / "02b_plan_audit.md").exists()
+  head = (tpl / "human_contacts.md").read_text()
+  for col in ("Sources checked", "Proposed category", "Confirmed category", "should-have-found", "human-only fact"):
+    assert col in head
+  auditor = (KIT / "template" / ".claude" / "agents" / "methods-auditor.md").read_text()
+  assert "Bash" in auditor.split("---")[1] and "G1–G16" in auditor
 
 
 def test_kit_is_paradigm_neutral():

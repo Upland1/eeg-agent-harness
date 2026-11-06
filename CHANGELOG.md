@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.2.0 — 2026-11-05 (frozen for evaluation round 2)
+
+From the first project's lessons L1–L26 (general ones only).
+
+- Rules: G9–G11 ported from the first project; new G12 (known-answer tests before
+  the first real-data run, false-positive-rate test on noise for every test
+  statistic), G13 (exchangeability unit; nulls can draw the observed labelling),
+  G14 (quality, rejection and label claims per participant and session, with
+  comparison set and absolute measures), G15 (committed files cite only committed
+  things), G16 (use every written source before asking a human).
+- Workflow: plan audit (`02b_plan_audit.md`) by the methods-auditor before approval;
+  one batched approval per stop; human-contact log `human_contacts.md` (agent
+  proposes the category, Sebastian confirms); measurement requests and a frozen,
+  per-participant label sanity check in onboarding; approved docs committed at
+  approval; short CPU runs by the orchestrator; rejection section required in results.
+- Agents: methods-auditor gets a read-only shell; paradigm-analyst reads documents
+  in the data folder and documentation the inputs point to, verifies input identity,
+  writes measurement requests; tester builds its own config, uses realistic inputs,
+  adds false-positive-rate tests; engineer runs on real data only after tests pass;
+  no un-awaited background work.
+- Tools: `eegharness` package vendored into each project (`new_output_dir`:
+  versioned output folders with provenance; `compare_runs` regression check);
+  profiler lists written documents in the data folder as documents, not as files
+  without a reader; `read_document.py` prints them (.txt .md .pdf .docx .odt .rtf
+  .csv .xlsx …) and refuses recordings; it is the paradigm-analyst's only shell
+  command, and its Read/Grep tools open nothing under `data/`.
+- Hooks: guard tokenizes shell commands (the first project's 9 false blocks pass,
+  real violations still block, also inside `bash -c` and heredocs run by a shell);
+  `log_cost.py` logs tokens and wall time per agent call and per orchestrator
+  session (harness arm). `cost_report.py` (kit) computes the same numbers for any
+  project, both arms, from its transcripts after the run; the control arm gets no
+  cost hook, so its setup and behaviour do not change.
+- Guard resolves every path before checking it (L26): relative paths, `..`, `cd`,
+  symlinks, quotes, globs, `~`, variables set in the command, `--option=path`, and
+  string literals in heredocs and `-c` code, for shell commands and file tools, in
+  both arms. Recursive tools aimed at a folder containing the evaluation folder are
+  blocked. Round 1 had let `cat ../../<eval folder>/...` through from inside a project.
+- `new_project.py`: vendors `eegharness/`, adds `tests/conftest.py`, commits the
+  project skeleton (with `inputs/`) so agents start from a clean tree.
+- End-to-end check (2026-11-05): `/onboard` headless on a synthetic 3-participant
+  auditory oddball, scratch project only. Reached the approval stop with one human
+  contact; the analyst read the lab-log .docx through `read_document.py` and asked
+  nothing it answered. Two defects found and fixed before release: the cost
+  summary counted resumed agents once per round (now once per agent), and the
+  auditor's read-only `sed -n <lines>p` was blocked (now allowed).
+- Not in 0.2: release gate for numbers shown outside the project (needs a
+  number-tracing tool).
+
 ## 0.1.0 — 2026-11-02
 
 First version, derived from the P300 project setup of 2026-11-01 with all
