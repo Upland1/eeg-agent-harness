@@ -11,8 +11,11 @@ reason to Claude.
 | `log_cost.py` | SubagentStop, Stop | Appends tokens (input, output, cache write, cache read; once per API response) and wall time of each agent call, and the orchestrator session's running totals, to `agent_runs/<run>/cost.jsonl` (control arm: `.claude/cost.jsonl`). Never blocks. `python .claude/hooks/log_cost.py --summary agent_runs/<run>` prints the table for `log.md` |
 
 Notes:
-- The guard matches text, so it is a strong fence, not a wall: a determined
-  command could still reach a file by a path it does not recognize. The
+- The guard resolves every path it can see to an absolute path before checking it
+  (relative paths, `..`, `cd`, symlinks, quotes, globs, `~`, variables set in the
+  command, string literals in code). It is still a fence, not a wall: a path built at
+  run time (inside a script, by `$( )`, or from variables set in an earlier command)
+  is not visible to it. The
   evaluation also scans every session transcript afterwards
   (`eval/tools/check_leaks.py`) and flags the run if anything slipped through.
 - You, in your own terminal, are never blocked.

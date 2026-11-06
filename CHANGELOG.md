@@ -2,7 +2,7 @@
 
 ## 0.2.0 — 2026-11-?? (frozen for evaluation round 2)
 
-From the first project's lessons L1–L25 (general ones only).
+From the first project's lessons L1–L26 (general ones only).
 
 - Rules: G9–G11 ported from the first project; new G12 (known-answer tests before
   the first real-data run, false-positive-rate test on noise for every test
@@ -28,6 +28,11 @@ From the first project's lessons L1–L25 (general ones only).
   real violations still block, also inside `bash -c` and heredocs run by a shell);
   `log_cost.py` logs tokens and wall time per agent call and per orchestrator
   session, in both arms.
+- Guard resolves every path before checking it (L26): relative paths, `..`, `cd`,
+  symlinks, quotes, globs, `~`, variables set in the command, `--option=path`, and
+  string literals in heredocs and `-c` code, for shell commands and file tools, in
+  both arms. Recursive tools aimed at a folder containing the evaluation folder are
+  blocked. Round 1 had let `cat ../../<eval folder>/...` through from inside a project.
 - `new_project.py`: vendors `eegharness/`, adds `tests/conftest.py`, commits the
   project skeleton (with `inputs/`) so agents start from a clean tree.
 - Not in 0.2: release gate for numbers shown outside the project (needs a
