@@ -2,6 +2,7 @@
 timestamps, records routed to the run named in the agent's prompt."""
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -77,10 +78,33 @@ def test_session_record_goes_to_latest_run_and_summary(project, tmp_path):
 
 
 def test_never_blocks_and_control_arm(project, tmp_path):
-  """Known answer: a missing transcript exits 0 with a note; in a control project records go to .claude/cost.jsonl."""
+  """Known answer: a missing transcript exits 0 with a note; if the hook ever ran in a control project it would
+  write to .claude/cost.jsonl (new_project no longer installs it there: cost_report.py is used instead)."""
   r = hook(project, {"hook_event_name": "SubagentStop", "agent_transcript_path": str(tmp_path / "nope.jsonl")})
   assert r.returncode == 0 and "not logged" in r.stderr
   (project / ".claude").mkdir()
   (project / ".claude" / "harness.json").write_text(json.dumps({"mode": "control"}))
   hook(project, {"hook_event_name": "Stop", "transcript_path": str(transcript(tmp_path / "m.jsonl", "x"))})
   assert json.loads((project / ".claude" / "cost.jsonl").read_text())["total_tokens"] == 12132
+
+
+def test_cost_report_from_transcripts_after_the_run(tmp_path):
+  """Known answer: a session (12132 tokens) with two subagents (12132 each, types from meta files) gives
+  36396 tokens, 1 session, 2 agent calls; the folder is found from the project path."""
+  sys.path.insert(0, str(KIT))
+  import cost_report
+  proj = tmp_path / "my_proj.v2"
+  assert cost_report.transcripts_dir(proj).name == re.sub(r"[^A-Za-z0-9]", "-", str(proj.resolve()))
+  folder = tmp_path / "tr"
+  (folder / "sess1" / "subagents").mkdir(parents=True)
+  transcript(folder / "sess1.jsonl", "/onboard")
+  for i, kind in enumerate(("paradigm-analyst", "methods-auditor")):
+    transcript(folder / "sess1" / "subagents" / f"agent-{i}.jsonl", "x")
+    (folder / "sess1" / "subagents" / f"agent-{i}.meta.json").write_text(json.dumps({"agentType": kind}))
+  rep = cost_report.report(folder)
+  t = rep["totals"]
+  assert (t["total_tokens"], t["sessions"], t["agent_calls"], t["api_responses"]) == (36396, 1, 2, 6)
+  assert [r["agent_type"] for r in rep["rows"]] == ["main", "paradigm-analyst", "methods-auditor"]
+  out = subprocess.run([sys.executable, str(KIT / "cost_report.py"), str(proj), "--transcripts", str(folder)],
+                       capture_output=True, text=True).stdout
+  assert "Totals: 36396 tokens" in out

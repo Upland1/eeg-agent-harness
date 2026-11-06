@@ -80,10 +80,12 @@ def write_build(dest: Path, info: dict, mode: str, eval_dir, case):
 
 def make_control(dest: Path, a, info):
   (dest / ".claude" / "hooks").mkdir(parents=True, exist_ok=True)
-  for hook in ("guard.py", "log_cost.py"):  # protection, and the same cost measurement as the harness arm
-    shutil.copy2(KIT / "template" / ".claude" / "hooks" / hook, dest / ".claude" / "hooks" / hook)
+  # only protection; tokens and time come from the transcripts after the run (cost_report.py),
+  # so nothing in the control arm's setup or behaviour changes
+  shutil.copy2(KIT / "template" / ".claude" / "hooks" / "guard.py", dest / ".claude" / "hooks" / "guard.py")
   s = settings(a.eval_dir)
-  s["hooks"].pop("PostToolUse", None)
+  for event in ("PostToolUse", "SubagentStop", "Stop"):
+    s["hooks"].pop(event, None)
   (dest / ".claude" / "settings.json").write_text(json.dumps(s, indent=2) + "\n")
   write_build(dest, info, "control", a.eval_dir, a.case)
   copy_inputs(a.case, dest)

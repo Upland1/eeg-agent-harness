@@ -23,11 +23,15 @@ From the first project's lessons L1–L26 (general ones only).
 - Tools: `eegharness` package vendored into each project (`new_output_dir`:
   versioned output folders with provenance; `compare_runs` regression check);
   profiler lists written documents in the data folder as documents, not as files
-  without a reader.
+  without a reader; `read_document.py` prints them (.txt .md .pdf .docx .odt .rtf
+  .csv .xlsx …) and refuses recordings; it is the paradigm-analyst's only shell
+  command, and its Read/Grep tools open nothing under `data/`.
 - Hooks: guard tokenizes shell commands (the first project's 9 false blocks pass,
   real violations still block, also inside `bash -c` and heredocs run by a shell);
   `log_cost.py` logs tokens and wall time per agent call and per orchestrator
-  session, in both arms.
+  session (harness arm). `cost_report.py` (kit) computes the same numbers for any
+  project, both arms, from its transcripts after the run; the control arm gets no
+  cost hook, so its setup and behaviour do not change.
 - Guard resolves every path before checking it (L26): relative paths, `..`, `cd`,
   symlinks, quotes, globs, `~`, variables set in the command, `--option=path`, and
   string literals in heredocs and `-c` code, for shell commands and file tools, in

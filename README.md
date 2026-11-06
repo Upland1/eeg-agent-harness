@@ -16,6 +16,7 @@ files). Projects made from it keep these files out of their own git history.
 | `template/` | copied into each project: `CLAUDE.md` (general rules G1–G16), `.claude/` (6 agents, skills `onboard`, `assignment`, `cite-sources`, guard, test and cost hooks), `agent_runs/` (handoff contract and templates, including the plan audit and the human-contact log), `tests/conftest.py` |
 | `tools/` | deterministic tools: the dataset profiler `run_profile.py` and its reader registry (`eegprofile/`), copied to `<project>/.harness/tools/`; the `eegharness` package (versioned output folders with provenance, `compare_runs` regression check), **vendored** as committed code to `<project>/eegharness/` |
 | `new_project.py` | creates or updates a project (harness arm or control arm) |
+| `cost_report.py` | tokens and time of a finished project (either arm) from its transcripts, run by the evaluator after the run |
 | `kit_tests/` | known-answer tests for the tools, the guard and project creation |
 
 Nothing in `template/` names a paradigm or a lab format; `kit_tests/test_kit.py`

@@ -121,9 +121,10 @@ def test_vendored_package_conftest_and_first_commit(made):
   assert {"eegharness/outputs.py", "tests/conftest.py", ".gitignore", "docs/DECISIONS.md"} <= set(tracked)
   assert subprocess.run(["git", "-C", str(h), "status", "--porcelain"], capture_output=True, text=True).stdout == ""
   assert ".harness" not in (h / "tests" / "conftest.py").read_text().split('"""')[2]
-  for p in (h, c):
-    hooks = json.loads((p / ".claude" / "settings.json").read_text())["hooks"]
-    assert "SubagentStop" in hooks and "Stop" in hooks and (p / ".claude" / "hooks" / "log_cost.py").exists()
+  hooks = json.loads((h / ".claude" / "settings.json").read_text())["hooks"]
+  assert "SubagentStop" in hooks and "Stop" in hooks and (h / ".claude" / "hooks" / "log_cost.py").exists()
+  hooks_c = json.loads((c / ".claude" / "settings.json").read_text())["hooks"]
+  assert set(hooks_c) == {"PreToolUse"} and not (c / ".claude" / "hooks" / "log_cost.py").exists()  # cost: after the run
   assert not (c / "eegharness").exists()
 
 
