@@ -11,8 +11,17 @@ Shell commands are tokenized (quotes, heredocs, `;` `&&` `||` `|` and newlines),
 looks at what a command does (its command word, operands and redirect targets, the commit
 message) rather than at any word anywhere in the text. A command that cannot be tokenized
 falls back to the conservative whole-text checks of v0.1.
+
+Every path a tool call names is resolved to an absolute, normalized path before it is checked
+(lesson L26): relative to the shell's working directory as `cd`/`pushd` change it, with `..`,
+symlinks, `~`, `$VAR`s assigned in the same command, `--option=path`, globs, and string
+literals in heredocs and `-c` code. Resolved paths are checked against the evaluation folder,
+the blocklist terms and the protected folders (data/raw, .harness, eegharness). A recursive
+tool (grep -r, find, rg, tree, du, ls -R, tar, zip, rsync, cp -r) aimed at a folder that
+contains the evaluation folder is blocked as well.
 """
 
+import glob
 import json
 import os
 import re
@@ -47,6 +56,73 @@ AUDITOR_READ = {"ls", "cat", "head", "tail", "wc", "grep", "egrep", "fgrep", "rg
 AUDITOR_GIT = {"diff", "show", "log", "status", "blame", "ls-files", "rev-parse", "branch", "describe",
                "grep", "shortlog", "cat-file", "merge-base", "rev-list", "ls-tree", "name-rev"}
 WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
+RECURSIVE = {"find", "rg", "tree", "du", "tar", "zip", "rsync", "ag", "fd", "locate"}
+STRING_PATH = re.compile(r"""['"]([^'"\n]*/[^'"\n]*)['"]""")
+VAR = re.compile(r"\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?")
+CTX = {"root": Path("."), "eval_dir": None, "terms": [], "own": ""}
+
+
+# ---------------------------------------------------------------- paths (L26)
+
+def real(p) -> Path:
+  return Path(os.path.realpath(p))
+
+
+def is_under(p: Path, folder) -> bool:
+  return folder is not None and (p == folder or folder in p.parents)
+
+
+def resolve_token(tok: str, base: Path, env: dict) -> list:
+  """Absolute, normalized paths (symlinks followed) that a command token may name."""
+  s = tok
+  if s.startswith("-"):
+    if "=" not in s:
+      return []
+    s = s.split("=", 1)[1]
+  s = s.lstrip("@")
+  if not s or s == "-" or "://" in s:
+    return []
+  s = VAR.sub(lambda m: env.get(m.group(1), os.environ.get(m.group(1), m.group(0))), s)
+  s = os.path.expanduser(s)
+  path = s if os.path.isabs(s) else str(base / s)
+  out = [real(path)]
+  if any(c in s for c in "*?["):
+    static = re.split(r"[*?\[]", path, maxsplit=1)[0]
+    out = [real(os.path.dirname(static) or "/")] + [real(m) for m in glob.glob(path)[:500]]
+  return out
+
+
+def check_eval_path(p: Path, recursive: bool = False) -> None:
+  ev = CTX["eval_dir"]
+  if ev is not None and (is_under(p, ev) or (recursive and is_under(ev, p))):
+    block("this is an evaluation project: evaluation material and blocked sources are out of reach "
+          f"(path resolves to {p}).")
+  low = str(p).casefold()
+  for term in CTX["terms"]:
+    if term.casefold() in low and term.casefold() not in CTX["own"]:
+      block("this is an evaluation project: evaluation material and blocked sources are out of reach.")
+
+
+def protected(p: Path) -> str:
+  """Which protected project folder a resolved path lies in ('' if none)."""
+  root = CTX["root"]
+  for rel, name in (("data/raw", "raw"), (".harness", "harness"), ("eegharness", "eegharness")):
+    if is_under(p, real(root / rel)):
+      return name
+  return ""
+
+
+def check_written(paths, raw_only: bool) -> None:
+  for p in paths:
+    kind = protected(p)
+    if kind == "raw":
+      block("recordings in data/raw/ may be read by project code only; never modify, copy, move or upload them.")
+    if raw_only:
+      continue
+    if kind == "harness":
+      block(".harness/ is the frozen harness; never change it.")
+    if kind == "eegharness":
+      block("eegharness/ is vendored harness code; never change it by hand (a new harness version replaces it).")
 
 
 def block(reason: str) -> None:
@@ -165,6 +241,16 @@ def parse_segment(seg):
   return os.path.basename(words[0]), words[1:], targets, heredocs
 
 
+def assignments(seg) -> dict:
+  out = {}
+  for w in seg:
+    m = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_]*)=(.*)", w, re.S)
+    if not m:
+      break
+    out[m.group(1)] = m.group(2)
+  return out
+
+
 def operands(cmd: str, args):
   """Non-option arguments; for sed the script argument is not an operand."""
   ops = [a for a in args if not a.startswith("-") or a == "-"]
@@ -230,6 +316,7 @@ def commit_message(sub_args, heredocs, bodies, cwd) -> str:
 
 def check_bash_fallback(cmd: str, cwd: str) -> None:
   """v0.1 whole-text checks, used only when a command cannot be tokenized."""
+  check_eval_text(cmd, Path(cwd))
   if RAW.search(cmd) and RAW_CHANGE.search(cmd):
     block("recordings in data/raw/ may be read by project code only; never modify, copy, move or upload them.")
   if re.search(r"(^|[\s;&|])(rm|mv|cp|tee|sed\s+-i|touch)\b[^;&|]*\.harness/", cmd) or re.search(r">\s*\S*\.harness/", cmd):
@@ -248,6 +335,14 @@ def check_bash_fallback(cmd: str, cwd: str) -> None:
             "write the message with -m and keep other text out of the command).")
 
 
+def check_eval_text(text: str, base: Path) -> None:
+  """Paths inside free text (code, unparseable commands): string literals and path-like words."""
+  cands = STRING_PATH.findall(text) + re.findall(r"[^\s'\"();|&<>=]*/[^\s'\"();|&<>]*", text)
+  for c in cands:
+    for p in resolve_token(c.strip(), base, {}):
+      check_eval_path(p)
+
+
 def check_raw_text(text: str) -> None:
   for line in text.split("\n"):
     if "data/raw" in line and PY_WRITE.search(line):
@@ -259,6 +354,7 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
   segs = segments(stripped)
   if segs is None:
     if raw_only:
+      check_eval_text(cmd, Path(cwd))
       if RAW.search(cmd) and RAW_CHANGE.search(cmd):
         block("recordings in data/raw/ are read-only; never modify, copy, move or upload them.")
       if re.search(r"\bgit\b[^;&|]*\bpush\b", cmd):
@@ -269,33 +365,46 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
   for body_list in bodies.values():
     for body in body_list:
       check_raw_text(body)
+      check_eval_text(body, Path(cwd))
   branch = None
-  try:
-    rel_cwd = Path(cwd).resolve().relative_to(root.resolve()).as_posix()
-  except (OSError, ValueError):
-    rel_cwd = ""
-  # which protected folder the shell is in: from the session's cwd, then each cd/pushd
-  where = {"raw": rel_cwd.startswith("data/raw"), "harness": rel_cwd.startswith((".harness", "eegharness"))}
+  here = real(cwd)  # the shell's working directory, followed through cd/pushd (L26)
+  env = {}
   for seg in segs:
+    env.update(assignments(seg))
+    for v in assignments(seg).values():
+      for part in v.split(":"):
+        for p in resolve_token(part, here, env):
+          check_eval_path(p)
     name, args, targets, heredocs = parse_segment(seg)
     if name in ("cd", "pushd"):
       dest = next((a for a in args if not a.startswith("-")), "~")
-      fresh = dest.startswith(("/", "~", ".."))
-      where["raw"] = "data/raw" in dest or (where["raw"] and not fresh)
-      where["harness"] = (in_dir(dest, ".harness", root) or in_dir(dest, "eegharness", root)
-                          or (where["harness"] and not fresh))
+      found = resolve_token(dest, here, env)
+      if found:
+        here = found[0]
+        check_eval_path(here)
       continue
+    recursive = name in RECURSIVE or (name in ("grep", "egrep", "fgrep", "ls", "cp", "chmod", "chown", "rm")
+                                      and any(re.fullmatch(r"-[A-Za-z]*[rR][A-Za-z]*|--recursive", a) for a in args))
+    resolved_args = [p for a in args for p in resolve_token(a, here, env)]
+    resolved_targets = [p for a in targets for p in resolve_token(a, here, env)]
+    for p in resolved_args + resolved_targets:
+      check_eval_path(p, recursive=recursive)
+    if name and "/" in seg[0]:
+      for p in resolve_token(seg[0], here, env):
+        check_eval_path(p)
     for t in targets:
-      if "data/raw" in t or (where["raw"] and not t.startswith("/dev/")):
+      if "data/raw" in t:
         block("recordings in data/raw/ are read-only; never write into them.")
+    check_written([p for p in resolved_targets if not str(p).startswith("/dev/")], raw_only)
     is_mut = name in MUTATING or name == "xargs" or (name == "sed" and any(a.startswith(("-i", "--in-place")) for a in args))
-    if is_mut and where["raw"]:
+    if is_mut and protected(here) == "raw":
       block("recordings in data/raw/ may be read by project code only; never modify, copy, move or upload them "
             "(this command runs inside data/raw/).")
-    if is_mut and where["harness"] and not raw_only:
+    if is_mut and protected(here) in ("harness", "eegharness") and not raw_only:
       block(".harness/ and eegharness/ are frozen harness code; never change them (this command runs inside one).")
     if name in ("python", "python3") and "-c" in args:
       check_raw_text(" ".join(args))
+      check_eval_text(" ".join(args), here)
     if name in SHELLS or name == "eval":
       # a shell runs its heredoc or -c string: check that text with the same rules
       inner = [b for d in heredocs for b in bodies.get(d, [])]
@@ -304,10 +413,12 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
       if name == "eval":
         inner.append(" ".join(args))
       for text in inner:
-        check_bash(text, cwd, root, raw_only)
+        check_bash(text, str(here), root, raw_only)
     ops = operands(name, args)
     if name in MUTATING or (name == "sed" and any(a == "-i" or a.startswith(("-i", "--in-place")) for a in args)):
-      if any("data/raw" in o for o in (ops if name != "curl" and name != "wget" else args)):
+      checked = ops if name not in ("curl", "wget") else args
+      if any("data/raw" in o for o in checked) or any(
+          protected(p) == "raw" for o in checked for p in resolve_token(o, here, env)):
         block("recordings in data/raw/ may be read by project code only; never modify, copy, move or upload them.")
     if name == "xargs" and any(a in MUTATING for a in args) and "data/raw" in " ".join(args):
       block("recordings in data/raw/ may be read by project code only; never modify, copy, move or upload them.")
@@ -328,6 +439,7 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
         block(".harness/ is the frozen harness; never change it.")
       if in_dir(w, "eegharness", root):
         block("eegharness/ is vendored harness code; never change it by hand (a new harness version replaces it).")
+    check_written([p for w in written for p in resolve_token(w, here, env)], raw_only)
     if name != "git":
       continue
     sub, sargs = git_sub(args)
@@ -354,7 +466,7 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
         block("commit messages must not mention Claude, Anthropic or a co-author.")
 
 
-def check_auditor_bash(cmd: str, root: Path) -> None:
+def check_auditor_bash(cmd: str, root: Path, cwd: str = ".") -> None:
   """The methods-auditor's shell: read-only commands only (CLAUDE.md, methods-auditor)."""
   deny = "the methods-auditor's shell is read-only: "
   if "<<" in cmd or "$(" in cmd or "`" in cmd:
@@ -397,7 +509,9 @@ def check_auditor_bash(cmd: str, root: Path) -> None:
     if re.fullmatch(r"python(3(\.\d+)?)?", name) and args[:2] == ["-m", "eegharness.compare_runs"]:
       outs = [args[i + 1] for i, a in enumerate(args) if a == "--out" and i + 1 < len(args)]
       outs += [a.split("=", 1)[1] for a in args if a.startswith("--out=")]
-      if not outs or not all(re.match(r"(\./)?agent_runs/[^/]+/", o) or str(root / "agent_runs") in o for o in outs):
+      runs = real(root / "agent_runs")
+      if not outs or not all(real(o if os.path.isabs(o) else Path(cwd) / o).parent != runs
+                             and is_under(real(o if os.path.isabs(o) else Path(cwd) / o), runs) for o in outs):
         block(deny + "compare_runs only with --out inside the run folder (agent_runs/<run>/...).")
       continue
     block(deny + f"`{name}` is not on the auditor's list (read-only file tools, read-only git, "
@@ -414,23 +528,40 @@ def main() -> None:
   cfg = load_cfg(root)
   text = json.dumps(args, ensure_ascii=False)
   own = str(root.resolve()).casefold()
-  for term in eval_terms(cfg):
+  terms = eval_terms(cfg)
+  CTX.update(root=root, own=own, terms=terms,
+             eval_dir=real(cfg["eval_dir"]) if cfg.get("eval_dir") else None)
+  for term in terms:
     if term.casefold() in own:  # e.g. the run's own folder name in a list of sibling runs
       continue
     if term.casefold() in text.casefold():
       block("this is an evaluation project: evaluation material and blocked sources are out of reach.")
+  # file tools: resolve every path argument (L26)
+  if tool != "Bash":
+    base = real(cwd)
+    for key in ("file_path", "notebook_path", "path"):
+      if isinstance(args.get(key), str) and args[key]:
+        for p in resolve_token(args[key], base, {}):
+          check_eval_path(p, recursive=tool in ("Grep", "Glob"))
+    if tool == "Glob" and isinstance(args.get("pattern"), str):
+      gbase = real(args["path"]) if isinstance(args.get("path"), str) and args["path"] else base
+      for p in resolve_token(args["pattern"], gbase, {}):
+        check_eval_path(p, recursive=True)
 
   if cfg.get("mode") == "control":
     # Control arm of an evaluation: only leak, recording and push protection, no workflow rules.
     if tool == "Bash":
       check_bash(args.get("command", ""), cwd, root, raw_only=True)
-    elif tool in WRITE_TOOLS and RAW.search(str(args.get("file_path", args.get("notebook_path", "")))):
-      block("recordings in data/raw/ are read-only.")
+    elif tool in WRITE_TOOLS:
+      target = str(args.get("file_path", args.get("notebook_path", "")))
+      if RAW.search(target):
+        block("recordings in data/raw/ are read-only.")
+      check_written(resolve_token(target, real(cwd), {}), raw_only=True)
     return
 
   if tool == "Bash":
     if event.get("agent_type") == "methods-auditor":
-      check_auditor_bash(args.get("command", ""), root)
+      check_auditor_bash(args.get("command", ""), root, cwd)
     check_bash(args.get("command", ""), cwd, root)
     return
 
@@ -442,8 +573,14 @@ def main() -> None:
       block(".harness/ is the frozen harness; never change it.")
     if in_dir(target, "eegharness", root):
       block("eegharness/ is vendored harness code; never change it by hand (a new harness version replaces it).")
+    resolved = resolve_token(target, real(cwd), {})
+    check_written(resolved, raw_only=False)
     if event.get("agent_type") == "methods-auditor":
-      if AUDITOR_MEMORY not in target and not AUDITOR_FILES.search(target):
+      try:
+        rel = resolved[0].relative_to(real(root)).as_posix() if resolved else ""
+      except ValueError:
+        rel = ""
+      if not (rel.startswith(AUDITOR_MEMORY) or re.fullmatch(r"agent_runs/[^/]+/(05_audit|02b_plan_audit)\.md", rel)):
         block("the methods-auditor is read-only; it may only write 02b_plan_audit.md, 05_audit.md and its memory folder.")
 
 
