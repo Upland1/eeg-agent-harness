@@ -490,6 +490,12 @@ def check_auditor_bash(cmd: str, root: Path, cwd: str = ".") -> None:
       if name == "sort" and any(a == "-o" or a.startswith(("-o", "--output")) for a in args):
         block(deny + "sort without -o.")
       continue
+    if name == "sed":
+      scripts = [a for a in args if not a.startswith("-")][:1]
+      if (args[:1] == ["-n"] and scripts and all(o in ("-n",) or not o.startswith("-") for o in args)
+          and re.fullmatch(r"((\d+|\$)(,(\d+|\$))?p;?)+", scripts[0])):
+        continue  # print lines only, e.g. sed -n 245,300p file
+      block(deny + "sed only as `sed -n <first>,<last>p <file>` (print lines).")
     if name == "git":
       sub, sargs = git_sub(args)
       if sub not in AUDITOR_GIT:

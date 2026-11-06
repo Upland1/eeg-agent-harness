@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — 2026-11-?? (frozen for evaluation round 2)
+## 0.2.0 — 2026-11-05 (frozen for evaluation round 2)
 
 From the first project's lessons L1–L26 (general ones only).
 
@@ -39,6 +39,12 @@ From the first project's lessons L1–L26 (general ones only).
   blocked. Round 1 had let `cat ../../<eval folder>/...` through from inside a project.
 - `new_project.py`: vendors `eegharness/`, adds `tests/conftest.py`, commits the
   project skeleton (with `inputs/`) so agents start from a clean tree.
+- End-to-end check (2026-11-05): `/onboard` headless on a synthetic 3-participant
+  auditory oddball, scratch project only. Reached the approval stop with one human
+  contact; the analyst read the lab-log .docx through `read_document.py` and asked
+  nothing it answered. Two defects found and fixed before release: the cost
+  summary counted resumed agents once per round (now once per agent), and the
+  auditor's read-only `sed -n <lines>p` was blocked (now allowed).
 - Not in 0.2: release gate for numbers shown outside the project (needs a
   number-tracing tool).
 

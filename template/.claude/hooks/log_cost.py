@@ -11,6 +11,12 @@ Totals per transcript: API responses are counted once per message id (a response
 into several transcript rows repeats the same usage); tokens are summed per field;
 wall time is last minus first timestamp of the transcript.
 
+An agent that is resumed (sent back for a revision) stops again with its transcript's
+cumulative totals, so the summary keeps the last line per agent id (and per session). The hook
+runs before an agent's final response is written to its transcript, so these are running
+numbers for log.md; the numbers for reporting come from the kit's cost_report.py, run on the
+transcripts after the run (the same method for both evaluation arms).
+
 Summary for log.md (G11: the numbers come from this script):
   python .claude/hooks/log_cost.py --summary agent_runs/<run>
 """
@@ -104,21 +110,28 @@ def record(event: dict, root: Path) -> tuple:
 
 def summary(run: Path) -> str:
   rows = [json.loads(l) for l in (run / "cost.jsonl").read_text().splitlines() if l.strip()]
-  agents = [r for r in rows if r["kind"] == "agent"]
+  last = {}
+  for i, r in enumerate(rows):
+    if r["kind"] == "agent":
+      key = r.get("agent_id") or f"row{i}"
+      last[key] = {**r, "stops": last.get(key, {}).get("stops", 0) + 1}
+  agents = list(last.values())
   sessions = {}
   for r in rows:
     if r["kind"] == "session":
       sessions[r["session_id"]] = r  # running totals: the last line per session is the total
-  out = ["| # | Agent | Tokens (in / out / cache write / cache read) | Total | Wall time (s) |", "|---|---|---|---|---|"]
+  out = ["| # | Agent | Rounds | Tokens (in / out / cache write / cache read) | Total | Wall time (s) |",
+         "|---|---|---|---|---|---|"]
   for i, r in enumerate(agents, 1):
-    out.append(f"| {i} | {r['agent_type']} | {r['input_tokens']} / {r['output_tokens']} / "
+    out.append(f"| {i} | {r['agent_type']} | {r['stops']} | {r['input_tokens']} / {r['output_tokens']} / "
                f"{r['cache_creation_input_tokens']} / {r['cache_read_input_tokens']} | {r['total_tokens']} | {r['wall_s']} |")
   for sid, r in sessions.items():
-    out.append(f"| — | orchestrator ({(sid or '')[:8]}) | {r['input_tokens']} / {r['output_tokens']} / "
+    out.append(f"| — | orchestrator ({(sid or '')[:8]}) | — | {r['input_tokens']} / {r['output_tokens']} / "
                f"{r['cache_creation_input_tokens']} / {r['cache_read_input_tokens']} | {r['total_tokens']} | {r['wall_s']} |")
   tot = sum(r["total_tokens"] for r in agents) + sum(r["total_tokens"] for r in sessions.values())
-  out += ["", f"Agent calls: {len(agents)}. Orchestrator sessions: {len(sessions)}. Total tokens: {tot}. "
-          f"Agent wall time: {round(sum(r['wall_s'] for r in agents), 1)} s."]
+  out += ["", f"Agents: {len(agents)} ({sum(r['stops'] for r in agents)} rounds). Orchestrator sessions: "
+          f"{len(sessions)}. Total tokens: {tot}. Agent wall time: {round(sum(r['wall_s'] for r in agents), 1)} s. "
+          "Running numbers; report the kit's cost_report.py totals."]
   return "\n".join(out)
 
 

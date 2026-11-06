@@ -69,12 +69,14 @@ def test_session_record_goes_to_latest_run_and_summary(project, tmp_path):
   hook(project, {"hook_event_name": "Stop", "transcript_path": str(t), "session_id": "sess-1"})
   hook(project, {"hook_event_name": "Stop", "transcript_path": str(t), "session_id": "sess-1"})
   a = transcript(tmp_path / "a.jsonl", "run agent_runs/2026-11-06_first-result")
-  hook(project, {"hook_event_name": "SubagentStop", "agent_type": "pipeline-engineer", "agent_transcript_path": str(a)})
+  for _ in range(2):  # the same agent stops twice (resumed for a revision): cumulative totals, counted once
+    hook(project, {"hook_event_name": "SubagentStop", "agent_type": "pipeline-engineer", "agent_id": "e1",
+                   "agent_transcript_path": str(a)})
   run = project / "agent_runs" / "2026-11-06_first-result"
-  assert len((run / "cost.jsonl").read_text().splitlines()) == 3
+  assert len((run / "cost.jsonl").read_text().splitlines()) == 4
   out = subprocess.run([sys.executable, str(HOOK), "--summary", str(run)], capture_output=True, text=True).stdout
-  assert "| 1 | pipeline-engineer | 12 / 120 / 1000 / 11000 | 12132 | 42.0 |" in out
-  assert "Agent calls: 1. Orchestrator sessions: 1. Total tokens: 24264." in out
+  assert "| 1 | pipeline-engineer | 2 | 12 / 120 / 1000 / 11000 | 12132 | 42.0 |" in out
+  assert "Agents: 1 (2 rounds). Orchestrator sessions: 1. Total tokens: 24264." in out
 
 
 def test_never_blocks_and_control_arm(project, tmp_path):

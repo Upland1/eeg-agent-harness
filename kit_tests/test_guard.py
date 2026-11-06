@@ -159,6 +159,8 @@ AUDITOR_ALLOW = [
   "find outputs -name provenance.json",
   "sha256sum outputs/r1/scores.csv",
   "cat docs/PARADIGM.md 2>/dev/null",
+  "sed -n 245,300p docs/DATA_PROFILE.json",   # wrongly blocked in the v0.2 end-to-end run
+  "sed -n '1,5p;40,$p' src/a.py",
   "python -m eegharness.compare_runs --a outputs/x/1 --b outputs/x/2 --out agent_runs/2026-11-06_r/regression",
 ]
 
@@ -176,7 +178,9 @@ AUDITOR_BLOCK = [
   "find . -name '*.pyc' -delete",
   "sort -o out.txt in.txt",
   "echo $(rm -rf src)",
-  "sed -n 1,5p src/a.py",
+  "sed -n '1w out.txt' src/a.py",
+  "sed -i 's/a/b/' src/a.py",
+  "sed -n 1,5p src/a.py > copy.txt",
   "rm src/a.py",
   "python -m eegharness.compare_runs --a a --b b --out outputs/cmp",
 ]
