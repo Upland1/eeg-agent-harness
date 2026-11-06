@@ -1,7 +1,7 @@
 {
  "profiler_version": "0.2.0",
  "created": "2026-11-05T18:23:57-0600",
- "root": "/tmp/claude-1000/-home-user-Documents-work-eeg-research-03-code-eeg-agent-harness/d31cea52-48c4-4714-9584-6c801a3ed637/scratchpad/e2e/proj/data/raw",
+ "root": "/tmp/claude-1000/-home-<redacted>-Documents-work-eeg-research-03-code-eeg-agent-harness/d31cea52-48c4-4714-9584-6c801a3ed637/scratchpad/e2e/proj/data/raw",
  "plugins": [],
  "max_files": null,
  "runtime_s": 0.43,

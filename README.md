@@ -63,8 +63,39 @@ project builds its reader from scratch.
   hook + the blocklist read by the hook), and copies a case's `inputs/`.
 - `--control` makes the control arm: the same inputs and protections, no harness.
 
+## Reproducing a frozen version
+
+Evaluation projects are built from the tagged commit, never from `main`: `main` may
+carry later commits (documentation, validation reports) and `new_project.py --eval-dir`
+refuses any checkout that is not exactly a clean tag. Use a detached worktree at the tag:
+
+```bash
+cd <kit repository>
+git fetch --tags                                    # if working from a fresh clone
+git worktree add --detach <worktree dir> v0.2.0
+python <worktree dir>/new_project.py <project dir> --name <name> \
+    --eval-dir <eval dir> [--case <eval dir>/cases/<case>] [--control]
+cat <project dir>/.harness/build.json               # must show "git": "v0.2.0", "dirty": false
+git worktree remove <worktree dir>                  # after all projects of the round are built
+```
+
+`.harness/build.json` in each project records the kit version it was built from; cite
+that file, not the state of `main`. Tested on 2026-11-05 with `v0.2.0` (`011a8b4`).
+
 ## Tests
 
 ```bash
-python -m pytest kit_tests -q
+python -m pytest kit_tests -q -p no:cacheprovider
 ```
+
+The full suite needs numpy, mne and pytest (`requirements.txt`) and `pdftotext`;
+with them nothing is skipped (v0.2.0: 190 passed). Keep the virtual environment
+outside the repository (e.g. `~/.venvs/eeg-harness-kit`).
+
+## Release and privacy
+
+This repository is private. Public release must come from a clean export; the private
+history contains unredacted transcripts (commit `6c3d48c`, `docs/validation/v0.2.0_e2e/`,
+redacted in the following commit but still in history). Export the tagged tree
+(`git archive v<version>`) plus the redacted `docs/validation/`, never push this history
+to a public remote.

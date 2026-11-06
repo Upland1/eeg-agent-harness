@@ -1,6 +1,6 @@
 # Data profile
 
-Measured by the harness profiler v0.2.0 on 2026-11-05T18:23:57-0600 (runtime 0.43 s). Root: `/tmp/claude-1000/-home-user-Documents-work-eeg-research-03-code-eeg-agent-harness/d31cea52-48c4-4714-9584-6c801a3ed637/scratchpad/e2e/proj/data/raw`. Plugins: none. Every number below is computed from the files; nothing is interpreted. Full detail: `DATA_PROFILE.json`.
+Measured by the harness profiler v0.2.0 on 2026-11-05T18:23:57-0600 (runtime 0.43 s). Root: `/tmp/claude-1000/-home-<redacted>-Documents-work-eeg-research-03-code-eeg-agent-harness/d31cea52-48c4-4714-9584-6c801a3ed637/scratchpad/e2e/proj/data/raw`. Plugins: none. Every number below is computed from the files; nothing is interpreted. Full detail: `DATA_PROFILE.json`.
 
 ## Overview
 

@@ -1,4 +1,4 @@
-Transcripts: `/home/user/.claude/projects/-tmp-claude-1000--home-user-Documents-work-eeg-research-03-code-eeg-agent-harness-d31cea52-48c4-4714-9584-6c801a3ed637-scratchpad-e2e-proj`
+Transcripts: `/home/<redacted>/.claude/projects/-tmp-claude-1000--home-<redacted>-Documents-work-eeg-research-03-code-eeg-agent-harness-d31cea52-48c4-4714-9584-6c801a3ed637-scratchpad-e2e-proj`
 
 | Session | Agent | In | Out | Cache write | Cache read | Total | Responses | Wall (s) |
 |---|---|---|---|---|---|---|---|---|
