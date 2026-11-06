@@ -1,0 +1,738 @@
+{
+ "profiler_version": "0.2.0",
+ "created": "2026-11-05T18:23:57-0600",
+ "root": "/tmp/claude-1000/-home-user-Documents-work-eeg-research-03-code-eeg-agent-harness/d31cea52-48c4-4714-9584-6c801a3ed637/scratchpad/e2e/proj/data/raw",
+ "plugins": [],
+ "max_files": null,
+ "runtime_s": 0.43,
+ "structure": {
+  "folder_levels": [
+   {
+    "depth": 0,
+    "n_distinct_folders": 3,
+    "name_shapes": [
+     {
+      "shape": "sub-##",
+      "n_files_below": 3,
+      "examples": [
+       "sub-01",
+       "sub-02",
+       "sub-03"
+      ]
+     }
+    ]
+   },
+   {
+    "depth": 1,
+    "n_distinct_folders": 3,
+    "name_shapes": [
+     {
+      "shape": "ses-##",
+      "n_files_below": 3,
+      "examples": [
+       "ses-01"
+      ]
+     }
+    ]
+   }
+  ],
+  "file_depths": {
+   "0": 1,
+   "2": 3
+  },
+  "extensions": {
+   ".docx": 1,
+   ".fif": 3
+  },
+  "file_stems": {
+   "bitacora": 1,
+   "sub-01_ses-01_oddball_raw": 1,
+   "sub-02_ses-01_oddball_raw": 1,
+   "sub-03_ses-01_oddball_raw": 1
+  },
+  "spelling_variants": []
+ },
+ "summary": {
+  "n_files": 4,
+  "n_profiled": 3,
+  "n_unreadable": 0,
+  "n_no_reader": 0,
+  "n_documents": 1,
+  "sampling_rates_hz": {
+   "256.0": 3
+  },
+  "channel_sets": [
+   {
+    "channels": [
+     "Fz",
+     "Cz",
+     "Pz",
+     "Oz",
+     "C3",
+     "C4",
+     "P3",
+     "P4",
+     "STI 014"
+    ],
+    "n_files": 3
+   }
+  ],
+  "duration_s": {
+   "n": 3,
+   "min": 90.0,
+   "median": 90.0,
+   "max": 90.0,
+   "mean": 90.0
+  },
+  "codes": {
+   "1": {
+    "n_files": 3,
+    "total_count": 214,
+    "median_of_file_medians_same_code_interval_ms": 1031.25
+   },
+   "2": {
+    "n_files": 3,
+    "total_count": 48,
+    "median_of_file_medians_same_code_interval_ms": 3511.71875
+   },
+   "9": {
+    "n_files": 3,
+    "total_count": 3,
+    "median_of_file_medians_same_code_interval_ms": null
+   }
+  },
+  "distinct_code_sets": [
+   {
+    "codes": [
+     "1",
+     "2",
+     "9"
+    ],
+    "n_files": 3
+   }
+  ],
+  "transitions": [
+   {
+    "transition": "1->1",
+    "count": 164,
+    "median_of_file_medians_gap_ms": 1009.765625
+   },
+   {
+    "transition": "2->1",
+    "count": 48,
+    "median_of_file_medians_gap_ms": 988.28125
+   },
+   {
+    "transition": "1->2",
+    "count": 47,
+    "median_of_file_medians_gap_ms": 980.46875
+   },
+   {
+    "transition": "9->1",
+    "count": 2,
+    "median_of_file_medians_gap_ms": 1500.0
+   },
+   {
+    "transition": "9->2",
+    "count": 1,
+    "median_of_file_medians_gap_ms": 1500.0
+   }
+  ],
+  "n_events_by_file_name_shape": {
+   "sub-##_ses-##_oddball_raw": {
+    "89": 1,
+    "88": 2
+   }
+  }
+ },
+ "files": [
+  {
+   "path": "bitacora.docx",
+   "reader": null,
+   "kind": "document",
+   "size_bytes": 1042
+  },
+  {
+   "path": "sub-01/ses-01/sub-01_ses-01_oddball_raw.fif",
+   "reader": "eegprofile.readers.mne_formats",
+   "profile": {
+    "fs": 256.0,
+    "n_channels": 9,
+    "ch_names": [
+     "Fz",
+     "Cz",
+     "Pz",
+     "Oz",
+     "C3",
+     "C4",
+     "P3",
+     "P4",
+     "STI 014"
+    ],
+    "n_samples": 23040,
+    "duration_s": 90.0,
+    "channels": [
+     {
+      "name": "Fz",
+      "n_nan": 0,
+      "std": 8.489161099819394e-06,
+      "min": -3.299325908301398e-05,
+      "max": 3.2528369047213346e-05,
+      "flat": false
+     },
+     {
+      "name": "Cz",
+      "n_nan": 0,
+      "std": 8.540877934826046e-06,
+      "min": -3.2230582291958854e-05,
+      "max": 3.071494211326353e-05,
+      "flat": false
+     },
+     {
+      "name": "Pz",
+      "n_nan": 0,
+      "std": 8.51843185703697e-06,
+      "min": -3.102044865954667e-05,
+      "max": 3.465747431619093e-05,
+      "flat": false
+     },
+     {
+      "name": "Oz",
+      "n_nan": 0,
+      "std": 8.478975221726018e-06,
+      "min": -2.9483746402547695e-05,
+      "max": 3.650756843853742e-05,
+      "flat": false
+     },
+     {
+      "name": "C3",
+      "n_nan": 0,
+      "std": 8.477944530880484e-06,
+      "min": -3.201513027306646e-05,
+      "max": 3.160702908644453e-05,
+      "flat": false
+     },
+     {
+      "name": "C4",
+      "n_nan": 0,
+      "std": 8.484736883273893e-06,
+      "min": -3.451573138590902e-05,
+      "max": 3.0698825867148116e-05,
+      "flat": false
+     },
+     {
+      "name": "P3",
+      "n_nan": 0,
+      "std": 8.463507373099059e-06,
+      "min": -3.499153899610974e-05,
+      "max": 2.851590579666663e-05,
+      "flat": false
+     },
+     {
+      "name": "P4",
+      "n_nan": 0,
+      "std": 8.458079592762239e-06,
+      "min": -3.787069726968184e-05,
+      "max": 2.9410315619315952e-05,
+      "flat": false
+     },
+     {
+      "name": "STI 014",
+      "n_nan": 0,
+      "std": 0.09692444749025643,
+      "min": 0.0,
+      "max": 9.0,
+      "flat": false
+     }
+    ],
+    "n_events": 89,
+    "codes": {
+     "1": {
+      "count": 72,
+      "first_s": 3.08984375,
+      "last_s": 88.30078125,
+      "interval_same_code_ms": {
+       "n": 71,
+       "min": 902.34375,
+       "median": 1015.625,
+       "max": 2144.53125,
+       "mean": 1200.1540492957747
+      }
+     },
+     "2": {
+      "count": 16,
+      "first_s": 2.0,
+      "last_s": 85.265625,
+      "interval_same_code_ms": {
+       "n": 15,
+       "min": 1929.6875,
+       "median": 3121.09375,
+       "max": 12824.21875,
+       "mean": 5551.041666666667
+      }
+     },
+     "9": {
+      "count": 1,
+      "first_s": 0.5,
+      "last_s": 0.5,
+      "interval_same_code_ms": {
+       "n": 0
+      }
+     }
+    },
+    "transitions": {
+     "9->2": {
+      "count": 1,
+      "gap_ms": {
+       "n": 1,
+       "min": 1500.0,
+       "median": 1500.0,
+       "max": 1500.0,
+       "mean": 1500.0
+      }
+     },
+     "2->1": {
+      "count": 16,
+      "gap_ms": {
+       "n": 16,
+       "min": 902.34375,
+       "median": 1023.4375,
+       "max": 1093.75,
+       "mean": 1007.8125
+      }
+     },
+     "1->1": {
+      "count": 56,
+      "gap_ms": {
+       "n": 56,
+       "min": 902.34375,
+       "median": 990.234375,
+       "max": 1097.65625,
+       "mean": 990.4436383928571
+      }
+     },
+     "1->2": {
+      "count": 15,
+      "gap_ms": {
+       "n": 15,
+       "min": 902.34375,
+       "median": 964.84375,
+       "max": 1085.9375,
+       "mean": 980.7291666666666
+      }
+     }
+    },
+    "interval_any_event_ms": {
+     "n": 88,
+     "min": 902.34375,
+     "median": 992.1875,
+     "max": 1500.0,
+     "mean": 997.7361505681819
+    },
+    "meta": {
+     "reader": "mne 1.13.2",
+     "event_source": "stim channel STI 014",
+     "channel_types": {
+      "Fz": "eeg",
+      "Cz": "eeg",
+      "Pz": "eeg",
+      "Oz": "eeg",
+      "C3": "eeg",
+      "C4": "eeg",
+      "P3": "eeg",
+      "P4": "eeg",
+      "STI 014": "stim"
+     }
+    }
+   }
+  },
+  {
+   "path": "sub-02/ses-01/sub-02_ses-01_oddball_raw.fif",
+   "reader": "eegprofile.readers.mne_formats",
+   "profile": {
+    "fs": 256.0,
+    "n_channels": 9,
+    "ch_names": [
+     "Fz",
+     "Cz",
+     "Pz",
+     "Oz",
+     "C3",
+     "C4",
+     "P3",
+     "P4",
+     "STI 014"
+    ],
+    "n_samples": 23040,
+    "duration_s": 90.0,
+    "channels": [
+     {
+      "name": "Fz",
+      "n_nan": 0,
+      "std": 8.496487391709943e-06,
+      "min": -3.412218939047307e-05,
+      "max": 3.158716936013661e-05,
+      "flat": false
+     },
+     {
+      "name": "Cz",
+      "n_nan": 0,
+      "std": 8.50411116736188e-06,
+      "min": -3.312733679194935e-05,
+      "max": 2.8819846193073317e-05,
+      "flat": false
+     },
+     {
+      "name": "Pz",
+      "n_nan": 0,
+      "std": 8.528349752405445e-06,
+      "min": -2.9284579795785248e-05,
+      "max": 3.387529432075098e-05,
+      "flat": false
+     },
+     {
+      "name": "Oz",
+      "n_nan": 0,
+      "std": 8.487615415491705e-06,
+      "min": -3.587278115446679e-05,
+      "max": 3.5046719858655706e-05,
+      "flat": false
+     },
+     {
+      "name": "C3",
+      "n_nan": 0,
+      "std": 8.49543377815211e-06,
+      "min": -3.102246773778461e-05,
+      "max": 3.396429383428767e-05,
+      "flat": false
+     },
+     {
+      "name": "C4",
+      "n_nan": 0,
+      "std": 8.465433708297774e-06,
+      "min": -3.4689503081608564e-05,
+      "max": 3.204632957931608e-05,
+      "flat": false
+     },
+     {
+      "name": "P3",
+      "n_nan": 0,
+      "std": 8.504662713589035e-06,
+      "min": -3.7343826988944784e-05,
+      "max": 3.103162089246325e-05,
+      "flat": false
+     },
+     {
+      "name": "P4",
+      "n_nan": 0,
+      "std": 8.463919083013031e-06,
+      "min": -3.2666106562828645e-05,
+      "max": 3.635667962953448e-05,
+      "flat": false
+     },
+     {
+      "name": "STI 014",
+      "n_nan": 0,
+      "std": 0.09466780634887034,
+      "min": 0.0,
+      "max": 9.0,
+      "flat": false
+     }
+    ],
+    "n_events": 88,
+    "codes": {
+     "1": {
+      "count": 74,
+      "first_s": 2.0,
+      "last_s": 87.90625,
+      "interval_same_code_ms": {
+       "n": 73,
+       "min": 902.34375,
+       "median": 1031.25,
+       "max": 2144.53125,
+       "mean": 1176.7979452054794
+      }
+     },
+     "2": {
+      "count": 13,
+      "first_s": 6.98828125,
+      "last_s": 78.89453125,
+      "interval_same_code_ms": {
+       "n": 12,
+       "min": 1945.3125,
+       "median": 3511.71875,
+       "max": 20109.375,
+       "mean": 5992.1875
+      }
+     },
+     "9": {
+      "count": 1,
+      "first_s": 0.5,
+      "last_s": 0.5,
+      "interval_same_code_ms": {
+       "n": 0
+      }
+     }
+    },
+    "transitions": {
+     "9->1": {
+      "count": 1,
+      "gap_ms": {
+       "n": 1,
+       "min": 1500.0,
+       "median": 1500.0,
+       "max": 1500.0,
+       "mean": 1500.0
+      }
+     },
+     "1->1": {
+      "count": 60,
+      "gap_ms": {
+       "n": 60,
+       "min": 902.34375,
+       "median": 1009.765625,
+       "max": 1097.65625,
+       "mean": 1003.3854166666666
+      }
+     },
+     "1->2": {
+      "count": 13,
+      "gap_ms": {
+       "n": 13,
+       "min": 906.25,
+       "median": 980.46875,
+       "max": 1097.65625,
+       "mean": 978.3653846153846
+      }
+     },
+     "2->1": {
+      "count": 13,
+      "gap_ms": {
+       "n": 13,
+       "min": 902.34375,
+       "median": 988.28125,
+       "max": 1097.65625,
+       "mean": 998.7980769230769
+      }
+     }
+    },
+    "interval_any_event_ms": {
+     "n": 87,
+     "min": 902.34375,
+     "median": 1000.0,
+     "max": 1500.0,
+     "mean": 1004.669540229885
+    },
+    "meta": {
+     "reader": "mne 1.13.2",
+     "event_source": "stim channel STI 014",
+     "channel_types": {
+      "Fz": "eeg",
+      "Cz": "eeg",
+      "Pz": "eeg",
+      "Oz": "eeg",
+      "C3": "eeg",
+      "C4": "eeg",
+      "P3": "eeg",
+      "P4": "eeg",
+      "STI 014": "stim"
+     }
+    }
+   }
+  },
+  {
+   "path": "sub-03/ses-01/sub-03_ses-01_oddball_raw.fif",
+   "reader": "eegprofile.readers.mne_formats",
+   "profile": {
+    "fs": 256.0,
+    "n_channels": 9,
+    "ch_names": [
+     "Fz",
+     "Cz",
+     "Pz",
+     "Oz",
+     "C3",
+     "C4",
+     "P3",
+     "P4",
+     "STI 014"
+    ],
+    "n_samples": 23040,
+    "duration_s": 90.0,
+    "channels": [
+     {
+      "name": "Fz",
+      "n_nan": 0,
+      "std": 8.516597381813604e-06,
+      "min": -4.158311276114546e-05,
+      "max": 2.8493768695625477e-05,
+      "flat": false
+     },
+     {
+      "name": "Cz",
+      "n_nan": 0,
+      "std": 8.461834180752618e-06,
+      "min": -3.5057841159868985e-05,
+      "max": 3.746923175640404e-05,
+      "flat": false
+     },
+     {
+      "name": "Pz",
+      "n_nan": 0,
+      "std": 8.578326004095038e-06,
+      "min": -3.948770972783677e-05,
+      "max": 3.837750045931898e-05,
+      "flat": false
+     },
+     {
+      "name": "Oz",
+      "n_nan": 0,
+      "std": 8.507533406996009e-06,
+      "min": -3.570919579942711e-05,
+      "max": 3.332417327328585e-05,
+      "flat": false
+     },
+     {
+      "name": "C3",
+      "n_nan": 0,
+      "std": 8.513299401360186e-06,
+      "min": -3.6574732803273946e-05,
+      "max": 3.3517568226670846e-05,
+      "flat": false
+     },
+     {
+      "name": "C4",
+      "n_nan": 0,
+      "std": 8.494326782714394e-06,
+      "min": -3.262523750890978e-05,
+      "max": 3.137722160317935e-05,
+      "flat": false
+     },
+     {
+      "name": "P3",
+      "n_nan": 0,
+      "std": 8.504931896238169e-06,
+      "min": -3.477240170468576e-05,
+      "max": 3.9021495467750356e-05,
+      "flat": false
+     },
+     {
+      "name": "P4",
+      "n_nan": 0,
+      "std": 8.470395404047973e-06,
+      "min": -3.4352644433965907e-05,
+      "max": 2.8850048693129793e-05,
+      "flat": false
+     },
+     {
+      "name": "STI 014",
+      "n_nan": 0,
+      "std": 0.09869504410153283,
+      "min": 0.0,
+      "max": 9.0,
+      "flat": false
+     }
+    ],
+    "n_events": 88,
+    "codes": {
+     "1": {
+      "count": 68,
+      "first_s": 2.0,
+      "last_s": 88.0,
+      "interval_same_code_ms": {
+       "n": 67,
+       "min": 906.25,
+       "median": 1031.25,
+       "max": 2179.6875,
+       "mean": 1283.5820895522388
+      }
+     },
+     "2": {
+      "count": 19,
+      "first_s": 3.04296875,
+      "last_s": 83.97265625,
+      "interval_same_code_ms": {
+       "n": 18,
+       "min": 1867.1875,
+       "median": 3935.546875,
+       "max": 9074.21875,
+       "mean": 4496.09375
+      }
+     },
+     "9": {
+      "count": 1,
+      "first_s": 0.5,
+      "last_s": 0.5,
+      "interval_same_code_ms": {
+       "n": 0
+      }
+     }
+    },
+    "transitions": {
+     "9->1": {
+      "count": 1,
+      "gap_ms": {
+       "n": 1,
+       "min": 1500.0,
+       "median": 1500.0,
+       "max": 1500.0,
+       "mean": 1500.0
+      }
+     },
+     "1->2": {
+      "count": 19,
+      "gap_ms": {
+       "n": 19,
+       "min": 902.34375,
+       "median": 1023.4375,
+       "max": 1097.65625,
+       "mean": 1004.5230263157895
+      }
+     },
+     "2->1": {
+      "count": 19,
+      "gap_ms": {
+       "n": 19,
+       "min": 914.0625,
+       "median": 984.375,
+       "max": 1097.65625,
+       "mean": 998.9720394736842
+      }
+     },
+     "1->1": {
+      "count": 48,
+      "gap_ms": {
+       "n": 48,
+       "min": 906.25,
+       "median": 1011.71875,
+       "max": 1097.65625,
+       "mean": 998.6165364583334
+      }
+     }
+    },
+    "interval_any_event_ms": {
+     "n": 87,
+     "min": 902.34375,
+     "median": 996.09375,
+     "max": 1500.0,
+     "mean": 1005.7471264367816
+    },
+    "meta": {
+     "reader": "mne 1.13.2",
+     "event_source": "stim channel STI 014",
+     "channel_types": {
+      "Fz": "eeg",
+      "Cz": "eeg",
+      "Pz": "eeg",
+      "Oz": "eeg",
+      "C3": "eeg",
+      "C4": "eeg",
+      "P3": "eeg",
+      "P4": "eeg",
+      "STI 014": "stim"
+     }
+    }
+   }
+  }
+ ]
+}

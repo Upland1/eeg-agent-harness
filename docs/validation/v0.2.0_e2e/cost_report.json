@@ -1,0 +1,96 @@
+{
+ "transcripts": "/home/user/.claude/projects/-tmp-claude-1000--home-user-Documents-work-eeg-research-03-code-eeg-agent-harness-d31cea52-48c4-4714-9584-6c801a3ed637-scratchpad-e2e-proj",
+ "rows": [
+  {
+   "kind": "session",
+   "session_id": "97fe2ef7-319a-4e21-a910-2f9868fd7c7a",
+   "agent_type": "main",
+   "input_tokens": 70,
+   "output_tokens": 15210,
+   "cache_creation_input_tokens": 68888,
+   "cache_read_input_tokens": 1853075,
+   "total_tokens": 1937243,
+   "api_responses": 35,
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "wall_s": 1886.3
+  },
+  {
+   "kind": "agent",
+   "session_id": "97fe2ef7-319a-4e21-a910-2f9868fd7c7a",
+   "agent_id": "agent-a0ce0e27f33a62a0f",
+   "agent_type": "pipeline-engineer",
+   "input_tokens": 58,
+   "output_tokens": 49736,
+   "cache_creation_input_tokens": 212035,
+   "cache_read_input_tokens": 1882208,
+   "total_tokens": 2144037,
+   "api_responses": 28,
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "wall_s": 1048.8
+  },
+  {
+   "kind": "agent",
+   "session_id": "97fe2ef7-319a-4e21-a910-2f9868fd7c7a",
+   "agent_id": "agent-a6a27d5e9e8bfd4c7",
+   "agent_type": "paradigm-analyst",
+   "input_tokens": 60,
+   "output_tokens": 78191,
+   "cache_creation_input_tokens": 197846,
+   "cache_read_input_tokens": 1687364,
+   "total_tokens": 1963461,
+   "api_responses": 29,
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "wall_s": 1849.4
+  },
+  {
+   "kind": "agent",
+   "session_id": "97fe2ef7-319a-4e21-a910-2f9868fd7c7a",
+   "agent_id": "agent-aa92951892693df13",
+   "agent_type": "methods-auditor",
+   "input_tokens": 44,
+   "output_tokens": 17460,
+   "cache_creation_input_tokens": 83207,
+   "cache_read_input_tokens": 1118898,
+   "total_tokens": 1219609,
+   "api_responses": 21,
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "wall_s": 280.8
+  },
+  {
+   "kind": "agent",
+   "session_id": "97fe2ef7-319a-4e21-a910-2f9868fd7c7a",
+   "agent_id": "agent-abac17750dec2471a",
+   "agent_type": "synthetic-tester",
+   "input_tokens": 32,
+   "output_tokens": 35253,
+   "cache_creation_input_tokens": 74618,
+   "cache_read_input_tokens": 727487,
+   "total_tokens": 837390,
+   "api_responses": 16,
+   "models": [
+    "claude-sonnet-5-5"
+   ],
+   "wall_s": 337.8
+  }
+ ],
+ "totals": {
+  "input_tokens": 264,
+  "output_tokens": 195850,
+  "cache_creation_input_tokens": 636594,
+  "cache_read_input_tokens": 7269032,
+  "total_tokens": 8101740,
+  "api_responses": 129,
+  "sessions": 1,
+  "agent_calls": 4,
+  "session_wall_s": 1886.3,
+  "agent_wall_s": 3516.8
+ }
+}
