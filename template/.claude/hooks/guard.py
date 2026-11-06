@@ -56,6 +56,9 @@ AUDITOR_READ = {"ls", "cat", "head", "tail", "wc", "grep", "egrep", "fgrep", "rg
 AUDITOR_GIT = {"diff", "show", "log", "status", "blame", "ls-files", "rev-parse", "branch", "describe",
                "grep", "shortlog", "cat-file", "merge-base", "rev-list", "ls-tree", "name-rev"}
 WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
+# Same list as .harness/tools/eegprofile/formats.py DOCUMENT_EXTS (a kit test keeps them equal).
+DOCUMENT_EXTS = {".txt", ".md", ".rst", ".pdf", ".doc", ".docx", ".odt", ".rtf", ".html", ".htm",
+                 ".csv", ".tsv", ".json", ".xls", ".xlsx", ".ods", ".log", ".ini", ".yaml", ".yml"}
 RECURSIVE = {"find", "rg", "tree", "du", "tar", "zip", "rsync", "ag", "fd", "locate"}
 STRING_PATH = re.compile(r"""['"]([^'"\n]*/[^'"\n]*)['"]""")
 VAR = re.compile(r"\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?")
@@ -518,6 +521,26 @@ def check_auditor_bash(cmd: str, root: Path, cwd: str = ".") -> None:
           "python -m pytest -p no:cacheprovider, python -m eegharness.compare_runs).")
 
 
+def check_analyst_bash(cmd: str, root: Path, cwd: str) -> None:
+  """The paradigm-analyst's shell runs one thing: the document reader on a document (G16, L25)."""
+  deny = ("the paradigm-analyst's shell only runs `python .harness/tools/read_document.py <document>`: ")
+  if "<<" in cmd or "$(" in cmd or "`" in cmd:
+    block(deny + "no heredocs, $( ) or backticks.")
+  segs = segments(cmd)
+  if not segs or len(segs) != 1:
+    block(deny + "one command, no pipes or chains.")
+  name, args, targets, _ = parse_segment(segs[0])
+  if any(t != "/dev/null" for t in targets):
+    block(deny + "no output redirection.")
+  reader = real(root / ".harness" / "tools" / "read_document.py")
+  if not re.fullmatch(r"python(3(\.\d+)?)?", name) or not args or real(Path(cwd) / args[0]) != reader:
+    block(deny + "nothing else.")
+  docs = [a for a in args[1:] if not a.startswith("-") and not re.fullmatch(r"\d+", a)]
+  for d in docs:
+    if Path(d).suffix.lower() not in DOCUMENT_EXTS:
+      block(deny + f"{d} is not a document; recordings are read only by project code.")
+
+
 def main() -> None:
   event = json.load(sys.stdin)
   tool = event.get("tool_name", "")
@@ -559,7 +582,15 @@ def main() -> None:
       check_written(resolve_token(target, real(cwd), {}), raw_only=True)
     return
 
+  if event.get("agent_type") == "paradigm-analyst" and tool in ("Read", "Grep", "NotebookRead"):
+    target = args.get("file_path") or args.get("path") or args.get("notebook_path") or ""
+    if target and any(is_under(p, real(root / "data")) for p in resolve_token(target, real(cwd), {})):
+      block("the paradigm-analyst reads documents in the data folder only through "
+            "`python .harness/tools/read_document.py <path>`, which refuses recordings (G16).")
+
   if tool == "Bash":
+    if event.get("agent_type") == "paradigm-analyst":
+      check_analyst_bash(args.get("command", ""), root, cwd)
     if event.get("agent_type") == "methods-auditor":
       check_auditor_bash(args.get("command", ""), root, cwd)
     check_bash(args.get("command", ""), cwd, root)

@@ -4,7 +4,7 @@ import numpy as np
 
 from ..recording import Recording
 
-EXTENSIONS = (".edf", ".bdf", ".gdf", ".vhdr", ".fif", ".set", ".cnt", ".mff", ".nxe")
+from ..formats import MNE_EXTENSIONS as EXTENSIONS  # noqa: E402
 
 
 def read(path) -> Recording:

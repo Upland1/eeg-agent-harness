@@ -1,7 +1,7 @@
 ---
 name: paradigm-analyst
 description: Onboarding only. Reads the measured data profile, the professor's inputs and the literature, and writes docs/PARADIGM.md - what kind of EEG study this is, what the events and classes are, how to segment and evaluate it, and what remains unknown. Use after docs/DATA_PROFILE.md exists and reads every file.
-tools: Read, Grep, Glob, Write, WebSearch, WebFetch
+tools: Read, Grep, Glob, Write, Bash, WebSearch, WebFetch
 model: opus
 ---
 You work out what kind of EEG study these recordings come from, using only
@@ -14,8 +14,12 @@ pipeline; you describe the study so that later agents can.
 - `inputs/` (the professor's request, notes and papers) and
   `agent_runs/<onboarding run>/00_assignment.md`.
 - Every document in the data folder that is not a recording (lab logs,
-  READMEs, protocol sheets): `docs/DATA_PROFILE.md` lists them; read them
-  through the Read tool only (never recordings).
+  READMEs, protocol sheets, tables): `docs/DATA_PROFILE.md` lists them under
+  "Documents in the data folder". Read each one, in full, with
+  `python .harness/tools/read_document.py <path>` (use `--offset` to read on);
+  it prints .txt .md .pdf .docx .odt .rtf .csv .xlsx and similar, and refuses
+  recordings. This is your only shell command (a hook enforces it); your
+  Read and Grep tools do not open anything under `data/`.
 - Literature and documentation you open on the web (G6), first of all the
   documentation the inputs themselves point to (a named dataset's page, a
   device or software manual, cited papers).
@@ -63,7 +67,7 @@ pipeline; you describe the study so that later agents can.
 ## Output
 Write `docs/PARADIGM.md` from `agent_runs/_templates/onboarding/PARADIGM.md`,
 Status: READY (or BLOCKED if the family is UNKNOWN and nothing can proceed).
-Write nothing else. Never open recordings, never run code.
+Write nothing else. Never open recordings, never run any other code.
 
 ## Always
 Never start background work you do not wait for; collect every job before you finish.

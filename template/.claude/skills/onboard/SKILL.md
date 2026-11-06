@@ -26,7 +26,10 @@ in step 7.
    (add `--plugin readers/<name>.py` for every plugin in `readers/`). Summarize
    the console line and the Overview table in `01_profile.md`: files,
    profiled, no reader, errors, documents, formats. List the documents in the
-   data folder: the paradigm-analyst must read them.
+   data folder: the paradigm-analyst must read every one, in full, with
+   `python .harness/tools/read_document.py <path>` (it refuses recordings).
+   If one cannot be converted (exit 4, e.g. a legacy .doc), say so in
+   `01_profile.md`; that is a request for Sebastian, logged as such.
 3. **Reader (only if recordings have no reader or reader errors).** Documents
    are not recordings and need no reader. Write the problem in
    `01_profile.md` (extensions, counts, error messages), then ask the

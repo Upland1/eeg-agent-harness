@@ -12,10 +12,7 @@ from . import __version__
 from .registry import Registry
 
 SKIP_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
-# Written documents (lab logs, READMEs, protocol sheets, spreadsheets): listed for the agents to
-# read (CLAUDE.md G16), never counted as recordings without a reader. A reader plugin wins.
-DOCUMENT_EXTS = {".txt", ".md", ".rst", ".pdf", ".doc", ".docx", ".odt", ".rtf", ".html", ".htm",
-                 ".csv", ".tsv", ".json", ".xls", ".xlsx", ".ods", ".log", ".ini", ".yaml", ".yml"}
+from .formats import DOCUMENT_EXTS  # noqa: F401  (re-exported)
 
 
 def shape_of(name: str) -> str:

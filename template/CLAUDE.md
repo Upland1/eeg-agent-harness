@@ -33,8 +33,9 @@ papers named there. Use them; cite them (G6).
   that matches no family you can justify, a contradiction between the notes and the data.
 - **Investigate before you ask (G16).** Before a question goes to Sebastian, search, in
   this order: (1) every input in full, including appendices, supplementary material,
-  tables and figure captions; (2) every document in the data folder and in `inputs/`
-  (lab logs, READMEs, protocol sheets, file headers); (3) the documentation the inputs
+  tables and figure captions; (2) every document in the data folder (through
+  `.harness/tools/read_document.py`, which refuses recordings) and in `inputs/` (lab logs,
+  READMEs, protocol sheets); (3) the documentation the inputs
   point to (a named public dataset's description, a device or software manual, a cited
   paper); (4) a measurement with project code. Record what each source said, including
   "searched, not found".
@@ -137,14 +138,20 @@ reference uncommitted files (`agent_runs/`, scratchpads, local notes). They cite
 hashes and committed or reproducible output paths. *Incident: audits found committed
 decisions pointing at local run files (L22).*
 
-**G16. Use every written source before asking a human.** See "When you don't know":
-inputs in full, documents in the data folder, documentation the inputs point to, and
-measurement come first; each question lists the sources checked and what they said.
-Every human contact is logged in `human_contacts.md` as *approval*, *human-only fact*,
-or *should-have-found* (the answer was in a written source in reach). *Incident: in
-onboarding, several questions sent to Sebastian were answered by the input paper's
-appendix, the public documentation the paper names, or the lab log in the data folder
-(L25).*
+**G16. Use every written source before asking a human.** Before any question goes to
+Sebastian, the agents check, and record what each said ("searched, not found" included):
+(a) every input in full, including appendices, supplementary material, tables and figure
+captions; (b) every document in the data folder that is not a recording (lab logs,
+READMEs, protocol sheets, spreadsheets), read through
+`.harness/tools/read_document.py`; (c) the documentation the inputs point to (a named
+dataset's description, a device or software manual, a cited paper); (d) a measurement
+with project code. A question goes to Sebastian only if none of these answers it, and it
+lists the sources checked. Every human contact (question, approval, request) is logged
+in the run's `human_contacts.md` as **approval**, **human-only fact** or
+**should-have-found** (the answer was in a source in reach); the agent proposes the
+category and Sebastian confirms it. *Incident: in onboarding, several questions sent to
+Sebastian were answered by the input paper's appendix, the public documentation the
+paper names, or the lab log in the data folder (L25).*
 
 **Rules grow from experience.** When a test or the auditor catches a new kind of mistake,
 the orchestrator writes up the incident and proposes a new rule (G17, G18, …). Sebastian
