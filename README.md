@@ -13,8 +13,8 @@ files). Projects made from it keep these files out of their own git history.
 | Path | What |
 |---|---|
 | `VERSION` | harness version; every project records the version that built it |
-| `template/` | copied into each project: `CLAUDE.md` (general rules G1–G16), `.claude/` (6 agents, skills `onboard`, `assignment`, `cite-sources`, guard, test and cost hooks), `agent_runs/` (handoff contract and templates, including the plan audit and the human-contact log), `tests/conftest.py` |
-| `tools/` | deterministic tools: the dataset profiler `run_profile.py` and its reader registry (`eegprofile/`), copied to `<project>/.harness/tools/`; the `eegharness` package (versioned output folders with provenance, `compare_runs` regression check), **vendored** as committed code to `<project>/eegharness/` |
+| `template/` | copied into each project: `CLAUDE.md` (general rules G1–G23), `.claude/` (6 agents; skills `onboard`, `assignment`, `cite-sources` and the method checklists `deep-learning`, `connectivity`, `compute-jobs`; guard, test and cost hooks), `agent_runs/` (handoff contract and templates, including the plan audit and the human-contact log), `tests/conftest.py`, `docs/COMPUTE.md` (per-job CPU/GPU limits, set by Sebastian) |
+| `tools/` | deterministic tools: the dataset profiler `run_profile.py` and its reader registry (`eegprofile/`), copied to `<project>/.harness/tools/`; the `eegharness` package (versioned output folders with provenance, `compare_runs` regression check; core: grouped `splits` with a leakage check, unit-level `permutation`, `chance` levels; optional for deep learning: `seeds`, resumable `folds`; numpy only, torch never required), **vendored** as committed code to `<project>/eegharness/` |
 | `new_project.py` | creates or updates a project (harness arm or control arm) |
 | `cost_report.py` | tokens and time of a finished project (either arm) from its transcripts, run by the evaluator after the run |
 | `kit_tests/` | known-answer tests for the tools, the guard and project creation |
@@ -72,10 +72,10 @@ refuses any checkout that is not exactly a clean tag. Use a detached worktree at
 ```bash
 cd <kit repository>
 git fetch --tags                                    # if working from a fresh clone
-git worktree add --detach <worktree dir> v0.2.0
+git worktree add --detach <worktree dir> v<version>          # e.g. v0.3.0
 python <worktree dir>/new_project.py <project dir> --name <name> \
     --eval-dir <eval dir> [--case <eval dir>/cases/<case>] [--control]
-cat <project dir>/.harness/build.json               # must show "git": "v0.2.0", "dirty": false
+cat <project dir>/.harness/build.json               # must show "git": "v<version>", "dirty": false
 git worktree remove <worktree dir>                  # after all projects of the round are built
 ```
 
@@ -89,7 +89,7 @@ python -m pytest kit_tests -q -p no:cacheprovider
 ```
 
 The full suite needs numpy, mne and pytest (`requirements.txt`) and `pdftotext`;
-with them nothing is skipped (v0.2.0: 190 passed). Keep the virtual environment
+with them nothing is skipped (v0.2.0: 190 passed; v0.3.0: 211 passed). Keep the virtual environment
 outside the repository (e.g. `~/.venvs/eeg-harness-kit`).
 
 ## Release and privacy

@@ -2,7 +2,7 @@
 
 Status: DRAFT
 Author: results-analyst
-Reads: 02_plan.md, CLAUDE.md, outputs Sebastian placed in this folder
+Reads: 02_plan.md, CLAUDE.md, the logged outputs of the runs
 
 ## Sources
 
@@ -23,6 +23,20 @@ table. -->
 | Participant | Session | File(s) | Condition(s) | Metric(s) | Chance level | Comparison | Δ |
 |---|---|---|---|---|---|---|---|
 | | | | | | | | |
+
+## Stochastic models (G18) and the significance budget (G19)
+
+<!-- Per participant: mean ± SD over seeds (n seeds), training accuracy, chance level for the
+number of test trials. Primary comparisons from 02_plan.md with their corrected p; every other
+comparison labelled exploratory. A difference smaller than the seed spread: "no difference
+shown". Every derived number from a committed, tested tool (G23); list missing ones under
+"Derived numbers needed" and set Status: BLOCKED. -->
+
+| Participant | Model / configuration | Test metric mean ± SD (n seeds) | Train accuracy | Chance level | Primary or exploratory |
+|---|---|---|---|---|---|
+| | | | | | |
+
+Derived numbers needed:
 
 ## Against the success criteria in 02_plan.md
 

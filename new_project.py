@@ -108,7 +108,7 @@ def vendor(dest: Path) -> bool:
 
 def first_commit(dest: Path, info: dict):
   """Commit the project skeleton on main, so agents start from a clean tree."""
-  paths = [p for p in (".gitignore", "README.md", "docs/DECISIONS.md", "tests/conftest.py", "eegharness", "inputs")
+  paths = [p for p in (".gitignore", "README.md", "docs/DECISIONS.md", "docs/COMPUTE.md", "tests/conftest.py", "eegharness", "inputs")
            if (dest / p).exists()]
   git = ["git", "-C", str(dest)]
   subprocess.run(git + ["add", "--", *paths], check=True)
@@ -147,8 +147,9 @@ def make_harness(dest: Path, a, info):
   vendored = vendor(dest)
   if not (dest / "tests" / "conftest.py").exists():
     shutil.copy2(t / "tests" / "conftest.py", dest / "tests" / "conftest.py")
-  if not (dest / "docs" / "DECISIONS.md").exists():
-    shutil.copy2(t / "docs" / "DECISIONS.md", dest / "docs" / "DECISIONS.md")
+  for doc in ("DECISIONS.md", "COMPUTE.md"):
+    if not (dest / "docs" / doc).exists():
+      shutil.copy2(t / "docs" / doc, dest / "docs" / doc)
   if not (dest / ".gitignore").exists():
     shutil.copy2(t / "gitignore", dest / ".gitignore")
   if not (dest / "README.md").exists():

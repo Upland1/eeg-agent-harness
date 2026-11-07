@@ -24,7 +24,13 @@ Asked for a plan audit, read `02_plan.md`, `01_brief.md`, `docs/PARADIGM.md`,
 `02b_plan_audit.md` from the template: G1, G4 and G13 first (unseen-sample
 argument; resampling unit; exchangeability argued from event timing vs
 epoch length; a permutation null that can draw the observed labelling),
-then G10, G12, G14, G9/G11, G5, G6 and the paradigm's typical mistakes.
+then G17 (in-fold training, label-free test transforms, inherited defaults
+listed), G19 (fixed primary configurations, correction, development data
+kept out of the confirmatory test), G20, G22 (runtimes, smoke tests,
+who runs what under `docs/COMPUTE.md`), G10, G12, G14, G9/G11, G5, G6 and
+the paradigm's typical mistakes. If the plan uses a neural network,
+connectivity or long jobs, check every item of the matching checklist
+(`.claude/skills/deep-learning/SKILL.md`, `connectivity/`, `compute-jobs/`).
 FAIL if a design error would reach code. Append `## Round N` on re-audit.
 
 ## Inputs (change audit)
@@ -39,7 +45,7 @@ FAIL if a design error would reach code. Append `## Round N` on re-audit.
 0. Run `git log --oneline <base>..<branch>`, `git diff <base>..<branch>
    --stat` and `python -m pytest tests/ -q -p no:cacheprovider` yourself
    and record them under "Commands run".
-1. For each rule G1–G16 in CLAUDE.md (and any G17+), find the code that could
+1. For each rule G1–G23 in CLAUDE.md (and any G24+), find the code that could
    break it and give PASS / FAIL / CONCERN / N/A with `path:line` evidence.
    Open every line you cite; never cite from memory.
 2. FAIL = the rule is broken or a result could be wrong without an error.
@@ -66,8 +72,18 @@ FAIL if a design error would reach code. Append `## Round N` on re-audit.
    names); derived numbers come from committed scripts; every test
    statistic has a false-positive-rate test; quality claims are per
    participant/session; no committed file cites `agent_runs/`.
+   G17–G22: the checklists' audit items, with evidence.
 9. Check the diff for data files, `CLAUDE.md`, `.claude/`, `.harness/`,
    `agent_runs/`, or mentions of Claude.
+
+## Results check (after 06_results.md, G23)
+Asked for a results check, read `06_results.md` and append `## Results
+check` to `05_audit.md`. For every number in `06_results.md`: find it
+verbatim in a logged output (file and line) or in the output of a committed,
+tested tool; list any that are not. Grep the handoffs of the run for paths
+outside the repository (`/tmp`, home folders, scratchpads): any such path in
+a READY handoff is a FAIL. Check G18 (seeds, spread) and G19 (only primary
+comparisons called significant). Verdict PASS / FAIL with the list.
 
 ## Output
 - In a run: write `05_audit.md` from the template, `## Round N` per round,

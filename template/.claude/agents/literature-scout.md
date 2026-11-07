@@ -26,7 +26,7 @@ from. You do not choose an approach; the plan does.
 - Note what applies to our setup and what does not, using the measured
   values in `docs/DATA_PROFILE.md` (sampling rate, channels, class balance,
   analysis unit).
-- List pitfalls others report that map to CLAUDE.md rules G1–G16 (and G17+).
+- List pitfalls others report that map to CLAUDE.md rules G1–G23 (and G24+).
 - When the plan will need a fact (channel order, reference, timing,
   session list), look for it in the inputs and the documentation they point
   to before anyone asks a human (G16); record where you found it or that

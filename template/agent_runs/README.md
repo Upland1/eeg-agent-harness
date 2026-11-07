@@ -52,7 +52,9 @@ No assignment run starts before `docs/PARADIGM.md` is approved
 | `03_changes.md` | pipeline-engineer | 02 (and 05 on a fix round) | — |
 | `04_tests.md` | synthetic-tester | 02, 03 | tests must pass |
 | `05_audit.md` | methods-auditor (read-only shell: git, pytest, compare_runs) | 02, 02b, 03, 04, and the changed files | PASS required |
-| `06_results.md` | results-analyst | 02, the CSVs and console output Sebastian provides | **Sebastian runs the real benchmarks first** |
+| (runs) | orchestrator within `docs/COMPUTE.md` limits after a smoke test; Sebastian for longer or remote jobs (G22) | 02 "Runs" | audit PASS first |
+| `06_results.md` | results-analyst | 02, the logged outputs of the runs | runs finished |
+| `05_audit.md` `## Results check` | methods-auditor | 06 and the outputs it cites | **PASS before the close** (G23) |
 
 ## Rules
 
@@ -61,7 +63,7 @@ No assignment run starts before `docs/PARADIGM.md` is approved
    `BLOCKED`. The next agent starts only from `READY`. On `BLOCKED`, explain why
    under "Open questions" and stop.
 3. **Cite, don't paraphrase, rules.** Reference methodological rules by their
-   `CLAUDE.md` number (G1–G16, and any G17+) so the audit can be checked mechanically.
+   `CLAUDE.md` number (G1–G23, and any G24+) so the audit can be checked mechanically.
    **Cite every source** (G6): papers, documentation, code examples and
    Sebastian's code, in the formats of `.claude/skills/cite-sources/SKILL.md`,
    with a `## Sources` list at the end of the file.
@@ -74,10 +76,11 @@ No assignment run starts before `docs/PARADIGM.md` is approved
 6. **Real data stays where it is.** Agents may read `data/raw/` through project
    code (to build the dataset, and smoke runs on one file), but never modify,
    copy, upload or commit it. Subagents never run full benchmarks. After the
-   audit PASS, the orchestrator runs the plan's commands that take under
-   about 10 minutes on CPU; longer or GPU runs are listed in "What Sebastian
-   will run" with exact commands, and Sebastian drops the outputs into the
-   run folder. Every output is a new versioned folder (G9).
+   audit PASS, the orchestrator runs the plan's jobs that fit the CPU or GPU
+   limit in `docs/COMPUTE.md` and whose committed smoke test passed (G22);
+   longer or remote jobs are given to Sebastian as exact commands, and he
+   drops the outputs into the run folder. Every output is a new versioned
+   folder (G9).
 7. **Runs are kept locally, never committed.** The run folder is the audit
    trail of how every result was produced, but `agent_runs/`, `CLAUDE.md` and
    `.claude/` are excluded from git (`.git/info/exclude`) so Claude never

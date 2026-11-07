@@ -15,7 +15,7 @@ outcome, audit round, sources cited, tokens and wall time from
 **Cite the source of every solution** (G6). Whenever you propose or report a
 solution (in `02_plan.md`, in a STOP message, in the close summary), name
 what it came from: a numbered source in `01_brief.md` (`[n]`, with authors
-and year), a CLAUDE.md rule (G1–G16, G17+), an audit finding (`02b_plan_audit.md`
+and year), a CLAUDE.md rule (G1–G23, G24+), an audit finding (`02b_plan_audit.md`
 or `05_audit.md` round and item), `docs/PARADIGM.md` or `docs/DATA_PROFILE.md`
 (section and value), the code it follows (`path:line`), or Sebastian's
 request. If a choice rests only on your own reasoning, mark it `[own]` with
@@ -42,8 +42,14 @@ Batch: one message per STOP, everything he must decide in it.
    every row, the G1 unseen-sample argument and the G13 exchangeability unit
    for any evaluation or resampling, the checks frozen before real data
    (G10, G12, G14), the tests with known answers (with a false-positive-rate
-   test for every test statistic), and "What Sebastian will run" with
-   runtimes.
+   test for every test statistic), and the "Runs" table (G22: device,
+   expected runtime, smoke test, who runs it under `docs/COMPUTE.md`).
+   Neural networks: seed scheme and number of seeds (G18), inherited
+   defaults listed and set (G17 i), primary configurations, test, α and
+   correction, development vs confirmatory data (G19). If the plan uses a
+   neural network, connectivity or long jobs, fill it against the matching
+   checklist in `.claude/skills/` (`deep-learning`, `connectivity`,
+   `compute-jobs`).
 4. **Plan audit.** Ask the methods-auditor for `02b_plan_audit.md`, naming
    the run folder. On FAIL, revise the plan (`## Revision N` at its end) and
    ask for the next round. After two failed rounds, stop and show Sebastian
@@ -59,16 +65,23 @@ Batch: one message per STOP, everything he must decide in it.
      and auditor again. After two failed rounds set the run BLOCKED and stop.
    - A mistake that fits no G rule: write the incident in `log.md` and
      propose a new rule (G17, …) to Sebastian. Do not add it yourself.
-9. **Real runs.** Commands from "What Sebastian will run" that take under
-   about 10 minutes on CPU, you run yourself after the audit PASS, and log.
-   Longer or GPU runs: show Sebastian the exact commands and wait until he
-   drops the outputs in the run folder. Every output is a versioned folder
+9. **Real runs** (G22, `.claude/skills/compute-jobs/SKILL.md`). After the
+   audit PASS, run yourself, in the foreground, each job whose expected
+   runtime fits its device's limit in `docs/COMPUTE.md` and whose committed
+   smoke test passed; log device, runtime and exit status. Longer or remote
+   jobs: show Sebastian the exact commands (one message, logged in
+   `human_contacts.md`) and wait until he drops the outputs in the run folder. Every output is a versioned folder
    (G9). If an earlier run of the same pipeline exists, run
    `python -m eegharness.compare_runs --a <old> --b <new> --out <run folder>/regression`
    and log its exit status.
-10. **Results.** Ask the results-analyst for `06_results.md`.
+10. **Results.** Ask the results-analyst for `06_results.md`. If it lists
+    "Derived numbers needed", have the engineer add a committed, tested tool
+    (G23), run it, and ask again.
+10b. **Results check.** Ask the methods-auditor for the results check
+    (`## Results check` in `05_audit.md`, G23). On FAIL, fix and repeat.
 11. **Close.** Summarize for Sebastian: branch, commit, test and audit
-    verdicts, the main numbers per participant, the source behind each
+    verdicts (plan audit, audit, results check), the main numbers per
+    participant, the source behind each
     solution, the totals from `cost.jsonl`, the contacts per category from
     `human_contacts.md`, and that merging and pushing are his to do.
 

@@ -30,11 +30,20 @@ correct answer is known before the code runs (CLAUDE.md G2).
   derivation, G6). Never loosen a planned tolerance; if one cannot be met,
   report it as a failure.
 - Include at least one test that would have FAILED on the mistake the change
-  prevents (a planted leak, a wrong offset, a shuffled order).
+  prevents (a planted leak, a wrong offset, a shuffled order). For a fix or an
+  index layout (reshape, flatten, coefficient slicing, adjacency, channel
+  order), show it: run the test against the plausible buggy variant (a
+  monkeypatch inside the test file) and assert that it fails (G2).
 - For every test statistic or significance procedure, a false-positive-rate
   test (G12): on pure noise with no effect, the rejection rate over many
   seeds is within a binomial tolerance of the nominal level; and for a
   permutation null, a test that the observed labelling can be drawn (G13).
+- Neural networks, connectivity, long jobs: write the tests the matching
+  checklist lists (`.claude/skills/deep-learning/SKILL.md`,
+  `.claude/skills/connectivity/SKILL.md`, `.claude/skills/compute-jobs/SKILL.md`):
+  leakage check fails on a shared group, planted signal learned and lost with
+  shuffled labels, determinism per seed, estimator bias on noise, NBS/FDR
+  known answers, smoke test of each long job.
 - Whole suite under about a minute on CPU.
 
 ## Running

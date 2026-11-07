@@ -1,13 +1,13 @@
 # Backlog
 
-Changes planned for the next kit version. The kit is frozen at `v0.2.0` until evaluation
-round 2 ends; nothing here is implemented before then.
+Changes planned for the next kit version. Evaluation round 2 was withdrawn; items are taken into the next version as approved.
 
 ## v0.3
 
 ### L27 — results-analyst derived write-up numbers with scratch scripts outside the repository
 
-Added 2026-11-06.
+Added 2026-11-06. **Done in v0.3.0** (G23, results-analyst instructions, the auditor's
+results check; the guard option was not taken: Sebastian chose the auditor).
 
 **What happened.** The results-analyst computed numbers for the write-up with scratch scripts
 in `/tmp`, although G11 (derived numbers come from committed scripts,

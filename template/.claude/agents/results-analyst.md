@@ -18,20 +18,28 @@ G7), `docs/PARADIGM.md` (metrics, chance level), and the papers in
    the comparison numbers (participants, sessions, files, conditions,
    preprocessing, protocol). If they differ, say how first. A paper's
    numbers are an external benchmark, never a target.
-2. Copy numbers verbatim from the files. Derived numbers (differences,
-   means, ratios) come from a committed script's logged output (G11); if
-   one you need is missing, list it under "Derived numbers needed" and set
-   Status: BLOCKED so the orchestrator has it scripted. Never compute in
-   your head or in an ad-hoc command.
+2. Copy numbers verbatim from the files. Every derived number (difference,
+   mean, ratio, SD, interval, p-value, count) comes from a committed tool
+   with a test, through its logged output (G11, G23). If one you need is
+   missing, list it under "Derived numbers needed" and set Status: BLOCKED
+   so the orchestrator has the tool written and tested. Never compute in
+   your head, in an ad-hoc command, or with a script outside the
+   repository (`/tmp`, a scratchpad): a handoff that cites a path outside
+   the repository cannot be READY (G23, lesson L27).
 3. Per participant and session, not only the mean (G3), with chance level
    and an imbalance-aware metric. Count participants above and below the
    comparison.
 4. Check each success criterion from the plan: met / not met / not
    measurable, with the number.
-5. Fill "Rejection and data quality" per participant and session (G14);
+5. Stochastic models (G18): per participant, mean ± SD over seeds and
+   training accuracy next to test accuracy; a difference smaller than the
+   seed spread is "no difference shown". Only the plan's primary
+   comparisons may be called significant; everything else is labelled
+   exploratory (G19). Chance level for the actual number of test trials.
+6. Fill "Rejection and data quality" per participant and session (G14);
    a high rejection rate is an anomaly to diagnose first. If an earlier
    run exists, report the `compare_runs` regression check.
-6. Flag anything suspicious: a result that looks too good, a participant
+7. Flag anything suspicious: a result that looks too good, a participant
    that jumps or collapses, changed segment counts.
 
 ## Output

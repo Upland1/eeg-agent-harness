@@ -29,7 +29,14 @@ Verdict: PASS / FAIL
 | G14 Quality/rejection/label claims per participant and session, with comparison set and absolute measures | | |
 | G15 No committed file references an uncommitted file (`agent_runs/`, scratchpads) | | |
 | G16 Questions to Sebastian list the written sources checked | | |
-| G17+ Rules added from later incidents | | |
+| G17 Training and preprocessing inside the training data; test transforms label-free; defaults set explicitly | | |
+| G18 Seeds set before each model; at least 3 seeds; per-seed values saved; train accuracy and parameter count | | |
+| G19 Only primary comparisons can be significant; development data not in the confirmatory test | | |
+| G20 Connectivity estimator and statistics (checklist items) | | |
+| G21 Continuous filtering; metadata from the file; channels by name | | |
+| G22 Smoke test committed; resumable folds with configuration; runtimes and device | | |
+| G23 Derivations through committed, tested tools; no paths outside the repository | | |
+| G24+ Rules added from later incidents | | |
 | 02b_plan_audit.md required changes were made | | |
 | Tests cover every change in 03 | | |
 | Changes match 02_plan.md | | |
@@ -55,3 +62,15 @@ checked. -->
 
 <!-- On a fix round, append "## Round 2" with the same structure.
 After two failed rounds, set Status: BLOCKED and hand to Sebastian. -->
+
+## Results check (after 06_results.md, G23)
+
+Verdict: PASS / FAIL
+
+| Number in 06_results.md | Found verbatim in (output file:line, or committed tool + its output) | OK |
+|---|---|---|
+| | | |
+
+Paths outside the repository cited in the run's handoffs: (none / list → FAIL)
+G18 seeds and spread reported: 
+G19 only primary comparisons called significant: 

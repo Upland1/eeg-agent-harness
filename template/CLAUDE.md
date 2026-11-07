@@ -67,7 +67,10 @@ without that argument.
 step ships with a synthetic test in `tests/` whose correct answer is known in advance
 (a planted signal is recovered where it was planted; a file written and read back gives
 the same values; a known filter response is preserved). `pytest tests/` runs on CPU in
-about a minute with no real data.
+about a minute with no real data. A test for a fix or for an index layout (reshape,
+flatten, coefficient slicing, adjacency, channel order) must fail on the plausible buggy
+variant (wrong axis, contiguous instead of strided, crossing a trial, a fit that sees
+the test data, a no-op), and the test file shows that it does.
 
 **G3. Report per participant and session, with the data source.** Never only a pooled
 mean. State which files, which preprocessing and which protocol produced each number.
@@ -153,8 +156,96 @@ category and Sebastian confirms it. *Incident: in onboarding, several questions 
 Sebastian were answered by the input paper's appendix, the public documentation the
 paper names, or the lab log in the data folder (L25).*
 
+Rules G17–G23 make G1, G4 and G7 concrete for neural networks, connectivity and long
+jobs. When a plan uses one of these methods, every agent working on it reads the matching
+checklist: `.claude/skills/deep-learning/SKILL.md`, `.claude/skills/connectivity/SKILL.md`,
+`.claude/skills/compute-jobs/SKILL.md`.
+
+**G17. Training and preprocessing stay inside the training data.** Extends G1.
+(a) Early-stopping and validation splits are drawn from the training fold, grouped by the
+G13 unit, never from the test fold or a held-out participant. (b) Normalization statistics
+come from the training fold, or are computed per sample with no statistics across samples
+(the plan says which). (c) Augmentation runs on the fly on training samples only and never
+mixes classes. (d) Hyperparameters, architecture, epochs and checkpoints are chosen on inner
+validation, never on test results. (e) Any transform applied to a test sample must be
+computable without that sample's label (e.g. never subtract the mean response of the test
+trial's own class). (f) Unsupervised test-time normalization (statistics from unlabeled test
+data) is allowed only when the method name and the write-up say so and state where the
+statistics came from (whole session = offline upper bound; first K units = online).
+(g) When participants are pooled, group ids are unique across participants, all share one
+channel set chosen by name, and nothing from the held-out participant reaches any fit.
+(h) Operations over consecutive samples (smoothing, context windows, sequence models) never
+cross a unit boundary, and samples are ordered by recording time. (i) Defaults inherited
+from ported or library code (priors, augmentation, label smoothing, segment lengths,
+class weights) are listed in the plan and set explicitly; a default that contradicts the
+plan is a FAIL. *Incidents: early stopping on the test fold, augmentation and transductive
+normalization in an earlier study; a preprocessing step that needed the test label
+and inherited defaults contradicting the plan, caught by plan audit (L28).*
+
+**G18. Seeds and spread.** Every stochastic model is seeded per fold and repeat before it is
+built (data loaders included), with the seed scheme in the plan
+(`eegharness.seeds`). Every reported number of a stochastic model is the mean and SD over
+at least 3 seeds (more if the plan says so), per participant, with each seed's value saved.
+A/B comparisons use the same seeds and folds (paired). A difference smaller than the seed
+spread is reported as "no difference shown". Final training accuracy on un-augmented
+training data is reported next to test accuracy, and the parameter count next to the
+architecture. Device and nondeterminism settings are recorded in `provenance.json`.
+*Incident: in an earlier study two runs of the same network command differed by several
+points; a network sweep ran one seed.*
+
+**G19. Significance budget, and development data stay out of the confirmatory test.**
+Before results, the plan states the comparisons that may be called significant: the
+primary configurations (a fixed, committed set), the test and its unit (G13), α and the
+family-wise correction (e.g. Holm). Every configuration tried counts against the budget
+(architectures, variants, sweeps, epochs, seeds chosen). Data used to develop, tune or
+debug (participants, sessions or runs) never enter the confirmatory test; the plan names
+both sets. Anything outside the budget is reported as exploratory and never marked
+significant. Accuracy is compared with a chance level for the actual number of test
+trials (`eegharness.chance`), not only 1/k. *Incident: plan audit of a methods port found
+the development session re-entering the confirmatory test and no fixed family of primary
+configurations (L28).*
+
+**G20. Connectivity estimators and their statistics.** (a) Every connectivity estimator has
+a known-answer test on independent noise that reports its bias at the sample size used;
+conditions are compared at matched sample sizes or estimated once per condition over
+concatenated data, never by averaging per-segment estimates of a biased estimator.
+(b) Phase is taken by a method valid for the segment length, with an edge-immunity test.
+(c) Stimulus versus baseline uses the same band and estimator. (d) Permutations exchange
+whole units (G13) with the observed group sizes; the number of permutations can resolve α;
+a result that crosses α between permutation counts is inconclusive. (e) Global,
+edge-wise (FDR) and component-wise (NBS) criteria are reported separately, each fixed
+before results (G10); a threshold sweep is a sensitivity analysis, not a selection.
+(f) Directed measures are symmetrized (estimate and null) before undirected statistics.
+(g) Missing channels are embedded by name as NaN before averaging across participants.
+(h) Subgroups (e.g. responders) are defined independently of the measure tested.
+*Incident: an earlier study averaged biased per-window coherence, took Hilbert phase on
+short windows, permuted windows instead of trials, and merged two criteria into one flag.*
+
+**G21. Filter continuous data, then cut; metadata from the file.** Filter continuous
+recordings before cutting segments; segments within the filter's ringing time of a
+discontinuity or artifact are discarded or flagged. Sampling rate, channel names and units
+come from the file header, never from a constant; channels are selected by name, never by
+position. Extends G5. *Incident: an earlier study filtered each short window and assumed
+a sampling rate that was not the recorded one.*
+
+**G22. Long and GPU jobs.** Every job in a plan states its device, expected runtime, seeds
+and output folder. The limits per job are in `docs/COMPUTE.md` (set by Sebastian). The
+orchestrator runs a job itself, after the audit PASS, only if it fits the CPU or GPU limit
+there **and** a committed smoke test (synthetic data or one fold, under 5 minutes, CPU)
+has passed through the same entry point. Longer jobs and anything on remote hardware go to
+Sebastian as exact commands with expected runtime and the outputs to return. Long jobs
+save each fold with its configuration (`eegharness.folds`); a rerun with a different
+configuration on the same folder is refused. Runtime and device are reported per job.
+
+**G23. Derivations go through committed, tested tools.** Any number derived for a handoff
+or write-up (difference, ratio, mean, interval, p-value, count) comes from a committed
+tool with a test before it enters the handoff; no scratch scripts, no inline arithmetic.
+A handoff that cites a path outside the repository cannot be READY. The auditor checks
+both in a results check. Extends G11. *Incident: the results-analyst computed write-up
+numbers with scratch scripts in a temporary folder although G11 existed (L27).*
+
 **Rules grow from experience.** When a test or the auditor catches a new kind of mistake,
-the orchestrator writes up the incident and proposes a new rule (G17, G18, …). Sebastian
+the orchestrator writes up the incident and proposes a new rule (G24, G25, …). Sebastian
 approves it before it is added here, with a one-line reference to the incident. Rules
 that apply to any EEG study are also proposed to the harness (next version, never the
 running one).
@@ -165,11 +256,14 @@ running one).
   through project code; never modify, copy elsewhere, upload or commit them.
 - Processed arrays, models and reports are generated, git-ignored, and rebuilt by script,
   each run into a new versioned folder (G9).
-- Shared tools are vendored, committed code in `eegharness/` (versioned output
-  folders and provenance, `python -m eegharness.compare_runs` for regression checks).
-  Project code imports only committed files, never `.harness/`.
-- Long runs (more than about 10 minutes, or anything on GPU) are listed in the plan's
-  "What Sebastian will run" section; Sebastian runs them locally or on Colab.
+- Shared tools are vendored, committed code in `eegharness/`: versioned output folders
+  and provenance (`outputs`), regression checks (`python -m eegharness.compare_runs`),
+  grouped splits with a leakage check (`splits`), unit-level permutation tests
+  (`permutation`), chance levels (`chance`), seeding (`seeds`) and resumable folds
+  (`folds`). torch is never required by `eegharness`. Project code imports only committed
+  files, never `.harness/`.
+- Jobs run under the limits in `docs/COMPUTE.md` (G22); longer or remote jobs are listed in
+  the plan's "Runs" section for Sebastian.
 
 ## Never do
 
@@ -198,7 +292,7 @@ running one).
    Sebastian approves → approved docs are committed.
 2. **Then one run per assignment** (`/assignment`): 00_assignment → 01_brief → 02_plan →
    02b_plan_audit → [Sebastian approves] → 03_changes → 04_tests → 05_audit →
-   [Sebastian runs long jobs] → 06_results.
+   runs (G22) → 06_results → results check (G23, in 05_audit).
 
 Every run keeps `log.md` (one row per agent call, with tokens and time),
 `human_contacts.md` (G16) and `cost.jsonl` (written by a hook).

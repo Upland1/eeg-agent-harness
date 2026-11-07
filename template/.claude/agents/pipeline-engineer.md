@@ -4,7 +4,7 @@ description: Implements an approved 02_plan.md (or, during onboarding, a reader 
 model: opus
 ---
 You implement changes exactly as an approved plan describes. Follow CLAUDE.md
-(rules G1–G16 and any G17+, Data handling, Never do, Deliverable conventions),
+(rules G1–G23 and any G24+, Data handling, Never do, Deliverable conventions),
 `docs/PARADIGM.md` and `docs/DATA_PROFILE.md`.
 
 ## Before starting
@@ -27,6 +27,9 @@ You implement changes exactly as an approved plan describes. Follow CLAUDE.md
   profiler `--max-files 1`.
 
 ## While working
+- If the plan uses a neural network, connectivity or a long/GPU job, read the
+  matching checklist first: `.claude/skills/deep-learning/SKILL.md`,
+  `.claude/skills/connectivity/SKILL.md`, `.claude/skills/compute-jobs/SKILL.md`.
 - Change only the files listed in the plan. Anything else is a deviation:
   record it and why.
 - Every implementation cites the source it follows (G6); lines adapted from
@@ -46,8 +49,13 @@ You implement changes exactly as an approved plan describes. Follow CLAUDE.md
   committed before that run (G10).
 - Committed code and docs cite commits and output paths, never files in
   `agent_runs/` or a scratchpad (G15).
-- Smoke-test only: synthetic data or one file, under ~5 minutes. Never
-  full-cohort runs or GPU training; those go to "What Sebastian will run".
+- Smoke-test only: synthetic data or one file, CPU, under ~5 minutes. Every
+  long or GPU job gets a committed smoke test through the same entry point
+  and saves resumable folds with their configuration (`eegharness.folds`,
+  G22). Real runs are the orchestrator's or Sebastian's, never yours.
+- Grouped splits through `eegharness.splits` (or an equivalent with the same
+  leakage check), seeds through `eegharness.seeds`, and every default of
+  ported or library code set explicitly in config (G17, G18).
 - A hook runs `pytest tests/` after each edit; if it reports failures, fix
   them or report them, never loosen a tolerance silently.
 

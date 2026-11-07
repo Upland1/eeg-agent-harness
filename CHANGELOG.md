@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.3.0 — 2026-11-06
+
+Support for pipelines with classical ML, neural networks, phase connectivity with
+permutation/FDR/NBS statistics, and graph neural networks. Spec: `docs/v0.3_spec_draft.md`
+(sources: an earlier SSVEP study's rules and pitfalls, lessons L27–L28).
+
+- Rules: G2 amended (a test for a fix or index layout fails on the plausible buggy
+  variant); new G17 (training and preprocessing inside the training data; test transforms
+  computable without test labels; inherited defaults listed and set — L28), G18 (seeds,
+  at least 3, spread, paired A/B, train accuracy, device provenance), G19 (significance
+  budget: fixed primary configurations, test, alpha, family-wise correction; development
+  data kept out of the confirmatory test — L28), G20 (connectivity estimators and their
+  statistics), G21 (filter continuous data, metadata from the file, channels by name),
+  G22 (long and GPU jobs: limits per project in `docs/COMPUTE.md`; the orchestrator runs
+  CPU and local GPU jobs within them after a committed smoke test; longer or remote jobs
+  go to Sebastian; resumable folds), G23 (derivations through committed, tested tools; no
+  READY handoff citing a path outside the repository — L27).
+- Method checklists (skills) `deep-learning`, `connectivity`, `compute-jobs`, read by the
+  agents when a plan uses those methods; no new agents.
+- Workflow: plan template gains training/defaults, significance-budget and "Runs" sections;
+  plan-audit and audit templates gain G17–G23 rows; the methods-auditor adds a results check
+  (`## Results check` in `05_audit.md`) after `06_results.md`; results template reports seed
+  spread and primary vs exploratory comparisons.
+- Tools (`eegharness` 0.3.0): `splits` (unique group ids across participants, grouped and
+  stratified k-fold, leave-one-group-out, grouped inner validation, `check_no_leak`),
+  `permutation` (unit-level permutation keeping units whole and group sizes, observed
+  labelling in the null), `chance` (exact binomial chance level) — core, numpy only;
+  `seeds` (fold seeds, seeding with optional torch, seed summary) and `folds` (resumable
+  fold store refusing a changed configuration) — torch optional; provenance records
+  torch's device and determinism settings when torch is imported.
+- Tests: 211 kit tests, including a false-positive-rate test showing unit-level permutation
+  at the nominal rate and window-level permutation inflated on clustered data.
+
 ## 0.2.0 — 2026-11-05 (frozen for evaluation round 2)
 
 From the first project's lessons L1–L26 (general ones only).

@@ -21,6 +21,13 @@ Verdict: PASS / FAIL
 | G10 Every check, gate, threshold and selection rule is fixed in the plan before it touches real data | | |
 | G12 Every new measurement or statistic has a known-answer test, and a false-positive-rate test if it is a test statistic, planned before its real-data run | | |
 | G14 Quality, rejection and label-sanity claims planned per participant/session, with comparison set and absolute measures | | |
+| G17 Training inside the training fold: validation, normalization, augmentation; test transforms label-free; inherited defaults listed and set | | |
+| G18 Seed scheme, at least 3 seeds, paired A/B | | |
+| G19 Primary configurations fixed; test, unit, alpha, correction; development data kept out of the confirmatory test | | |
+| G20 Connectivity: bias, phase method, matched baseline, unit permutation, separate criteria fixed before results | | |
+| G21 Filtering on continuous data; sampling rate and channels from the file, by name | | |
+| G22 Each job: device, runtime, smoke test, resumable folds, who runs it under docs/COMPUTE.md | | |
+| Method checklists (deep-learning / connectivity / compute-jobs) applied, if the plan uses them | | |
 | G9 / G11 Outputs versioned; every derived number planned to come from a committed script | | |
 | G5 Parameters explicit, with source | | |
 | G6 Every row of "Changes" has a source that exists | | |
