@@ -466,5 +466,233 @@
   "epoch_samples_out": 102,
   "onset_rule": "floor(onset / 2) on the 128 Hz grid",
   "span_samples_at_256_hz": "(845 - 1) + (41 - 1) = 884"
- }
+ },
+ "f3": {
+  "enabled": true,
+  "description": "F3 (plan F3, P2-3, P2-4, P2-7; D-014): (b) single-trial PHASE FEATURES for classifiers and the GNN edges; (a) condition-level connectivity (debiased wPLI, block permutations, BH-FDR, NBS). p300/phase.py",
+  "source": "[M] ../mas-ssvep-eeg-xai v1.0.4 (commit f725369) src/features/connectivity/phase_connectivity.py (window_csd, plv_from_csd, wpli_from_csd), connectivity_graph_features.py (_hann_fft, edge_phase, upper_tri_flat), permutation.py (benjamini_hochberg), src/stats/nbs.py (edge_components, nbs_from_z); debiased wPLI: Vinck et al. 2011 via mne-connectivity 0.9.0 _WPLIDebiasedEst",
+  "input_signal": "the recorded signal (amplifier 0.5-60 Hz), no extra filter (plan P2-4)",
+  "window_s": [
+   -0.2,
+   1.0
+  ],
+  "window_rounding": "round",
+  "window_samples": 307,
+  "nfft": 307,
+  "window_note": "must equal gates.connectivity_window (gate (ii), checked before any data is read); round(-0.2 * 256) = -51 ... round(1.0 * 256) = 256 -> 307 samples; nfft = window length (one segment, no zero padding), bin spacing 256 / 307 = 0.834 Hz (plan P2-4)",
+  "spectrum": {
+   "detrend": "constant",
+   "window": "hann",
+   "window_fftbins": true,
+   "segments": 1,
+   "source": "plan F3 / P1-C1 / P2-4 (constant detrend, Hann, one segment); periodic Hann scipy.signal.get_window('hann', T) (fftbins True) as M connectivity_graph_features.py _hann_fft"
+  },
+  "bands": {
+   "delta": [
+    1.0,
+    4.0
+   ],
+   "theta": [
+    4.0,
+    8.0
+   ]
+  },
+  "band_rule": "closed: bins with low <= f <= high (plan P2-4): delta = bins 2-4 (1.67, 2.50, 3.34 Hz), theta = bins 5-9 (4.17 ... 7.50 Hz); M's fs-250 band axis not ported",
+  "cross_spectrum": "S_ij = sum over band bins of X_i conj(X_j), i < j (28 pairs, numpy.triu_indices(8, 1)); phasor = S / |S| ((1, 0) if |S| <= 1e-12, as M edge_phase); band phase = angle of S, never a mean of angles (plan P2-4)",
+  "classification": {
+   "primary": "delta",
+   "order": [
+    "delta",
+    "delta_nosub",
+    "delta_sin",
+    "theta",
+    "theta_nosub"
+   ],
+   "variants": {
+    "delta": {
+     "bands": [
+      "delta"
+     ],
+     "subtract_template": true,
+     "components": [
+      "cos",
+      "sin"
+     ],
+     "role": "primary (plan F3: shrinkage LDA on delta phasors, label-free template subtracted)"
+    },
+    "delta_nosub": {
+     "bands": [
+      "delta"
+     ],
+     "subtract_template": false,
+     "components": [
+      "cos",
+      "sin"
+     ],
+     "role": "secondary: no subtraction (plan F3)"
+    },
+    "delta_sin": {
+     "bands": [
+      "delta"
+     ],
+     "subtract_template": true,
+     "components": [
+      "sin"
+     ],
+     "role": "secondary: imaginary (sin) component alone, reported separately from cos (plan F3, volume conduction) [own variant]"
+    },
+    "theta": {
+     "bands": [
+      "theta"
+     ],
+     "subtract_template": true,
+     "components": [
+      "cos",
+      "sin"
+     ],
+     "role": "secondary, descriptive only: the 6.4 Hz flash rate cannot be separated from theta in this window (plan P1-C1)"
+    },
+    "theta_nosub": {
+     "bands": [
+      "theta"
+     ],
+     "subtract_template": false,
+     "components": [
+      "cos",
+      "sin"
+     ],
+     "role": "secondary, descriptive only"
+    }
+   },
+   "template": "label-free: mean over all training-fold epochs (both classes, all files) per channel and sample, fitted in every training fold, subtracted from training and test epochs alike (plan P1-1, P2-4)",
+   "model": "Shrinkage-LDA lsqr",
+   "model_note": "the f1.models entry of that name: the same full parameter table as the F1 primary (solver lsqr, shrinkage auto, priors [0.5, 0.5])",
+   "scaler": {
+    "class": "StandardScaler",
+    "with_mean": true,
+    "with_std": true,
+    "fit": "training fold only (inside the Pipeline)",
+    "source": "[own] as the F1 primary Pipeline(features, StandardScaler, model)"
+   },
+   "naming": "method ids f3/phase_features/<variant>; results are 'phase features' (flash-locked phase, evoked residual plus any induced part), never 'connectivity' or 'coupling' (plan P2-7)"
+  },
+  "condition_level": {
+   "enabled": false,
+   "role": "F3(a): secondary, outside the Holm family; unit = flash epochs of the session, permutation unit = block (plan P1-C3)",
+   "bands": [
+    "delta",
+    "theta"
+   ],
+   "n_permutations": 1000,
+   "permutation_seed": 20261105,
+   "permutation_rng": "numpy.random.default_rng([permutation_seed, p]); block targets shuffled within each file (session_eval.draw_session_shuffles: the same draws as the F1 null)",
+   "per_class_subtraction": "per labelling (observed and every permutation): the class-mean ERP over the retained epochs of each FILE and class, with that labelling's labels, subtracted within each file and class, on the band-bin spectra (linear, equal to subtraction in time) (plan P2-3 step 2; per file: code audit C3 #3)",
+   "subsample_seed": 20261112,
+   "n_subsample_repeats": 100,
+   "subsample_rule": "non-targets subsampled to the target count: numpy.random.default_rng([subsample_seed, key, repeat]).choice(n_nontarget, n_target, replace=False); key = p for permutation p, key = observed_key for the observed labelling (plan P2-3 step 3)",
+   "observed_key": 4294967295,
+   "observed_key_source": "[own]: an index no permutation reaches; numpy SeedSequence ignores trailing zeros, so [seed, repeat] would equal [seed, p = repeat, 0]",
+   "statistic": "debiased squared wPLI (Vinck 2011; mne-connectivity _WPLIDebiasedEst) of Im(S) per class; non-target = mean over the repeats; statistic = target - non-target per pair and band (plan P2-3 step 4)",
+   "min_trials_per_class": 2,
+   "min_trials_source": "[own]: the debiased estimator needs at least 2 epochs of a class (its denominator is 0 for one); applies to the per-block NBS values",
+   "edge_p": "two-sided: (1 + #{|null| >= |observed|}) / (n_permutations + 1) [own: the plan fixes no direction]",
+   "fdr": {
+    "method": "benjamini_hochberg",
+    "alpha": 0.05,
+    "family": "28 pairs x 2 bands = 56 edge p-values (plan P1-C3)"
+   },
+   "nbs": {
+    "threshold": 3.0,
+    "statistic": "paired t over blocks of the per-block (target - non-target) debiased wPLI (all epochs of the block after the per-class subtraction, no subsampling); t = mean / (sd(ddof 1) / sqrt(n_blocks)), 0 where sd = 0 (plan P2-4)",
+    "component_size": "number of supra-threshold edges (plan P2-4; M nbs.py)",
+    "directions": [
+     "target_gt_nontarget",
+     "nontarget_gt_target"
+    ],
+    "directions_source": "[own]: one contrast per direction, each band separately",
+    "alpha": 0.05,
+    "null": "largest component of each permutation's t-map (the same n_permutations draws)"
+   },
+   "plv": "PLV of the observed labelling reported for comparison only (plan F3(a))",
+   "multiplicity": "BH-FDR covers the 28 pairs x 2 bands jointly; the 4 NBS analyses (2 bands x 2 directions) are not corrected against each other (code audit C3 #3)",
+   "contrast": [
+    1,
+    0
+   ],
+   "contrast_note": "class indices (a, b): a = target, b = nontarget (P300 run)"
+  }
+ },
+ "f4": {
+  "enabled": true,
+  "description": "F4 GNN (plan F4; D-014): M's edge-gated GNN on the complete 8-node graph; p300/graph.py",
+  "source": "[M] ../mas-ssvep-eeg-xai v1.0.4 (commit f725369) src/models/graph/connectivity_gnn.py (ConnectivityGNN, EdgeGatedLayer, EMBED_STD 0.1), src/features/connectivity/graph_inputs.py (build_inputs, fit_standardizer / standardize_fold, STD_FLOOR 1e-8), scripts/connectivity/graph_modeling/benchmark_gnn.py make_model (hidden 32, 2 layers, dropout 0.3)",
+  "primary": "gnn_phase",
+  "order": [
+   "gnn_phase",
+   "gnn_nodes"
+  ],
+  "models": {
+   "gnn_phase": {
+    "class": "ConnectivityGNN",
+    "variant": "nodes+phase",
+    "edge_bands": [
+     "delta"
+    ],
+    "edge_components": [
+     "cos",
+     "sin"
+    ],
+    "subtract_template": true,
+    "params": {
+     "n_node_feats": 51,
+     "n_edge_feats": 2,
+     "hidden": 32,
+     "n_layers": 2,
+     "dropout": 0.3,
+     "embed_std": 0.1
+    },
+    "role": "primary (plan F4: edge features = F3(b) phasors)",
+    "source": "hidden 32, n_layers 2, dropout 0.3: M connectivity_gnn.py defaults and benchmark_gnn.py make_model; embed_std 0.1: M EMBED_STD; n_node_feats 51 = the Step-1 epoch (8 x 51, 4-14 Hz, decimated by 4); n_edge_feats 2 = delta (cos, sin), the F3 primary's band and template [own: theta is descriptive only, plan P1-C1]"
+   },
+   "gnn_nodes": {
+    "class": "ConnectivityGNN",
+    "variant": "nodes",
+    "edge_bands": [],
+    "edge_components": [],
+    "subtract_template": false,
+    "params": {
+     "n_node_feats": 51,
+     "n_edge_feats": 0,
+     "hidden": 32,
+     "n_layers": 2,
+     "dropout": 0.3,
+     "embed_std": 0.1
+    },
+    "role": "secondary (plan F4: nodes only)",
+    "source": "as gnn_phase; no edge gate (M EdgeGatedLayer with n_edge_feats 0)"
+   }
+  },
+  "graph": "complete graph on the 8 electrodes, no self messages (M EdgeGatedLayer)",
+  "normalisation": {
+   "kind": "per_feature",
+   "std_floor": 1e-08,
+   "rule": "mean and std over the fitting epochs (training fold minus validation blocks) per (channel, feature) for nodes and per (i, j, feature) for edges; std < std_floor -> 1 (M graph_inputs.py _stats, STD_FLOOR)"
+  },
+  "max_norm": "none (M ConnectivityGNN has no max-norm constraint)",
+  "trainer": "networks.trainer and networks.augmentation (fit_network), networks.seeds, networks.device, networks.deterministic: the same trainer, seeds and seed-mean scoring as F2 (plan F4)",
+  "null": {
+   "methods": [
+    "f4/gnn_phase"
+   ],
+   "seeds": [
+    20261107
+   ],
+   "n_permutations": 0,
+   "seed": 20261105,
+   "rng": "as networks.null: numpy.random.default_rng([seed, p]); block targets shuffled within each file; folds fixed; GNN refitted (template and normalisation refitted in each fold)",
+   "reporting": "descriptive only, no p-value (plan 'Statistics', network sanity null)",
+   "scope_note": "[own] as networks.null: primary GNN and first seed only, 20 x 8 = 160 fits"
+  }
+ },
+ "fs_hz": 256.0
 }
