@@ -11,7 +11,8 @@ project ADAPTER as an event table (paradigm-specific, written per study):
     "label":      (n,) int   class index 0..k-1,
     "unit_start": (U,) int   first sample of each unit's own interval (e.g. stimulus start),
     "unit_end":   (U,) int   last sample of it (inclusive),
-    optional per-epoch columns (e.g. "code"), carried through to the output.
+    optional per-epoch columns (e.g. "code"), carried through to the output (retained epochs),
+    optional "unit_target": (U,) the target code of each unit (scheme unit_target), carried as is.
   }
 
 Steps (every parameter from the settings, G5):
@@ -33,6 +34,7 @@ from eegpipe import filtering as flt
 from eegpipe import gates as gt
 
 REQUIRED_EVENTS = ("onset", "unit", "label", "unit_start", "unit_end")
+PER_UNIT_KEYS = ("unit_target",)
 
 
 def check_events(events, n_samples):
@@ -136,6 +138,10 @@ def prepare_file(data, fs, events, s):
          "unit_start": np.asarray(events["unit_start"], dtype=np.int64),
          "unit_end": np.asarray(events["unit_end"], dtype=np.int64)}
   for key, v in events.items():
-    if key not in REQUIRED_EVENTS:
+    if key in PER_UNIT_KEYS:
+      if len(v) != n_units:
+        raise ValueError(f"{key} must have one entry per unit")
+      out[key] = np.asarray(v)
+    elif key not in REQUIRED_EVENTS:
       out[key] = np.asarray(v)[keep]
   return out

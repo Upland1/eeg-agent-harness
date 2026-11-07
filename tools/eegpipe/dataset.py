@@ -24,7 +24,7 @@ def assemble(file_results):
   if not file_results:
     raise ValueError("no files")
   extra = sorted(set(file_results[0]) - set(BASE_KEYS) - {"X", "keep", "counts", "gates", "segments",
-                                                          "unit_start", "unit_end"})
+                                                          "unit_start", "unit_end", "unit_target"})
   Xs = []
   cols = {k: [] for k in ("y", "unit_local", "unit_uid", "file_idx", "onset", *extra)}
   unit_file, unit_local_of_uid = [], []
