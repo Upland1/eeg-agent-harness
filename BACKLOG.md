@@ -26,3 +26,13 @@ reproduced from the repository.
      running them, for all agents or for the results-analyst only;
    - methods-auditor check: flag any path outside the repository cited in a handoff or a
      results file, and any number in `06_results.md` that no committed script outputs.
+
+## L29 — headless orchestrator ended its turn with a subagent still running (2026-11-07)
+
+In ssvep-apply, the headless `/apply-pipeline` run (claude -p) started the plan subagent in the
+background and ended its turn. Claude Code stopped the background subagent 10 minutes later and
+the run ended mid step C ($8.25 spent; adapter done at 84a3c6b). The CLAUDE.md "Never do" rule
+on background work exists, but the skills don't say that a subagent counts. Proposed fix for the
+next kit version: `onboard`, `assignment` and `apply-pipeline` say "run each agent in the
+foreground and wait for its handoff before the next step or the end of the turn". Workaround
+used: resume the session with that instruction.
