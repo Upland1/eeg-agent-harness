@@ -8,7 +8,8 @@
 writes ``provenance.json`` into it before anything else (two runs started in the same second
 get ``_2``, ``_3``, … appended; an existing folder is never reused): the command, working directory,
 commit, whether tracked files were modified, UTC start time, Python, platform, versions of
-the scientific packages that are imported, the parameters given, and the size and SHA-256
+the scientific packages that are imported, torch's device and determinism settings if torch
+is imported (``compute``, else null), the parameters given, and the size and SHA-256
 of every input file (folders are expanded to their files, sorted).
 """
 
@@ -23,6 +24,7 @@ from importlib import metadata
 from pathlib import Path
 
 from . import __version__
+from .seeds import torch_state
 
 PACKAGES = ("numpy", "scipy", "scikit-learn", "mne", "pandas", "torch", "pyriemann", "braindecode")
 _MODULE_OF = {"scikit-learn": "sklearn"}
@@ -112,6 +114,7 @@ def new_output_dir(out, *, inputs=(), params=None, root=".", argv=None, now=None
     "python": platform.python_version(),
     "platform": platform.platform(),
     "packages": package_versions(),
+    "compute": torch_state(),
     "eegharness": __version__,
     "params": params or {},
     "inputs": described,
