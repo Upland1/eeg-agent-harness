@@ -61,6 +61,10 @@ project builds its reader from scratch.
 - `new_project.py --eval-dir <eval>` refuses an untagged or dirty kit, makes the
   evaluation folder unreachable for the agents (permission deny rules + guard
   hook + the blocklist read by the hook), and copies a case's `inputs/`.
+- `<eval>/blocklist.json`: `"terms"` (strings blocked anywhere in a tool call) and, from
+  v0.3.1, `"dirs"` (absolute folders or files treated like the evaluation folder: nothing
+  inside them is reachable, and no search or listing may start in a folder that contains
+  one, e.g. the shared data folder above `data/raw`).
 - `--control` makes the control arm: the same inputs and protections, no harness.
 
 ## Reproducing a frozen version
@@ -89,7 +93,7 @@ python -m pytest kit_tests -q -p no:cacheprovider
 ```
 
 The full suite needs numpy, mne and pytest (`requirements.txt`) and `pdftotext`;
-with them nothing is skipped (v0.2.0: 190 passed; v0.3.0: 211 passed). Keep the virtual environment
+with them nothing is skipped (v0.2.0: 190 passed; v0.3.0: 211 passed; v0.3.1: 249 passed). Keep the virtual environment
 outside the repository (e.g. `~/.venvs/eeg-harness-kit`).
 
 ## Release and privacy

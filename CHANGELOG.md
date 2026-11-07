@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.1 — 2026-11-06
+
+- Guard: `blocklist.json` may list `"dirs"`, absolute folders or files treated like the
+  evaluation folder. A path inside one is blocked, and so is any search or listing (grep -r,
+  rg, find, tree, du, ls with or without -R, the Grep and Glob tools) whose resolved starting
+  folder contains one, including a search with no folder operand run from such a folder.
+  Closes the gap where `grep -r x data/raw/..` read every sibling of the recordings' folder.
+  Known-answer tests: `kit_tests/test_guard_blocked_dirs.py` (38), including the v0.3.0
+  behaviour as the buggy variant.
+- Compute limits template: 120 min per CPU and per GPU job; longer work split into resumable
+  parts that each fit the limit (G22 text and the `compute-jobs` checklist updated).
+- `eegharness` 0.3.1: version number only (it follows the kit); no code change.
+
 ## 0.3.0 — 2026-11-06
 
 Support for pipelines with classical ML, neural networks, phase connectivity with
