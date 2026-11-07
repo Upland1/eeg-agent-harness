@@ -232,8 +232,10 @@ a sampling rate that was not the recorded one.*
 and output folder. The limits per job are in `docs/COMPUTE.md` (set by Sebastian). The
 orchestrator runs a job itself, after the audit PASS, only if it fits the CPU or GPU limit
 there **and** a committed smoke test (synthetic data or one fold, under 5 minutes, CPU)
-has passed through the same entry point. Longer jobs and anything on remote hardware go to
-Sebastian as exact commands with expected runtime and the outputs to return. Long jobs
+has passed through the same entry point. Longer work is split into resumable parts (per
+fold, seed or session) that each fit the limit; a part that cannot fit, and anything on
+remote hardware, goes to Sebastian as exact commands with expected runtime and the
+outputs to return. Long jobs
 save each fold with its configuration (`eegharness.folds`); a rerun with a different
 configuration on the same folder is refused. Runtime and device are reported per job.
 

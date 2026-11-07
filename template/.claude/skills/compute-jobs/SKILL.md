@@ -37,7 +37,12 @@ otherwise Sebastian does.
 
 ## Running (orchestrator)
 
-- Run in the foreground and wait for it; never leave background jobs.
+- A job (or part) longer than a few minutes runs in the Bash tool's background mode,
+  because a foreground call times out after 10 minutes; wait for its completion
+  notification before doing anything that depends on it, start no second job meanwhile,
+  and never end the session with a job still running.
+- Work longer than the limit runs as resumable parts (per fold, seed or session), each
+  within the limit; the next part starts only after the previous one finished cleanly.
 - If the job exceeds its stated runtime by more than 50 %, stop it, record it in
   `log.md`, and hand it to Sebastian with the resumable command.
 - Record device, runtime and exit status in `log.md`; provenance (G9) records the device.
