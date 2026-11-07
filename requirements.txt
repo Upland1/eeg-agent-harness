@@ -1,3 +1,7 @@
 numpy>=1.26
+scipy>=1.18
+scikit-learn>=1.9
 mne>=1.6
 pytest>=8
+# optional (networks, GNN, CCNN, fusion; the kit tests skip nothing on CPU with it):
+# torch>=2.13  (CPU build: --index-url https://download.pytorch.org/whl/cpu)

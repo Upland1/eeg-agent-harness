@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.4.0 — unreleased (tag after the P300 Stage-2 run ends and its suite has run once; spec §0 D3)
+
+Applies Sebastian's pipeline to any EEG study (spec: `docs/v0.4_spec_draft.md`, decisions §0).
+
+- New vendored package `eegpipe` (ported from the P300 project's `p300/ssvep-methods`, code
+  @ cd5db15, tests @ d833264, and from mas-ssvep-eeg-xai v1.0.4 @ f725369), generalised to k
+  classes (D5) with 5-class known-answer tests:
+  `filtering`, `gates` (span and window gates between exchangeable units, unit-wise fallback),
+  `epochs` (adapter event table -> retained epochs), `dataset`, `folds` (the P300 dealing,
+  bitwise; optional class balance), `cca`, `classical` (10-model suite, strict parameter
+  tables), `evaluate` (k-class metrics, per-stratum permutation tests for unit-target and
+  unit-label schemes, restricted draws so every training fold keeps every class),
+  `networks` (EEGNet, ShallowConvNet, the trainer; same-class mixup and shift added),
+  `network_input`, `phase`, `connectivity` (declared two-class contrast; `nbs.pair_by`),
+  `graphstats` (BH-FDR, NBS), `graph` (edge-gated GNN), `paired` (exact Wilcoxon / Pratt, sign
+  test, HL bootstrap, Holm, verdicts), `settings` (validator, profiles `erp` and `ssvep`),
+  `runner` (part runner, label-free selection, frozen stage runner with retry and provenance
+  rules, confirmatory collect), `ssvep` (continuous filter banks with an IIR span gate, FBCCA,
+  FBCSP, CCNN, DualBranchFusionCNN with channels by name).
+- Rules G24 (the library is configured, never edited) and G25 (confirmatory runs only from a
+  frozen commit); the guard protects `eegpipe/` like `eegharness/`; `new_project.py` vendors it.
+- New `/apply-pipeline` skill and `agent_runs/_templates/apply_pipeline/`; PARADIGM.md gains
+  "Pipeline settings this study needs"; plan-audit and audit templates gain G24/G25 rows.
+- Kit tests: 384 passed (1 CUDA test skipped on CPU); torch, scipy and scikit-learn join the kit
+  test environment. `eegharness` 0.4.0: version number only.
+
 ## 0.3.1 — 2026-11-06
 
 - Guard: `blocklist.json` may list `"dirs"`, absolute folders or files treated like the

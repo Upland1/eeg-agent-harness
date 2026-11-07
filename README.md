@@ -13,8 +13,8 @@ files). Projects made from it keep these files out of their own git history.
 | Path | What |
 |---|---|
 | `VERSION` | harness version; every project records the version that built it |
-| `template/` | copied into each project: `CLAUDE.md` (general rules G1–G23), `.claude/` (6 agents; skills `onboard`, `assignment`, `cite-sources` and the method checklists `deep-learning`, `connectivity`, `compute-jobs`; guard, test and cost hooks), `agent_runs/` (handoff contract and templates, including the plan audit and the human-contact log), `tests/conftest.py`, `docs/COMPUTE.md` (per-job CPU/GPU limits, set by Sebastian) |
-| `tools/` | deterministic tools: the dataset profiler `run_profile.py` and its reader registry (`eegprofile/`), copied to `<project>/.harness/tools/`; the `eegharness` package (versioned output folders with provenance, `compare_runs` regression check; core: grouped `splits` with a leakage check, unit-level `permutation`, `chance` levels; optional for deep learning: `seeds`, resumable `folds`; numpy only, torch never required), **vendored** as committed code to `<project>/eegharness/` |
+| `template/` | copied into each project: `CLAUDE.md` (general rules G1–G25), `.claude/` (6 agents; skills `onboard`, `assignment`, `apply-pipeline`, `cite-sources` and the method checklists `deep-learning`, `connectivity`, `compute-jobs`; guard, test and cost hooks), `agent_runs/` (handoff contract and templates, including the plan audit and the human-contact log), `tests/conftest.py`, `docs/COMPUTE.md` (per-job CPU/GPU limits, set by Sebastian) |
+| `tools/` | deterministic tools: the dataset profiler `run_profile.py` and its reader registry (`eegprofile/`), copied to `<project>/.harness/tools/`; the `eegharness` package (versioned output folders with provenance, `compare_runs` regression check; core: grouped `splits` with a leakage check, unit-level `permutation`, `chance` levels; optional for deep learning: `seeds`, resumable `folds`; numpy only, torch never required), **vendored** as committed code to `<project>/eegharness/`; the `eegpipe` package (Sebastian's pipeline: classical suite and baseline, EEGNet/ShallowConvNet with the trainer, phase features, condition-level connectivity with debiased wPLI, BH-FDR and NBS, the edge-gated GNN, grouped folds with leakage gates, the settings validator and profiles, the dev → freeze → confirm runner, paired statistics, and the SSVEP option FBCCA, FBCSP, CCNN, DualBranchFusionCNN; numpy, scipy, scikit-learn; torch for the networks), **vendored** to `<project>/eegpipe/` and protected by the guard (G24) |
 | `new_project.py` | creates or updates a project (harness arm or control arm) |
 | `cost_report.py` | tokens and time of a finished project (either arm) from its transcripts, run by the evaluator after the run |
 | `kit_tests/` | known-answer tests for the tools, the guard and project creation |
@@ -41,6 +41,14 @@ checks that.
 3. `/assignment` for each request: scout → plan → plan audit → approval → engineer →
    tester → auditor → real runs (short ones by the orchestrator, long or GPU ones by
    Sebastian) → results.
+4. `/apply-pipeline` to apply Sebastian's pipeline (`eegpipe`, v0.4): adapter
+   (`adapter.py`: recording → event table) → settings (`configs/pipeline.json` from the
+   `erp` or `ssvep` profile, every value with its source, `eegpipe.settings.validate`) →
+   plan → plan audit → approval → gates and smoke → development run → freeze
+   (`eegpipe.runner.select`, approval) → confirmatory stage (`eegpipe.runner.stage`, frozen
+   commit, resumable, retry rule, provenance checks) → statistics (`eegpipe.runner.collect`:
+   exact Wilcoxon or Pratt, sign test, Hodges-Lehmann with bootstrap interval, Holm) →
+   results (G24, G25).
 
 Every run logs tokens and time per agent (`cost.jsonl`) and every human contact with its
 category (`human_contacts.md`: approval / human-only fact / should-have-found, confirmed
@@ -92,8 +100,10 @@ that file, not the state of `main`. Tested on 2026-11-05 with `v0.2.0` (`011a8b4
 python -m pytest kit_tests -q -p no:cacheprovider
 ```
 
-The full suite needs numpy, mne and pytest (`requirements.txt`) and `pdftotext`;
-with them nothing is skipped (v0.2.0: 190 passed; v0.3.0: 211 passed; v0.3.1: 249 passed). Keep the virtual environment
+The full suite needs numpy, scipy, scikit-learn, mne and pytest (`requirements.txt`),
+`pdftotext`, and torch (CPU build) for the network tests; with them only the CUDA test is skipped
+on a machine without a GPU (v0.2.0: 190 passed; v0.3.0: 211; v0.3.1: 249; v0.4.0: 384 passed, 1
+skipped without CUDA). Keep the virtual environment
 outside the repository (e.g. `~/.venvs/eeg-harness-kit`).
 
 ## Release and privacy
