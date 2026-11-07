@@ -54,6 +54,34 @@ reported per participant/session with a comparison set. -->
 |---|---|---|---|---|
 | | | | | |
 
+## Training, seeds and inherited defaults (G17, G18)
+
+<!-- Only if a model is trained (otherwise N/A). Checklist: .claude/skills/deep-learning/SKILL.md.
+Validation split (from the training fold, grouped by the G13 unit); normalization (per sample,
+or fitted on the training fold); augmentation (training only, class-preserving); every
+transform applied to test samples computable without their labels; test-time normalization
+labelled; seed scheme and number of seeds (at least 3); every default of ported or library
+code listed and set. -->
+
+| Default (ported / library code) | Library value | Value set here | Why |
+|---|---|---|---|
+| | | | |
+
+## Significance budget (G19)
+
+<!-- Before results. Development data (participants/sessions/runs used to build, tune or
+debug) vs confirmatory data, and why they do not overlap. The fixed set of primary
+configurations; the comparisons that may be called significant, their test and unit (G13),
+alpha, family-wise correction (e.g. Holm); chance level for the number of test trials.
+Everything else is exploratory. "N/A" with a reason if nothing will be tested. -->
+
+Development data:
+Confirmatory data:
+
+| Primary comparison | Test, unit | alpha | Correction |
+|---|---|---|---|
+| | | | |
+
 ## Methodological risks
 
 <!-- For each rule this change could break, say how the plan prevents it. -->
@@ -71,16 +99,17 @@ reported per participant/session with a comparison set. -->
 |---|---|---|---|
 | | | | |
 
-## What Sebastian will run
+## Runs (G22)
 
-<!-- Exact commands, where (local or Colab), and expected runtime.
-Agents never run these. -->
+<!-- One row per job. Device: cpu / local GPU / remote. Runtime estimated from the smoke
+test. Who: "orchestrator" only if it fits the limit for its device in docs/COMPUTE.md and its
+committed smoke test passed; otherwise "Sebastian". Checklist: .claude/skills/compute-jobs/SKILL.md. -->
 
-```bash
+| Job | Exact command | Device | Expected runtime (basis) | Seeds | Smoke test | Output folder | Who |
+|---|---|---|---|---|---|---|---|
+| | | | | | | | |
 
-```
-
-Outputs to drop into this folder (each a versioned folder `<out>/<UTC>_<commit>/`, G9):
+Outputs Sebastian drops into this folder (each a versioned folder `<out>/<UTC>_<commit>/`, G9):
 
 ## Sources
 

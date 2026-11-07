@@ -46,8 +46,8 @@ in step 7.
    - Ask the pipeline-engineer to implement them as committed scripts writing
      versioned outputs (G9), the synthetic-tester for known-answer tests (G12),
      and the methods-auditor for a short audit.
-   - Run them yourself if each takes under about 10 minutes on CPU;
-     otherwise list them for Sebastian.
+   - Run them yourself if each fits the CPU limit in `docs/COMPUTE.md`
+     (G22); otherwise list them for Sebastian.
    - Ask the paradigm-analyst for a revision (`## Revision N`) with the
      logged outputs, the label check reported per participant and session
      (G14).

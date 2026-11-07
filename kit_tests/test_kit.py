@@ -118,7 +118,9 @@ def test_vendored_package_conftest_and_first_commit(made):
   for f in src.glob("*.py"):
     assert (h / "eegharness" / f.name).read_bytes() == f.read_bytes()
   tracked = subprocess.run(["git", "-C", str(h), "ls-files"], capture_output=True, text=True).stdout.split()
-  assert {"eegharness/outputs.py", "tests/conftest.py", ".gitignore", "docs/DECISIONS.md"} <= set(tracked)
+  assert {"eegharness/outputs.py", "eegharness/splits.py", "eegharness/permutation.py", "eegharness/chance.py",
+          "eegharness/seeds.py", "eegharness/folds.py", "tests/conftest.py", ".gitignore", "docs/DECISIONS.md",
+          "docs/COMPUTE.md"} <= set(tracked)
   assert subprocess.run(["git", "-C", str(h), "status", "--porcelain"], capture_output=True, text=True).stdout == ""
   assert ".harness" not in (h / "tests" / "conftest.py").read_text().split('"""')[2]
   hooks = json.loads((h / ".claude" / "settings.json").read_text())["hooks"]
@@ -128,17 +130,45 @@ def test_vendored_package_conftest_and_first_commit(made):
   assert not (c / "eegharness").exists()
 
 
-def test_templates_carry_v02_rules_and_files():
-  """Known answer: CLAUDE.md defines G1-G16; run templates include the plan audit and the human-contact log."""
+def test_templates_carry_v03_rules_and_files():
+  """Known answer: CLAUDE.md defines G1-G23; run templates include the plan audit and the human-contact log."""
   claude = (KIT / "template" / "CLAUDE.md").read_text()
-  assert all(f"**G{n}." in claude for n in range(1, 17))
+  assert all(f"**G{n}." in claude for n in range(1, 24)) and "**G24." not in claude
   tpl = KIT / "template" / "agent_runs" / "_templates"
   assert (tpl / "02b_plan_audit.md").exists()
   head = (tpl / "human_contacts.md").read_text()
   for col in ("Sources checked", "Proposed category", "Confirmed category", "should-have-found", "human-only fact"):
     assert col in head
   auditor = (KIT / "template" / ".claude" / "agents" / "methods-auditor.md").read_text()
-  assert "Bash" in auditor.split("---")[1] and "G1–G16" in auditor
+  assert "Bash" in auditor.split("---")[1] and "G1–G23" in auditor and "## Results check" in auditor
+
+
+def test_v03_checklists_rows_and_compute_limits():
+  """Known answer: the three method checklists exist and are named in CLAUDE.md and the agents that
+  apply them; plan/audit templates carry G17-G23 rows; COMPUTE.md has the three limits; no agent
+  or template still points at the v0.2 'What Sebastian will run' section."""
+  t = KIT / "template"
+  claude = (t / "CLAUDE.md").read_text()
+  for name in ("deep-learning", "connectivity", "compute-jobs"):
+    skill = (t / ".claude" / "skills" / name / "SKILL.md").read_text()
+    assert skill.startswith("---\nname: " + name + "\n")
+    assert f".claude/skills/{name}/SKILL.md" in claude
+  for agent in ("pipeline-engineer", "synthetic-tester", "methods-auditor"):
+    assert "deep-learning/SKILL.md" in (t / ".claude" / "agents" / f"{agent}.md").read_text()
+  results = (t / ".claude" / "agents" / "results-analyst.md").read_text()
+  assert "G23" in results and "outside" in results and "L27" in results
+  tpl = t / "agent_runs" / "_templates"
+  plan_audit, audit = (tpl / "02b_plan_audit.md").read_text(), (tpl / "05_audit.md").read_text()
+  for n in (17, 18, 19, 20, 21, 22):
+    assert f"| G{n} " in plan_audit and f"| G{n} " in audit
+  assert "| G23 " in audit and "## Results check" in audit
+  plan = (tpl / "02_plan.md").read_text()
+  assert "## Runs (G22)" in plan and "## Significance budget (G19)" in plan and "Development data" in plan
+  compute = (t / "docs" / "COMPUTE.md").read_text()
+  for key in ("cpu_max_minutes:", "gpu_max_minutes:", "gpu_device:"):
+    assert key in compute
+  stale = [str(f.relative_to(KIT)) for f in t.rglob("*.md") if "What Sebastian will run" in f.read_text()]
+  assert stale == []
 
 
 def test_kit_is_paradigm_neutral():
