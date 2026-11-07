@@ -27,6 +27,8 @@ Verdict: PASS / FAIL
 | G20 Connectivity: bias, phase method, matched baseline, unit permutation, separate criteria fixed before results | | |
 | G21 Filtering on continuous data; sampling rate and channels from the file, by name | | |
 | G22 Each job: device, runtime, smoke test, resumable folds, who runs it under docs/COMPUTE.md | | |
+| G24 The plan configures `eegpipe` only through `configs/pipeline.json`; any gap is a new project module with tests | | |
+| G25 Development and confirmatory data named and disjoint; selection rule label-free and seeded; freeze before any confirmatory run | | |
 | Method checklists (deep-learning / connectivity / compute-jobs) applied, if the plan uses them | | |
 | G9 / G11 Outputs versioned; every derived number planned to come from a committed script | | |
 | G5 Parameters explicit, with source | | |

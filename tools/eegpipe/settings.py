@@ -106,9 +106,13 @@ def validate(cfg, require_sources=True):
     probs.append("selection.development_participants is empty: name the development data (G19)")
   for prior_owner in ("f1",):
     for name, spec in cfg.get(prior_owner, {}).get("models", {}).items():
-      pr = spec.get("params", {}).get("priors")
-      if pr is not None and len(pr) != k:
-        probs.append(f"{prior_owner}.models.{name}.priors has {len(pr)} entries for {k} classes")
+      params = spec.get("params", {})
+      if "priors" in params:
+        pr = params["priors"]
+        if pr is None:
+          probs.append(f"{prior_owner}.models.{name}.priors is null (inferred from the data): set it explicitly (G17 i)")
+        elif len(pr) != k:
+          probs.append(f"{prior_owner}.models.{name}.priors has {len(pr)} entries for {k} classes")
   if require_sources:
     src = cfg.get("sources", {})
     for key in required_sources(cfg):

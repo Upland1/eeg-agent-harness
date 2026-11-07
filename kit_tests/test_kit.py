@@ -117,30 +117,35 @@ def test_vendored_package_conftest_and_first_commit(made):
   src = KIT / "tools" / "eegharness"
   for f in src.glob("*.py"):
     assert (h / "eegharness" / f.name).read_bytes() == f.read_bytes()
+  psrc = KIT / "tools" / "eegpipe"
+  for f in psrc.rglob("*"):
+    if f.is_file() and "__pycache__" not in f.parts:
+      assert (h / "eegpipe" / f.relative_to(psrc)).read_bytes() == f.read_bytes(), f
   tracked = subprocess.run(["git", "-C", str(h), "ls-files"], capture_output=True, text=True).stdout.split()
   assert {"eegharness/outputs.py", "eegharness/splits.py", "eegharness/permutation.py", "eegharness/chance.py",
           "eegharness/seeds.py", "eegharness/folds.py", "tests/conftest.py", ".gitignore", "docs/DECISIONS.md",
-          "docs/COMPUTE.md"} <= set(tracked)
+          "docs/COMPUTE.md", "eegpipe/__init__.py", "eegpipe/runner/stage.py", "eegpipe/profiles/erp.json",
+          "eegpipe/ssvep/fbcca.py"} <= set(tracked)
   assert subprocess.run(["git", "-C", str(h), "status", "--porcelain"], capture_output=True, text=True).stdout == ""
   assert ".harness" not in (h / "tests" / "conftest.py").read_text().split('"""')[2]
   hooks = json.loads((h / ".claude" / "settings.json").read_text())["hooks"]
   assert "SubagentStop" in hooks and "Stop" in hooks and (h / ".claude" / "hooks" / "log_cost.py").exists()
   hooks_c = json.loads((c / ".claude" / "settings.json").read_text())["hooks"]
   assert set(hooks_c) == {"PreToolUse"} and not (c / ".claude" / "hooks" / "log_cost.py").exists()  # cost: after the run
-  assert not (c / "eegharness").exists()
+  assert not (c / "eegharness").exists() and not (c / "eegpipe").exists()
 
 
 def test_templates_carry_v03_rules_and_files():
-  """Known answer: CLAUDE.md defines G1-G23; run templates include the plan audit and the human-contact log."""
+  """Known answer: CLAUDE.md defines G1-G25; run templates include the plan audit and the human-contact log."""
   claude = (KIT / "template" / "CLAUDE.md").read_text()
-  assert all(f"**G{n}." in claude for n in range(1, 24)) and "**G24." not in claude
+  assert all(f"**G{n}." in claude for n in range(1, 26)) and "**G26." not in claude
   tpl = KIT / "template" / "agent_runs" / "_templates"
   assert (tpl / "02b_plan_audit.md").exists()
   head = (tpl / "human_contacts.md").read_text()
   for col in ("Sources checked", "Proposed category", "Confirmed category", "should-have-found", "human-only fact"):
     assert col in head
   auditor = (KIT / "template" / ".claude" / "agents" / "methods-auditor.md").read_text()
-  assert "Bash" in auditor.split("---")[1] and "G1–G23" in auditor and "## Results check" in auditor
+  assert "Bash" in auditor.split("---")[1] and "G1–G25" in auditor and "## Results check" in auditor
 
 
 def test_v03_checklists_rows_and_compute_limits():
@@ -191,3 +196,40 @@ def test_sibling_runs_blocked_own_folder_allowed(tmp_path):
   new_project.main([str(p), "--name", "r-h1", "--eval-dir", str(ev), "--allow-dirty"])
   assert guard(p, "Read", {"file_path": str(p / "inputs" / "x.md")}) == 0
   assert guard(p, "Read", {"file_path": str(tmp_path / "runs" / "r-h2" / "docs" / "x.md")}) == 2
+
+
+def test_v04_apply_pipeline_skill_templates_and_rules():
+  """Known answer: the /apply-pipeline skill and its four templates exist; G24 and G25 are in CLAUDE.md
+  and in the plan-audit and audit templates; PARADIGM.md asks for the pipeline settings; the skill
+  names every runner step and both stop points."""
+  t = KIT / "template"
+  skill = (t / ".claude" / "skills" / "apply-pipeline" / "SKILL.md").read_text()
+  assert skill.startswith("---\nname: apply-pipeline\n")
+  for step in ("eegpipe.runner.select", "eegpipe.runner.stage", "eegpipe.runner.collect", "eegpipe.settings.validate",
+               "STOP: Sebastian approves the plan", "STOP: Sebastian approves the freeze", "--interim"):
+    assert step in skill, step
+  tpl = t / "agent_runs" / "_templates"
+  for f in ("00_assignment.md", "02_plan_pipeline.md", "02b_audit_rows.md", "06_results_pipeline.md"):
+    assert (tpl / "apply_pipeline" / f).exists()
+  for n in (24, 25):
+    assert f"| G{n} " in (tpl / "02b_plan_audit.md").read_text() and f"| G{n} " in (tpl / "05_audit.md").read_text()
+  assert "Pipeline settings this study needs" in (tpl / "onboarding" / "PARADIGM.md").read_text()
+  assert "/apply-pipeline" in (t / "CLAUDE.md").read_text()
+
+
+def test_guard_protects_vendored_eegpipe(made):
+  """Known answer (G24): writing into eegpipe/ by Edit/Write, sed -i, cp, a redirect or from inside
+  the folder is blocked (exit 2) with the G24 message; reading it, importing it and running its
+  modules pass (exit 0)."""
+  _, h, _ = made
+  for tool, inp in (("Write", {"file_path": str(h / "eegpipe" / "x.py"), "content": "x"}),
+                    ("Edit", {"file_path": str(h / "eegpipe" / "settings.py"), "old_string": "a", "new_string": "b"}),
+                    ("Bash", {"command": "sed -i s/a/b/ eegpipe/settings.py"}),
+                    ("Bash", {"command": "cp /tmp/x.py eegpipe/runner/stage.py"}),
+                    ("Bash", {"command": "echo x > eegpipe/x.py"}),
+                    ("Bash", {"command": "cd eegpipe && rm settings.py"})):
+    assert guard(h, tool, inp) == 2, (tool, inp)
+  for tool, inp in (("Read", {"file_path": str(h / "eegpipe" / "settings.py")}),
+                    ("Bash", {"command": "cat eegpipe/settings.py"}),
+                    ("Bash", {"command": "python -m eegpipe.runner.stage --config configs/pipeline.json --out outputs/s --dry-run"})):
+    assert guard(h, tool, inp) == 0, (tool, inp)

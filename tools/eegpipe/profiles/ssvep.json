@@ -1,0 +1,488 @@
+{
+ "profile": "ssvep",
+ "source": "mas-ssvep-eeg-xai v1.0.4 (f725369), the values of Sebastian's SSVEP pipeline; every value a starting draft the plan confirms or changes (G17 i). Frequencies, harmonics response, window and channels have NO default: from PARADIGM.md.",
+ "label_scheme": "unit_label",
+ "ssvep": {
+  "enabled": true,
+  "stimulus_freqs_hz": null,
+  "stimulus_freqs_note": "REQUIRED from PARADIGM.md: one frequency per class, in class order ([M] used 24, 20, 15, 10.9091, 8.5714 Hz for its study)",
+  "filterbank": {
+   "bank": [
+    {
+     "kind": "cheby1",
+     "order": 4,
+     "ripple_db": 3.0,
+     "band_hz": [
+      6.0,
+      90.0
+     ]
+    },
+    {
+     "kind": "cheby1",
+     "order": 4,
+     "ripple_db": 3.0,
+     "band_hz": [
+      14.0,
+      90.0
+     ]
+    },
+    {
+     "kind": "cheby1",
+     "order": 4,
+     "ripple_db": 3.0,
+     "band_hz": [
+      22.0,
+      90.0
+     ]
+    }
+   ],
+   "fbcsp_bank": [
+    {
+     "kind": "butter",
+     "order": 4,
+     "band_hz": [
+      7,
+      12
+     ]
+    },
+    {
+     "kind": "butter",
+     "order": 4,
+     "band_hz": [
+      13,
+      17
+     ]
+    },
+    {
+     "kind": "butter",
+     "order": 4,
+     "band_hz": [
+      18,
+      26
+     ]
+    },
+    {
+     "kind": "butter",
+     "order": 4,
+     "band_hz": [
+      27,
+      36
+     ]
+    },
+    {
+     "kind": "butter",
+     "order": 4,
+     "band_hz": [
+      38,
+      52
+     ]
+    }
+   ],
+   "bank_note": "bank = the FBCCA bank of [M] (src/preprocessing/windowing.py fbcca_filter_bank: Chebyshev I, order 4, 3 dB, from 6/14/22 Hz to min(90, fs/2 - 1)); fbcsp_bank = [M] DEFAULT_SUBBANDS (Butterworth 4); the harmonic bank k*f +- 1 Hz (configs/pipeline_config.yaml l.41-42) is an alternative the plan may choose",
+   "padlen": 1000,
+   "window_s": null,
+   "window_rounding": "floor",
+   "tol": 0.001,
+   "window_note": "REQUIRED from PARADIGM.md (analysis window per trial, e.g. [0, 1] s after stimulus onset)"
+  },
+  "fbcca": {
+   "enabled": true,
+   "n_harmonics": 3,
+   "response_multiple": 1,
+   "weight_a": 1.25,
+   "weight_b": 0.25,
+   "response_multiple_note": "2 for pattern-reversal / checkerboard stimulation whose response is at twice the rate ([M] PF-39); from PARADIGM"
+  }
+ },
+ "f1": {
+  "source": "mas-ssvep-eeg-xai v1.0.4 (f725369) get_sklearn_model_suite (the same 10 models as the erp profile); flagship FBCSP+FBCCA -> Shrinkage-LDA (scripts/benchmarks/benchmark_loso.py l.296-298)",
+  "primary": {
+   "model": "Shrinkage-LDA lsqr",
+   "features": "fbcsp"
+  },
+  "feature_spaces": [
+   "fbcsp",
+   "fbcca",
+   "fbcsp+fbcca"
+  ],
+  "feature_spaces_note": "raw = decimated 4-14 Hz epoch flattened channel-major (8 x 51 = 408); cca = the baseline's CCA spatial filter fitted in-fold (51 x 3 = 153)",
+  "scaler": {
+   "class": "StandardScaler",
+   "with_mean": true,
+   "with_std": true,
+   "fit": "training fold only (inside the Pipeline)"
+  },
+  "model_seed": 20261107,
+  "model_seed_source": "[own]: the plan's fold seed 20261107 reused for the saga/SGD random_state (M default 42)",
+  "model_order": [
+   "Shrinkage-LDA lsqr"
+  ],
+  "models": {
+   "Ridge": {
+    "class": "RidgeClassifier",
+    "params": {
+     "alpha": 1.0,
+     "class_weight": "balanced",
+     "copy_X": true,
+     "fit_intercept": true,
+     "max_iter": null,
+     "positive": false,
+     "random_state": null,
+     "solver": "auto",
+     "tol": 0.0001
+    },
+    "source": "values set in M: ['alpha', 'class_weight']; every other parameter = scikit-learn 1.9.1 default, written out (G5)"
+   },
+   "LogReg L2": {
+    "class": "LogisticRegression",
+    "params": {
+     "C": 1.0,
+     "class_weight": "balanced",
+     "dual": false,
+     "fit_intercept": true,
+     "intercept_scaling": 1,
+     "l1_ratio": 0.0,
+     "max_iter": 1000,
+     "n_jobs": null,
+     "random_state": null,
+     "solver": "lbfgs",
+     "tol": 0.0001,
+     "verbose": 0,
+     "warm_start": false
+    },
+    "source": "values set in M: ['C', 'class_weight', 'l1_ratio', 'max_iter', 'solver']; every other parameter = scikit-learn 1.9.1 default, written out (G5)"
+   },
+   "LogReg L1": {
+    "class": "LogisticRegression",
+    "params": {
+     "C": 1.0,
+     "class_weight": "balanced",
+     "dual": false,
+     "fit_intercept": true,
+     "intercept_scaling": 1,
+     "l1_ratio": 1.0,
+     "max_iter": 3000,
+     "n_jobs": null,
+     "random_state": 20261107,
+     "solver": "saga",
+     "tol": 0.001,
+     "verbose": 0,
+     "warm_start": false
+    },
+    "source": "values set in M: ['C', 'class_weight', 'l1_ratio', 'max_iter', 'random_state', 'solver', 'tol']; every other parameter = scikit-learn 1.9.1 default, written out (G5); random_state = f1.model_seed (M: seed argument, default 42) [own]"
+   },
+   "LogReg ElasticNet": {
+    "class": "LogisticRegression",
+    "params": {
+     "C": 1.0,
+     "class_weight": "balanced",
+     "dual": false,
+     "fit_intercept": true,
+     "intercept_scaling": 1,
+     "l1_ratio": 0.5,
+     "max_iter": 3000,
+     "n_jobs": null,
+     "random_state": 20261107,
+     "solver": "saga",
+     "tol": 0.001,
+     "verbose": 0,
+     "warm_start": false
+    },
+    "source": "values set in M: ['C', 'class_weight', 'l1_ratio', 'max_iter', 'random_state', 'solver', 'tol']; every other parameter = scikit-learn 1.9.1 default, written out (G5); random_state = f1.model_seed (M: default 42) [own]"
+   },
+   "SGD log-loss": {
+    "class": "SGDClassifier",
+    "params": {
+     "alpha": 0.001,
+     "average": false,
+     "class_weight": "balanced",
+     "early_stopping": false,
+     "epsilon": 0.1,
+     "eta0": 0.01,
+     "fit_intercept": true,
+     "l1_ratio": 0.5,
+     "learning_rate": "optimal",
+     "loss": "log_loss",
+     "max_iter": 2000,
+     "n_iter_no_change": 5,
+     "n_jobs": null,
+     "penalty": "elasticnet",
+     "power_t": 0.5,
+     "random_state": 20261107,
+     "shuffle": true,
+     "tol": 0.001,
+     "validation_fraction": 0.1,
+     "verbose": 0,
+     "warm_start": false
+    },
+    "source": "values set in M: ['alpha', 'class_weight', 'l1_ratio', 'loss', 'max_iter', 'penalty', 'random_state']; every other parameter = scikit-learn 1.9.1 default, written out (G5); random_state = f1.model_seed (M: default 42) [own]"
+   },
+   "SGD PA": {
+    "class": "SGDClassifier",
+    "params": {
+     "alpha": 0.0001,
+     "average": false,
+     "class_weight": null,
+     "early_stopping": false,
+     "epsilon": 0.1,
+     "eta0": 1.0,
+     "fit_intercept": true,
+     "l1_ratio": 0.15,
+     "learning_rate": "pa1",
+     "loss": "hinge",
+     "max_iter": 2000,
+     "n_iter_no_change": 5,
+     "n_jobs": null,
+     "penalty": null,
+     "power_t": 0.5,
+     "random_state": 20261107,
+     "shuffle": true,
+     "tol": 0.001,
+     "validation_fraction": 0.1,
+     "verbose": 0,
+     "warm_start": false
+    },
+    "source": "values set in M: ['eta0', 'learning_rate', 'loss', 'max_iter', 'penalty', 'random_state']; every other parameter = scikit-learn 1.9.1 default, written out (G5); random_state = f1.model_seed (M: default 42) [own]; class_weight None as in M (M sets none for this model)"
+   },
+   "LDA svd": {
+    "class": "LinearDiscriminantAnalysis",
+    "params": {
+     "covariance_estimator": null,
+     "n_components": null,
+     "priors": null,
+     "shrinkage": null,
+     "solver": "svd",
+     "store_covariance": false,
+     "tol": 0.0001
+    },
+    "source": "values set in M: ['priors', 'solver']; every other parameter = scikit-learn 1.9.1 default, written out (G5); priors [0.5, 0.5] = equal priors as the baseline (D-005 item 3; plan F1); M leaves priors at the class proportions"
+   },
+   "Shrinkage-LDA lsqr": {
+    "class": "LinearDiscriminantAnalysis",
+    "params": {
+     "covariance_estimator": null,
+     "n_components": null,
+     "priors": null,
+     "shrinkage": "auto",
+     "solver": "lsqr",
+     "store_covariance": false,
+     "tol": 0.0001
+    },
+    "source": "values set in M: ['priors', 'shrinkage', 'solver']; every other parameter = scikit-learn 1.9.1 default, written out (G5); priors [0.5, 0.5] = equal priors as the baseline (D-005 item 3; plan F1); M leaves priors at the class proportions. F1 PRIMARY on raw features"
+   },
+   "Shrinkage-LDA eigen": {
+    "class": "LinearDiscriminantAnalysis",
+    "params": {
+     "covariance_estimator": null,
+     "n_components": null,
+     "priors": null,
+     "shrinkage": "auto",
+     "solver": "eigen",
+     "store_covariance": false,
+     "tol": 0.0001
+    },
+    "source": "values set in M: ['priors', 'shrinkage', 'solver']; every other parameter = scikit-learn 1.9.1 default, written out (G5); priors [0.5, 0.5] as the baseline (D-005 item 3; plan F1); M leaves priors at the class proportions"
+   },
+   "QDA": {
+    "class": "QuadraticDiscriminantAnalysis",
+    "params": {
+     "covariance_estimator": null,
+     "priors": null,
+     "reg_param": 0.5,
+     "shrinkage": null,
+     "solver": "svd",
+     "store_covariance": false,
+     "tol": 0.0001
+    },
+    "source": "values set in M: ['priors', 'reg_param']; every other parameter = scikit-learn 1.9.1 default, written out (G5); reg_param 0.5 as M; priors [0.5, 0.5] [own]: same reason as LDA (imbalance must not set the threshold)"
+   }
+  },
+  "priors_note": "REQUIRED: set priors of LDA/QDA to 1/k for the k classes (or as the plan decides); null is refused",
+  "fbcsp": {
+   "n_components": 1,
+   "reg": 1e-06,
+   "var_floor": 1e-12,
+   "source": "[M] src/features/ssvep/fbcsp_extraction.py CSP_REG 1e-6, VAR_FLOOR 1e-12 (l.32-33); m = 1 (benchmark_loso.py l.291)"
+  },
+  "fbcca": {
+   "fs_hz": null,
+   "stimulus_freqs_hz": null,
+   "n_harmonics": 3,
+   "response_multiple": 1,
+   "weight_a": 1.25,
+   "weight_b": 0.25,
+   "source": "fs and frequencies from the header / PARADIGM (required); H 3, weights b^-1.25 + 0.25: [M] fbcca_extraction.py l.35, l.51 (Chen et al. 2015)"
+  }
+ },
+ "networks": {
+  "enabled": true,
+  "description": "trainer of [M] src/models/cnn/training.py (identical table to the erp profile: AdamW 1e-3 / 0.01, cosine to 1e-5, label smoothing 0.1, batch 16, 150 epochs, patience 25, val 20 %); EEGNet kernel = fs_out // 2; the [M] augmentation (scale, noise, 10 % shift, same-class mixup, p 0.5 each) is available, OFF by default",
+  "source": "[M] ../mas-ssvep-eeg-xai v1.0.4 (commit f725369) src/models/cnn/eegnet.py, shallow_conv_net.py, training.py::fit_network, src/preprocessing/dataset/augmentation.py",
+  "primary": "eegnet",
+  "order": [
+   "eegnet",
+   "shallowconvnet"
+  ],
+  "device": "cuda",
+  "device_note": "a configured CUDA device that is unavailable is an error, never a silent CPU fallback",
+  "seeds": [
+   20261107,
+   20261108,
+   20261109
+  ],
+  "seeds_note": "plan 'Seeds': torch.manual_seed(seed) immediately before the model is built; DataLoader generator seeded with the same seed; participant/session score = mean over seeds",
+  "deterministic": {
+   "cudnn_deterministic": true,
+   "cudnn_benchmark": false,
+   "use_deterministic_algorithms": true,
+   "cublas_workspace_config": ":4096:8",
+   "source": "plan F2 'deterministic cuDNN set'; PyTorch 2.13 Reproducibility notes (CUBLAS_WORKSPACE_CONFIG required by use_deterministic_algorithms on CUDA)"
+  },
+  "models": {
+   "eegnet": {
+    "class": "EEGNet",
+    "params": {
+     "F1": 8,
+     "D": 2,
+     "F2": 16,
+     "kernel_length": 64,
+     "sep_kernel_length": 16,
+     "pool1": 4,
+     "pool2": 8,
+     "dropout_rate": 0.5,
+     "max_norm": 1.0,
+     "dense_max_norm": 0.25
+    },
+    "source": "plan F2 ERP configuration (kernel 64, F1 8, D 2, F2 16, dropout 0.5; brief B section 2, Lawhern 2018); sep_kernel_length 16, pool1 4, pool2 8, max_norm 1.0 hard-coded in M eegnet.py l.34-38, l.27; kernel 64 = fs_out // 2 as M training.py model_factory (kernel = fs // 2); checked against Lawhern et al. 2018 arXiv:1611.08024v4 Table 2 and reference code arl-eegmodels EEGModels.py::EEGNet (brief, EEGNet verification 2026-11-07): dense_max_norm 0.25 (Table 2 Dense max norm = 0.25; code norm_rate 0.25) and same padding of the temporal and separable convolutions (Table 2 mode same) added in D-013; trainer departs from the paper by design (D-013)",
+    "input_shape": "(B, 1, 8, 102)"
+   },
+   "shallowconvnet": {
+    "class": "ShallowConvNet",
+    "params": {
+     "F1": 40,
+     "temporal_kernel_length": 13,
+     "pool_kernel_length": 38,
+     "pool_stride": 8,
+     "dropout_rate": 0.5
+    },
+    "source": "F1 40 and dropout 0.5 as M shallow_conv_net.py defaults; M's 25 / 75 / 15 samples are sized for 256 Hz recordings (M connectivity_extraction.py: recordings 256 Hz) and are halved for the 128 Hz input, rounded up (12.5 -> 13, 37.5 -> 38, 7.5 -> 8) [own]: with M's values the pool would cover the whole 78-sample convolution output (one pooled value)"
+   }
+  },
+  "trainer": {
+   "optimizer": "AdamW",
+   "lr": 0.001,
+   "betas": [
+    0.9,
+    0.999
+   ],
+   "eps": 1e-08,
+   "weight_decay": 0.01,
+   "amsgrad": false,
+   "scheduler": "CosineAnnealingLR, stepped once per epoch",
+   "T_max": 150,
+   "eta_min": 1e-05,
+   "label_smoothing": 0.1,
+   "batch_size": 16,
+   "min_batch_size": 2,
+   "max_epochs": 150,
+   "patience": 25,
+   "val_frac": 0.2,
+   "val_split": "first split of StratifiedGroupKFold(n_splits=max(2, round(1/val_frac)), shuffle=True, random_state=val_seed) over the training-fold epochs, groups = block uid",
+   "val_seed": 20261113,
+   "class_weights": "balanced",
+   "class_weights_rule": "w_c = n_fit / (2 * n_fit_c) over the fitting epochs (training blocks minus validation blocks); plan F2 'class weights from training blocks' (not in M)",
+   "val_loss_class_weighted": true,
+   "val_loss_note": "validation loss = class-weighted mean NLL without label smoothing [own]; M uses the plain NLL",
+   "normalisation": "per channel: mean and std over all fitting epochs and time samples, std + norm_eps (M fit_stats); no per-epoch z-scoring (M's trainer does not do it)",
+   "norm_eps": 1e-06,
+   "predict_chunk": 256,
+   "decision": "argmax of the softmax",
+   "restore": "state with the lowest validation loss",
+   "source": "[M] ../mas-ssvep-eeg-xai v1.0.4 (commit f725369) src/models/cnn/training.py: BATCH_SIZE 16, LR 1e-3, WEIGHT_DECAY 0.01, ETA_MIN 1e-5, LABEL_SMOOTHING 0.1, VAL_FRAC 0.2, MAX_EPOCHS 150, PATIENCE 25, NORM_EPS 1e-6 (l.35-43), T_max = max_epochs (l.115), predict chunk 256 (l.69), min batch 2 (l.128); AdamW betas/eps/amsgrad = torch 2.13 defaults written out; val_seed and class weights from the plan"
+  },
+  "augmentation": {
+   "enabled": false,
+   "note": "plan F2: OFF in all primary runs; noise + amplitude scaling only as a labelled secondary ablation (time shift, reversal, frequency shift and mixup not ported)",
+   "p_scale": 0.5,
+   "scale_range": [
+    0.9,
+    1.1
+   ],
+   "p_noise": 0.5,
+   "noise_std_frac": 0.05,
+   "source": "[M] ../mas-ssvep-eeg-xai v1.0.4 (commit f725369) src/preprocessing/dataset/augmentation.py: p 0.5 per op, scale U(0.9, 1.1), noise std 0.05 x the epoch's per-channel std; order scale -> noise as M's order",
+   "p_shift": 0.5,
+   "shift_frac": 0.1,
+   "p_mixup": 0.5
+  },
+  "null": {
+   "methods": [
+    "f2/eegnet"
+   ],
+   "seeds": [
+    20261107
+   ],
+   "n_permutations": 0,
+   "seed": 20261105,
+   "rng": "numpy.random.default_rng([seed, p]) per permutation p; block targets shuffled within each file (session_eval.draw_session_shuffles, the same draws as the first 20 of the F1 null); folds fixed; network refitted",
+   "reporting": "descriptive only (null BA mean, sd, min, median, max per file and pooled, next to the observed BA of the same seed); no p-value (plan 'Statistics')",
+   "scope_note": "[own] primary network and first seed only: 20 permutations x 8 folds = 160 fits"
+  }
+ },
+ "statistics": {
+  "source": "plan 'Statistics' (Stage 2) and P2-6; D-016",
+  "participant_score": "balanced accuracy pooled over all retained epochs of the participant's session (pooled.csv); networks: seed 'mean' row (mean over seeds)",
+  "difference": "method - baseline, per participant",
+  "round_decimals": 12,
+  "round_decimals_source": "[own]: zeros and ties of |d| are detected after rounding d to 12 decimals, so floating-point noise (~1e-16) does not hide an exact tie",
+  "alternative": "two-sided",
+  "wilcoxon_exact": {
+   "zero_method": "wilcox",
+   "method": "exact"
+  },
+  "wilcoxon_zeros_or_ties": {
+   "zero_method": "pratt",
+   "method": "approx",
+   "correction": false
+  },
+  "sign_test": "scipy.stats.binomtest(n_positive, n_nonzero, 0.5, alternative two-sided); direction = sign(n_positive - n_negative); Wilcoxon direction = sign(R+ - R-); different directions -> 'not robust' (P2-6)",
+  "hodges_lehmann": "median of the Walsh averages (d_i + d_j) / 2, i <= j",
+  "bootstrap": {
+   "n_resamples": 10000,
+   "seed": 20261110,
+   "ci": 0.95,
+   "unit": "participant",
+   "interval": "percentile, numpy.quantile method linear",
+   "rng": "numpy.random.default_rng(seed), a fresh generator per method (identical resamples when n is equal)"
+  },
+  "holm_family": [
+   "f1/raw/Shrinkage-LDA lsqr",
+   "f2/eegnet",
+   "f3/phase_features/delta",
+   "f4/gnn_phase"
+  ],
+  "holm_missing_p": 1.0,
+  "holm_missing_p_source": "[own]: the family stays 4; a comparison without a p-value enters Holm with p = 1 (conservative)",
+  "alpha": 0.05,
+  "min_n": 12,
+  "min_n_rule": "per comparison: participants with valid results for both the method and the baseline (zeros included); fewer -> descriptive only (plan; P2-6)",
+  "separate_roles": [
+   "reported_separately"
+  ],
+  "interim_stamp": "INTERIM — not confirmatory"
+ },
+ "permutation": {
+  "methods": [
+   "baseline",
+   "f1/raw/Shrinkage-LDA lsqr"
+  ],
+  "null": "shuffle_block_targets",
+  "description": "per permutation p: rng = numpy.random.default_rng([seed, p]); for every file in sorted order its observed block targets are permuted across its blocks (evaluate.draw_shuffled_targets, n_perm 1); labels recomputed; folds fixed; the whole method refit in every fold; per-file BA from the pooled out-of-fold predictions of the file",
+  "n_permutations": 1000,
+  "seed": 20261105,
+  "critical_value_percentile": 95.0,
+  "percentile_method": "linear",
+  "n_jobs": 16,
+  "chunk_size": 8
+ }
+}

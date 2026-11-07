@@ -36,7 +36,9 @@ Verdict: PASS / FAIL
 | G21 Continuous filtering; metadata from the file; channels by name | | |
 | G22 Smoke test committed; resumable folds with configuration; runtimes and device | | |
 | G23 Derivations through committed, tested tools; no paths outside the repository | | |
-| G24+ Rules added from later incidents | | |
+| G24 `eegpipe/` untouched; gaps are new project modules with tests | | |
+| G25 Confirmatory outputs from the frozen commit only; selection label-free; refusals logged | | |
+| G26+ Rules added from later incidents | | |
 | 02b_plan_audit.md required changes were made | | |
 | Tests cover every change in 03 | | |
 | Changes match 02_plan.md | | |

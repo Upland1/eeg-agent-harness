@@ -98,6 +98,22 @@ logged outputs ("## Revision N"). -->
 |---|---|---|---|---|
 | | | | | |
 
+## 13. Pipeline settings this study needs (for /apply-pipeline)
+
+<!-- One row per value eegpipe needs from the paradigm, each with its evidence (section above or
+source). Leave UNKNOWN where nothing written answers it (G16). -->
+
+| Setting | Value | Evidence |
+|---|---|---|
+| Design family (profile): event-related or frequency-tagged | | |
+| Classes (names, in class-index order) | | |
+| Exchangeable unit (G13) and label scheme (label per unit, or per epoch from a unit target) | | |
+| Label rule (event codes -> labels) | | |
+| Epoch windows (rejection, analysis, network input, phase) | | |
+| Frequencies: stimulation frequencies per class and response multiple, or bands of interest | | |
+| Contrast for condition-level connectivity (class a vs class b) | | |
+| Development data (participants or parts) and participants reported separately | | |
+
 ## Sources
 
 1.

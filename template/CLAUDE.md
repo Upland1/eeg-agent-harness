@@ -246,8 +246,29 @@ A handoff that cites a path outside the repository cannot be READY. The auditor 
 both in a results check. Extends G11. *Incident: the results-analyst computed write-up
 numbers with scratch scripts in a temporary folder although G11 existed (L27).*
 
+**G24. The pipeline library is configured, never edited.** `eegpipe/` (Sebastian's pipeline:
+classical suite, EEGNet/ShallowConvNet and their trainer, phase features and connectivity
+with debiased wPLI, FDR and NBS, the edge-gated GNN, grouped folds with leakage gates, the
+stage runner and paired statistics, and a frequency-tagging option) is vendored code like
+`eegharness/`. A project changes what it does only through `configs/pipeline.json`, every
+value with its source (`eegpipe.settings`). A study that needs something the library does not
+do adds a NEW project module with its own tests (G2, G12) and a DECISIONS.md entry naming the
+gap; it never patches, copies-and-edits or monkeypatches `eegpipe`. *Incident: an earlier study
+re-implemented its methods per script, and two versions of one estimator drifted apart.*
+
+**G25. Confirmatory runs only from a frozen commit.** The data used to develop, tune or debug
+(named in the settings, G19) are separated before any confirmatory number exists; the
+confirmatory selection is label-free and seeded (`eegpipe.runner.select`), committed with the
+settings (the freeze, approved by Sebastian); `eegpipe.runner.stage` refuses a dirty tree,
+checks HEAD and the tree before and after every job, and refuses outputs whose commit,
+settings hash or epochs/folds hashes disagree; `eegpipe.runner.collect` refuses an incomplete
+root unless the analysis is stamped INTERIM. Nothing computed before the freeze is reported as
+confirmatory. The auditor checks the freeze commit, the selection and every refusal in the log.
+*Incident: in a methods port the development session re-entered the confirmatory test, and a
+part was nearly rerun at a different commit (L28; methods-port audit C4).*
+
 **Rules grow from experience.** When a test or the auditor catches a new kind of mistake,
-the orchestrator writes up the incident and proposes a new rule (G24, G25, …). Sebastian
+the orchestrator writes up the incident and proposes a new rule (G26, G27, …). Sebastian
 approves it before it is added here, with a one-line reference to the incident. Rules
 that apply to any EEG study are also proposed to the harness (next version, never the
 running one).
@@ -264,6 +285,10 @@ running one).
   (`permutation`), chance levels (`chance`), seeding (`seeds`) and resumable folds
   (`folds`). torch is never required by `eegharness`. Project code imports only committed
   files, never `.harness/`.
+- Sebastian's pipeline is vendored, committed code in `eegpipe/` (G24): configured in
+  `configs/pipeline.json` (`eegpipe.settings`; one profile per design family), read through the
+  project's `adapter.py` (recording -> event table), run with `eegpipe.runner` (G25). It needs
+  numpy, scipy and scikit-learn; torch only for the networks and the GNN.
 - Jobs run under the limits in `docs/COMPUTE.md` (G22); longer or remote jobs are listed in
   the plan's "Runs" section for Sebastian.
 
@@ -273,7 +298,7 @@ running one).
 - Never commit data, `CLAUDE.md`, `.claude/`, `.harness/` or `agent_runs/`, and never
   mention Claude in commit messages or committed files.
 - Never loosen a test tolerance without saying so explicitly in the handoff.
-- Never edit files in `reports/`, `.harness/` or `eegharness/` by hand.
+- Never edit files in `reports/`, `.harness/`, `eegharness/` or `eegpipe/` by hand.
 - Never start background work (background shells, detached jobs) that you do not wait for
   and collect before you finish.
 - Never look for answer keys, evaluation material or other projects' results outside this
@@ -295,6 +320,9 @@ running one).
 2. **Then one run per assignment** (`/assignment`): 00_assignment → 01_brief → 02_plan →
    02b_plan_audit → [Sebastian approves] → 03_changes → 04_tests → 05_audit →
    runs (G22) → 06_results → results check (G23, in 05_audit).
+3. **Applying Sebastian's pipeline** (`/apply-pipeline`, G24, G25): adapter → settings →
+   02_plan → 02b_plan_audit → [Sebastian approves] → gates and smoke → development run →
+   freeze [Sebastian approves] → confirmatory stage → statistics → 06_results → results check.
 
 Every run keeps `log.md` (one row per agent call, with tokens and time),
 `human_contacts.md` (G16) and `cost.jsonl` (written by a hook).

@@ -92,13 +92,23 @@ def make_control(dest: Path, a, info):
   ensure_git(dest, EXCLUDE_CONTROL)
 
 
+VENDORED = ("eegharness", "eegpipe")
+
+
 def vendor(dest: Path) -> bool:
-  """Copy tools/eegharness to <dest>/eegharness (committed project code, L11). True if it changed."""
-  src, dst = KIT / "tools" / "eegharness", dest / "eegharness"
+  """Copy tools/eegharness and tools/eegpipe into the project (committed code, L11; G24). True if
+  either changed."""
+  return any([_vendor_one(dest, name) for name in VENDORED])
+
+
+def _vendor_one(dest: Path, name: str) -> bool:
+  src, dst = KIT / "tools" / name, dest / name
   ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
   if dst.exists():
+    files = [f for f in src.rglob("*") if f.is_file() and "__pycache__" not in f.parts and f.suffix != ".pyc"]
+    have = [f for f in dst.rglob("*") if f.is_file() and "__pycache__" not in f.parts and f.suffix != ".pyc"]
     same = all((dst / f.relative_to(src)).is_file() and (dst / f.relative_to(src)).read_bytes() == f.read_bytes()
-               for f in src.rglob("*.py")) and len(list(dst.rglob("*.py"))) == len(list(src.rglob("*.py")))
+               for f in files) and len(have) == len(files)
     if same:
       return False
     shutil.rmtree(dst)
@@ -108,7 +118,8 @@ def vendor(dest: Path) -> bool:
 
 def first_commit(dest: Path, info: dict):
   """Commit the project skeleton on main, so agents start from a clean tree."""
-  paths = [p for p in (".gitignore", "README.md", "docs/DECISIONS.md", "docs/COMPUTE.md", "tests/conftest.py", "eegharness", "inputs")
+  paths = [p for p in (".gitignore", "README.md", "docs/DECISIONS.md", "docs/COMPUTE.md", "tests/conftest.py", "eegharness",
+                       "eegpipe", "inputs")
            if (dest / p).exists()]
   git = ["git", "-C", str(dest)]
   subprocess.run(git + ["add", "--", *paths], check=True)
@@ -160,7 +171,7 @@ def make_harness(dest: Path, a, info):
   if fresh:
     first_commit(dest, info)
   elif vendored:
-    print(f"eegharness/ was updated to {info['version']}: review and commit it (git add eegharness).")
+    print(f"eegharness/ and eegpipe/ were updated to {info['version']}: review and commit them (git add eegharness eegpipe).")
 
 
 def main(argv=None):

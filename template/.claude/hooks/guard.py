@@ -16,7 +16,7 @@ Every path a tool call names is resolved to an absolute, normalized path before 
 (lesson L26): relative to the shell's working directory as `cd`/`pushd` change it, with `..`,
 symlinks, `~`, `$VAR`s assigned in the same command, `--option=path`, globs, and string
 literals in heredocs and `-c` code. Resolved paths are checked against the evaluation folder,
-the blocklist terms and the protected folders (data/raw, .harness, eegharness). A recursive
+the blocklist terms and the protected folders (data/raw, .harness, eegharness, eegpipe). A recursive
 tool (grep -r, find, rg, tree, du, ls -R, tar, zip, rsync, cp -r) aimed at a folder that
 contains the evaluation folder is blocked as well.
 
@@ -121,7 +121,7 @@ def check_eval_path(p: Path, recursive: bool = False) -> None:
 def protected(p: Path) -> str:
   """Which protected project folder a resolved path lies in ('' if none)."""
   root = CTX["root"]
-  for rel, name in (("data/raw", "raw"), (".harness", "harness"), ("eegharness", "eegharness")):
+  for rel, name in (("data/raw", "raw"), (".harness", "harness"), ("eegharness", "eegharness"), ("eegpipe", "eegpipe")):
     if is_under(p, real(root / rel)):
       return name
   return ""
@@ -138,6 +138,8 @@ def check_written(paths, raw_only: bool) -> None:
       block(".harness/ is the frozen harness; never change it.")
     if kind == "eegharness":
       block("eegharness/ is vendored harness code; never change it by hand (a new harness version replaces it).")
+    if kind == "eegpipe":
+      block("eegpipe/ is the vendored pipeline; configure it in configs/pipeline.json, never edit it (G24; a deviation is a new project module with tests).")
 
 
 def block(reason: str) -> None:
@@ -430,8 +432,8 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
     if is_mut and protected(here) == "raw":
       block("recordings in data/raw/ may be read by project code only; never modify, copy, move or upload them "
             "(this command runs inside data/raw/).")
-    if is_mut and protected(here) in ("harness", "eegharness") and not raw_only:
-      block(".harness/ and eegharness/ are frozen harness code; never change them (this command runs inside one).")
+    if is_mut and protected(here) in ("harness", "eegharness", "eegpipe") and not raw_only:
+      block(".harness/, eegharness/ and eegpipe/ are frozen harness code; never change them (this command runs inside one).")
     if name in ("python", "python3") and "-c" in args:
       check_raw_text(" ".join(args))
       check_eval_text(" ".join(args), here)
@@ -469,6 +471,8 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
         block(".harness/ is the frozen harness; never change it.")
       if in_dir(w, "eegharness", root):
         block("eegharness/ is vendored harness code; never change it by hand (a new harness version replaces it).")
+      if in_dir(w, "eegpipe", root):
+        block("eegpipe/ is the vendored pipeline; configure it in configs/pipeline.json, never edit it (G24; a deviation is a new project module with tests).")
     check_written([p for w in written for p in resolve_token(w, here, env)], raw_only)
     if name != "git":
       continue
@@ -639,6 +643,8 @@ def main() -> None:
       block(".harness/ is the frozen harness; never change it.")
     if in_dir(target, "eegharness", root):
       block("eegharness/ is vendored harness code; never change it by hand (a new harness version replaces it).")
+    if in_dir(target, "eegpipe", root):
+      block("eegpipe/ is the vendored pipeline; configure it in configs/pipeline.json, never edit it (G24; a deviation is a new project module with tests).")
     resolved = resolve_token(target, real(cwd), {})
     check_written(resolved, raw_only=False)
     if event.get("agent_type") == "methods-auditor":

@@ -15,7 +15,7 @@ outcome, audit round, sources cited, tokens and wall time from
 **Cite the source of every solution** (G6). Whenever you propose or report a
 solution (in `02_plan.md`, in a STOP message, in the close summary), name
 what it came from: a numbered source in `01_brief.md` (`[n]`, with authors
-and year), a CLAUDE.md rule (G1–G23, G24+), an audit finding (`02b_plan_audit.md`
+and year), a CLAUDE.md rule (G1–G25, G26+), an audit finding (`02b_plan_audit.md`
 or `05_audit.md` round and item), `docs/PARADIGM.md` or `docs/DATA_PROFILE.md`
 (section and value), the code it follows (`path:line`), or Sebastian's
 request. If a choice rests only on your own reasoning, mark it `[own]` with

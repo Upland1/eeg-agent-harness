@@ -45,7 +45,7 @@ FAIL if a design error would reach code. Append `## Round N` on re-audit.
 0. Run `git log --oneline <base>..<branch>`, `git diff <base>..<branch>
    --stat` and `python -m pytest tests/ -q -p no:cacheprovider` yourself
    and record them under "Commands run".
-1. For each rule G1–G23 in CLAUDE.md (and any G24+), find the code that could
+1. For each rule G1–G25 in CLAUDE.md (and any G26+), find the code that could
    break it and give PASS / FAIL / CONCERN / N/A with `path:line` evidence.
    Open every line you cite; never cite from memory.
 2. FAIL = the rule is broken or a result could be wrong without an error.
