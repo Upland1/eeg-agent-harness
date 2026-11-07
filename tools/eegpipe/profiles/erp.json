@@ -246,5 +246,81 @@
     "source": "values set in M: ['priors', 'reg_param']; every other parameter = scikit-learn 1.9.1 default, written out (G5); reg_param 0.5 as M; priors [0.5, 0.5] [own]: same reason as LDA (imbalance must not set the threshold)"
    }
   }
+ },
+ "statistics": {
+  "source": "plan 'Statistics' (Stage 2) and P2-6; D-016",
+  "participant_score": "balanced accuracy pooled over all retained epochs of the participant's session (pooled.csv); networks: seed 'mean' row (mean over seeds)",
+  "difference": "method - baseline, per participant",
+  "round_decimals": 12,
+  "round_decimals_source": "[own]: zeros and ties of |d| are detected after rounding d to 12 decimals, so floating-point noise (~1e-16) does not hide an exact tie",
+  "alternative": "two-sided",
+  "wilcoxon_exact": {
+   "zero_method": "wilcox",
+   "method": "exact"
+  },
+  "wilcoxon_zeros_or_ties": {
+   "zero_method": "pratt",
+   "method": "approx",
+   "correction": false
+  },
+  "sign_test": "scipy.stats.binomtest(n_positive, n_nonzero, 0.5, alternative two-sided); direction = sign(n_positive - n_negative); Wilcoxon direction = sign(R+ - R-); different directions -> 'not robust' (P2-6)",
+  "hodges_lehmann": "median of the Walsh averages (d_i + d_j) / 2, i <= j",
+  "bootstrap": {
+   "n_resamples": 10000,
+   "seed": 20261110,
+   "ci": 0.95,
+   "unit": "participant",
+   "interval": "percentile, numpy.quantile method linear",
+   "rng": "numpy.random.default_rng(seed), a fresh generator per method (identical resamples when n is equal)"
+  },
+  "holm_family": [
+   "f1/raw/Shrinkage-LDA lsqr",
+   "f2/eegnet",
+   "f3/phase_features/delta",
+   "f4/gnn_phase"
+  ],
+  "holm_missing_p": 1.0,
+  "holm_missing_p_source": "[own]: the family stays 4; a comparison without a p-value enters Holm with p = 1 (conservative)",
+  "alpha": 0.05,
+  "min_n": 12,
+  "min_n_rule": "per comparison: participants with valid results for both the method and the baseline (zeros included); fewer -> descriptive only (plan; P2-6)",
+  "separate_roles": [
+   "reported_separately"
+  ],
+  "interim_stamp": "INTERIM — not confirmatory"
+ },
+ "comparator": "baseline",
+ "permutation": {
+  "methods": [
+   "baseline",
+   "f1/raw/Shrinkage-LDA lsqr"
+  ],
+  "null": "shuffle_block_targets",
+  "description": "per permutation p: rng = numpy.random.default_rng([seed, p]); for every file in sorted order its observed block targets are permuted across its blocks (evaluate.draw_shuffled_targets, n_perm 1); labels recomputed; folds fixed; the whole method refit in every fold; per-file BA from the pooled out-of-fold predictions of the file",
+  "n_permutations": 1000,
+  "seed": 20261105,
+  "critical_value_percentile": 95.0,
+  "percentile_method": "linear",
+  "n_jobs": 16,
+  "chunk_size": 8
+ },
+ "seeds": {
+  "description": "every seed of this run (plan 'Seeds', P2 additions; code audit C1 #2)",
+  "fold_assignment": 20261107,
+  "f1_model_random_state": 20261107,
+  "f1_model_random_state_source": "[own] (D-010 item 5): saga/SGD random_state; not in the plan's list, added here (C1 #2)",
+  "block_target_permutations": 20261105,
+  "network_seeds": [
+   20261107,
+   20261108,
+   20261109
+  ],
+  "early_stopping_validation_split": 20261113,
+  "f3a_nontarget_subsampling": 20261112,
+  "stage2_session_selection": 20261111,
+  "bootstrap": 20261110,
+  "f3a_permutations": 20261105,
+  "f3a_observed_subsample_key": 4294967295,
+  "f4_network_seeds": "= network_seeds (plan F4: same seeds as F2)"
  }
 }
