@@ -20,7 +20,7 @@ from eegpipe import filtering as flt  # noqa: E402
 from eegpipe import folds as fo  # noqa: E402
 from eegpipe import gates as gt  # noqa: E402
 from eegpipe.testing import synth  # noqa: E402
-from eegharness.splits import LeakError  # noqa: E402
+import eegharness.splits as hsplits  # noqa: E402  (attribute lookups: another test reloads it)
 
 FS = 256.0
 SEED_FOLDS = 20261107
@@ -55,9 +55,8 @@ def test_folds_never_split_a_unit_are_balanced_and_reproducible():
   bad_fold = rng.integers(0, 8, unit_uid.size)              # buggy: folds per epoch, not per unit
   te = np.flatnonzero(bad_fold == 0)
   tr = np.flatnonzero(bad_fold != 0)
-  with pytest.raises(LeakError):
-    from eegharness.splits import check_no_leak
-    check_no_leak(tr, te, unit_uid)
+  with pytest.raises(hsplits.LeakError):
+    hsplits.check_no_leak(tr, te, unit_uid)
 
 
 def test_fold_assignment_is_bitwise_the_p300_algorithm():

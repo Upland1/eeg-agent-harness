@@ -18,21 +18,47 @@ except ImportError:  # pragma: no cover
   raise ImportError("eegpipe.folds needs eegharness (vendored next to eegpipe)")
 
 
-def assign_unit_folds(unit_stratum, n_folds, seed):
+def assign_unit_folds(unit_stratum, n_folds, seed, unit_label=None):
   """Fold of every unit uid. ``unit_stratum``: stratum index per unit uid, the units of each
-  stratum contiguous and in stratum order."""
+  stratum contiguous and in stratum order.
+
+  ``unit_label`` (optional, for studies whose label is constant within a unit, e.g. SSVEP
+  trials): every label keeps its own running position, started where the previous label's
+  units of the first stratum end; in each stratum (ascending) the units of each label
+  (ascending) are permuted and dealt from that label's position on. So each class cycles
+  through all folds (a class with u units has at most ceil(u / n_folds) in one fold, and is
+  missing from a training set only if u = 1), and when every stratum holds the same number
+  of units of each label the per-stratum fold counts also differ by at most 1. Without
+  ``unit_label`` the dealing is the P300 algorithm, bitwise."""
   unit_stratum = np.asarray(unit_stratum, dtype=np.int64)
   if n_folds < 2:
     raise ValueError("n_folds must be >= 2")
   rng = np.random.default_rng(seed)
   fold = np.full(unit_stratum.size, -1, dtype=np.int64)
-  nxt = 0
+  if unit_label is None:
+    nxt = 0
+    for f in np.unique(unit_stratum):
+      uids = np.flatnonzero(unit_stratum == f)
+      perm = rng.permutation(uids.size)
+      for i, j in enumerate(perm):
+        fold[uids[j]] = (nxt + i) % n_folds
+      nxt = (nxt + uids.size) % n_folds
+    return fold
+  lab_all = np.asarray(unit_label, dtype=np.int64)
+  pos = {}
+  start = 0
   for f in np.unique(unit_stratum):
     uids = np.flatnonzero(unit_stratum == f)
-    perm = rng.permutation(uids.size)
-    for i, j in enumerate(perm):
-      fold[uids[j]] = (nxt + i) % n_folds
-    nxt = (nxt + uids.size) % n_folds
+    lab = lab_all[uids]
+    for c in np.unique(lab):
+      g = uids[lab == c]
+      if int(c) not in pos:
+        pos[int(c)] = start
+        start += g.size
+      perm = rng.permutation(g.size)
+      for i, j in enumerate(perm):
+        fold[g[j]] = (pos[int(c)] + i) % n_folds
+      pos[int(c)] += g.size
   return fold
 
 

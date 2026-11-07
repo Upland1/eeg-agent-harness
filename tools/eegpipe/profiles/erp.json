@@ -1,0 +1,250 @@
+{
+ "profile": "erp",
+ "source": "P300 project configs/ssvep_methods_stage2.json @ cd5db15 (Stage-2 freeze); values unchanged. Every value is a starting draft: the plan confirms or changes it with a reason (G17 i).",
+ "baseline": {
+  "description": "CCA (3 filters) + shrinkage LDA, equal priors, 4-14 Hz, decimate 4; p300/evaluate.py make_estimator, unchanged (D-005)",
+  "model": {
+   "cca": {
+    "n_filters": 3,
+    "reg": 0.0
+   },
+   "lda": {
+    "solver": "lsqr",
+    "shrinkage": "auto",
+    "priors": [
+     0.5,
+     0.5
+    ]
+   },
+   "feature_selection": "none"
+  }
+ },
+ "f1": {
+  "source": "[M] ../mas-ssvep-eeg-xai v1.0.4 (commit f725369) src/models/classical/sklearn_models.py::get_sklearn_model_suite",
+  "primary": {
+   "model": "Shrinkage-LDA lsqr",
+   "features": "raw"
+  },
+  "feature_spaces": [
+   "raw",
+   "cca"
+  ],
+  "feature_spaces_note": "raw = decimated 4-14 Hz epoch flattened channel-major (8 x 51 = 408); cca = the baseline's CCA spatial filter fitted in-fold (51 x 3 = 153)",
+  "cca": {
+   "n_filters": 3,
+   "reg": 0.0
+  },
+  "scaler": {
+   "class": "StandardScaler",
+   "with_mean": true,
+   "with_std": true,
+   "fit": "training fold only (inside the Pipeline)"
+  },
+  "model_seed": 20261107,
+  "model_seed_source": "[own]: the plan's fold seed 20261107 reused for the saga/SGD random_state (M default 42)",
+  "model_order": [
+   "Ridge",
+   "LogReg L2",
+   "LogReg L1",
+   "LogReg ElasticNet",
+   "SGD log-loss",
+   "SGD PA",
+   "LDA svd",
+   "Shrinkage-LDA lsqr",
+   "Shrinkage-LDA eigen",
+   "QDA"
+  ],
+  "models": {
+   "Ridge": {
+    "class": "RidgeClassifier",
+    "params": {
+     "alpha": 1.0,
+     "class_weight": "balanced",
+     "copy_X": true,
+     "fit_intercept": true,
+     "max_iter": null,
+     "positive": false,
+     "random_state": null,
+     "solver": "auto",
+     "tol": 0.0001
+    },
+    "source": "values set in M: ['alpha', 'class_weight']; every other parameter = scikit-learn 1.9.1 default, written out (G5)"
+   },
+   "LogReg L2": {
+    "class": "LogisticRegression",
+    "params": {
+     "C": 1.0,
+     "class_weight": "balanced",
+     "dual": false,
+     "fit_intercept": true,
+     "intercept_scaling": 1,
+     "l1_ratio": 0.0,
+     "max_iter": 1000,
+     "n_jobs": null,
+     "random_state": null,
+     "solver": "lbfgs",
+     "tol": 0.0001,
+     "verbose": 0,
+     "warm_start": false
+    },
+    "source": "values set in M: ['C', 'class_weight', 'l1_ratio', 'max_iter', 'solver']; every other parameter = scikit-learn 1.9.1 default, written out (G5)"
+   },
+   "LogReg L1": {
+    "class": "LogisticRegression",
+    "params": {
+     "C": 1.0,
+     "class_weight": "balanced",
+     "dual": false,
+     "fit_intercept": true,
+     "intercept_scaling": 1,
+     "l1_ratio": 1.0,
+     "max_iter": 3000,
+     "n_jobs": null,
+     "random_state": 20261107,
+     "solver": "saga",
+     "tol": 0.001,
+     "verbose": 0,
+     "warm_start": false
+    },
+    "source": "values set in M: ['C', 'class_weight', 'l1_ratio', 'max_iter', 'random_state', 'solver', 'tol']; every other parameter = scikit-learn 1.9.1 default, written out (G5); random_state = f1.model_seed (M: seed argument, default 42) [own]"
+   },
+   "LogReg ElasticNet": {
+    "class": "LogisticRegression",
+    "params": {
+     "C": 1.0,
+     "class_weight": "balanced",
+     "dual": false,
+     "fit_intercept": true,
+     "intercept_scaling": 1,
+     "l1_ratio": 0.5,
+     "max_iter": 3000,
+     "n_jobs": null,
+     "random_state": 20261107,
+     "solver": "saga",
+     "tol": 0.001,
+     "verbose": 0,
+     "warm_start": false
+    },
+    "source": "values set in M: ['C', 'class_weight', 'l1_ratio', 'max_iter', 'random_state', 'solver', 'tol']; every other parameter = scikit-learn 1.9.1 default, written out (G5); random_state = f1.model_seed (M: default 42) [own]"
+   },
+   "SGD log-loss": {
+    "class": "SGDClassifier",
+    "params": {
+     "alpha": 0.001,
+     "average": false,
+     "class_weight": "balanced",
+     "early_stopping": false,
+     "epsilon": 0.1,
+     "eta0": 0.01,
+     "fit_intercept": true,
+     "l1_ratio": 0.5,
+     "learning_rate": "optimal",
+     "loss": "log_loss",
+     "max_iter": 2000,
+     "n_iter_no_change": 5,
+     "n_jobs": null,
+     "penalty": "elasticnet",
+     "power_t": 0.5,
+     "random_state": 20261107,
+     "shuffle": true,
+     "tol": 0.001,
+     "validation_fraction": 0.1,
+     "verbose": 0,
+     "warm_start": false
+    },
+    "source": "values set in M: ['alpha', 'class_weight', 'l1_ratio', 'loss', 'max_iter', 'penalty', 'random_state']; every other parameter = scikit-learn 1.9.1 default, written out (G5); random_state = f1.model_seed (M: default 42) [own]"
+   },
+   "SGD PA": {
+    "class": "SGDClassifier",
+    "params": {
+     "alpha": 0.0001,
+     "average": false,
+     "class_weight": null,
+     "early_stopping": false,
+     "epsilon": 0.1,
+     "eta0": 1.0,
+     "fit_intercept": true,
+     "l1_ratio": 0.15,
+     "learning_rate": "pa1",
+     "loss": "hinge",
+     "max_iter": 2000,
+     "n_iter_no_change": 5,
+     "n_jobs": null,
+     "penalty": null,
+     "power_t": 0.5,
+     "random_state": 20261107,
+     "shuffle": true,
+     "tol": 0.001,
+     "validation_fraction": 0.1,
+     "verbose": 0,
+     "warm_start": false
+    },
+    "source": "values set in M: ['eta0', 'learning_rate', 'loss', 'max_iter', 'penalty', 'random_state']; every other parameter = scikit-learn 1.9.1 default, written out (G5); random_state = f1.model_seed (M: default 42) [own]; class_weight None as in M (M sets none for this model)"
+   },
+   "LDA svd": {
+    "class": "LinearDiscriminantAnalysis",
+    "params": {
+     "covariance_estimator": null,
+     "n_components": null,
+     "priors": [
+      0.5,
+      0.5
+     ],
+     "shrinkage": null,
+     "solver": "svd",
+     "store_covariance": false,
+     "tol": 0.0001
+    },
+    "source": "values set in M: ['priors', 'solver']; every other parameter = scikit-learn 1.9.1 default, written out (G5); priors [0.5, 0.5] = equal priors as the baseline (D-005 item 3; plan F1); M leaves priors at the class proportions"
+   },
+   "Shrinkage-LDA lsqr": {
+    "class": "LinearDiscriminantAnalysis",
+    "params": {
+     "covariance_estimator": null,
+     "n_components": null,
+     "priors": [
+      0.5,
+      0.5
+     ],
+     "shrinkage": "auto",
+     "solver": "lsqr",
+     "store_covariance": false,
+     "tol": 0.0001
+    },
+    "source": "values set in M: ['priors', 'shrinkage', 'solver']; every other parameter = scikit-learn 1.9.1 default, written out (G5); priors [0.5, 0.5] = equal priors as the baseline (D-005 item 3; plan F1); M leaves priors at the class proportions. F1 PRIMARY on raw features"
+   },
+   "Shrinkage-LDA eigen": {
+    "class": "LinearDiscriminantAnalysis",
+    "params": {
+     "covariance_estimator": null,
+     "n_components": null,
+     "priors": [
+      0.5,
+      0.5
+     ],
+     "shrinkage": "auto",
+     "solver": "eigen",
+     "store_covariance": false,
+     "tol": 0.0001
+    },
+    "source": "values set in M: ['priors', 'shrinkage', 'solver']; every other parameter = scikit-learn 1.9.1 default, written out (G5); priors [0.5, 0.5] as the baseline (D-005 item 3; plan F1); M leaves priors at the class proportions"
+   },
+   "QDA": {
+    "class": "QuadraticDiscriminantAnalysis",
+    "params": {
+     "covariance_estimator": null,
+     "priors": [
+      0.5,
+      0.5
+     ],
+     "reg_param": 0.5,
+     "shrinkage": null,
+     "solver": "svd",
+     "store_covariance": false,
+     "tol": 0.0001
+    },
+    "source": "values set in M: ['priors', 'reg_param']; every other parameter = scikit-learn 1.9.1 default, written out (G5); reg_param 0.5 as M; priors [0.5, 0.5] [own]: same reason as LDA (imbalance must not set the threshold)"
+   }
+  }
+ }
+}
