@@ -19,6 +19,13 @@ literals in heredocs and `-c` code. Resolved paths are checked against the evalu
 the blocklist terms and the protected folders (data/raw, .harness, eegharness). A recursive
 tool (grep -r, find, rg, tree, du, ls -R, tar, zip, rsync, cp -r) aimed at a folder that
 contains the evaluation folder is blocked as well.
+
+Blocked folders (v0.3.1): ``blocklist.json`` may also list ``"dirs"``, absolute folders that
+are treated like the evaluation folder: any path inside one is blocked, and so is any
+search or listing (the recursive tools above, plain ls, the Grep and Glob tools) whose
+resolved starting folder contains one, e.g. ``grep -r x data/raw/..`` when the recordings'
+parent folder holds other projects. A search or listing with no folder operand starts in
+the current folder, which is checked the same way.
 """
 
 import glob
@@ -62,7 +69,8 @@ DOCUMENT_EXTS = {".txt", ".md", ".rst", ".pdf", ".doc", ".docx", ".odt", ".rtf",
 RECURSIVE = {"find", "rg", "tree", "du", "tar", "zip", "rsync", "ag", "fd", "locate"}
 STRING_PATH = re.compile(r"""['"]([^'"\n]*/[^'"\n]*)['"]""")
 VAR = re.compile(r"\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?")
-CTX = {"root": Path("."), "eval_dir": None, "terms": [], "own": ""}
+CTX = {"root": Path("."), "eval_dir": None, "terms": [], "own": "", "dirs": []}
+LISTING = {"ls", "dir", "vdir", "tree", "du"}
 
 
 # ---------------------------------------------------------------- paths (L26)
@@ -100,6 +108,10 @@ def check_eval_path(p: Path, recursive: bool = False) -> None:
   if ev is not None and (is_under(p, ev) or (recursive and is_under(ev, p))):
     block("this is an evaluation project: evaluation material and blocked sources are out of reach "
           f"(path resolves to {p}).")
+  for d in CTX["dirs"]:
+    if is_under(p, d) or (recursive and is_under(d, p)):
+      block("this is an evaluation project: blocked sources are out of reach "
+            f"(path resolves to {p}, which is or contains a blocked folder).")
   low = str(p).casefold()
   for term in CTX["terms"]:
     if term.casefold() in low and term.casefold() not in CTX["own"]:
@@ -156,6 +168,18 @@ def eval_terms(cfg: dict):
     except (OSError, ValueError):
       pass
   return [t for t in terms if t]
+
+
+def blocked_dirs(cfg: dict) -> list:
+  """Absolute folders from <eval_dir>/blocklist.json "dirs" (symlinks resolved)."""
+  eval_dir = cfg.get("eval_dir")
+  if not eval_dir:
+    return []
+  try:
+    dirs = json.loads((Path(eval_dir) / "blocklist.json").read_text()).get("dirs", [])
+  except (OSError, ValueError):
+    return []
+  return [real(d) for d in dirs if isinstance(d, str) and os.path.isabs(d)]
 
 
 def current_branch(cwd: str) -> str:
@@ -388,10 +412,13 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
       continue
     recursive = name in RECURSIVE or (name in ("grep", "egrep", "fgrep", "ls", "cp", "chmod", "chown", "rm")
                                       and any(re.fullmatch(r"-[A-Za-z]*[rR][A-Za-z]*|--recursive", a) for a in args))
+    listing = recursive or name in LISTING
     resolved_args = [p for a in args for p in resolve_token(a, here, env)]
     resolved_targets = [p for a in targets for p in resolve_token(a, here, env)]
     for p in resolved_args + resolved_targets:
-      check_eval_path(p, recursive=recursive)
+      check_eval_path(p, recursive=listing)
+    if listing and not any(p.is_dir() for p in resolved_args):
+      check_eval_path(here, recursive=True)  # no folder operand: it starts in the current folder
     if name and "/" in seg[0]:
       for p in resolve_token(seg[0], here, env):
         check_eval_path(p)
@@ -558,7 +585,7 @@ def main() -> None:
   text = json.dumps(args, ensure_ascii=False)
   own = str(root.resolve()).casefold()
   terms = eval_terms(cfg)
-  CTX.update(root=root, own=own, terms=terms,
+  CTX.update(root=root, own=own, terms=terms, dirs=blocked_dirs(cfg),
              eval_dir=real(cfg["eval_dir"]) if cfg.get("eval_dir") else None)
   for term in terms:
     if term.casefold() in own:  # e.g. the run's own folder name in a list of sibling runs
@@ -572,6 +599,8 @@ def main() -> None:
       if isinstance(args.get(key), str) and args[key]:
         for p in resolve_token(args[key], base, {}):
           check_eval_path(p, recursive=tool in ("Grep", "Glob"))
+    if tool in ("Grep", "Glob") and not (isinstance(args.get("path"), str) and args["path"]):
+      check_eval_path(base, recursive=True)  # no path: it searches the current folder
     if tool == "Glob" and isinstance(args.get("pattern"), str):
       gbase = real(args["path"]) if isinstance(args.get("path"), str) and args["path"] else base
       for p in resolve_token(args["pattern"], gbase, {}):
