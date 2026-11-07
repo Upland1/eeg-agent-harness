@@ -265,6 +265,12 @@ def run(cfg, out, root="."):
     name = part[4:]
     mid = f"{part[:2]}/{name}"
     ncfg = cfg["networks"]
+    spec_cls = (cfg[sec]["models"][name]["class"] if sec == "f4" else ncfg["models"][name]["class"])
+    if spec_cls == "CCNN":
+      from eegpipe.ssvep import ccnn  # noqa: F401  (registers the class)
+    if spec_cls == "PackedFusion":
+      raise ValueError("PackedFusion needs packed (harmonic map, FBCCA score) inputs: run it with a project script "
+                       "through eegpipe.ssvep.fusion (not a runner part in v0.4)")
     nw.set_determinism(ncfg["deterministic"])
     device = str(nw.resolve_device(ncfg["device"]))
     seed_rows = []

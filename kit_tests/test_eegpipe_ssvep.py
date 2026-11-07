@@ -361,3 +361,101 @@ def test_fbcsp_plus_fbcca_feature_union_has_both_blocks():
   est = cl.make_method("f1/fbcsp+fbcca/Shrinkage-LDA lsqr", cfg).fit(X, y)
   Z = est.named_steps["fbcsp+fbcca"].transform(X)
   assert Z.shape == (30, 3 * 5 * 2 + 5)
+
+
+# ------------------------------------------------------------------ CCNN and fusion (torch)
+def _torch():
+  return pytest.importorskip("torch")
+
+
+def ccnn_spec(C, F=None, fs=256.0):
+  return {"class": "CCNN", "params": {"fs": fs, "f_min": 3.0, "f_max": 50.0, "resolution_hz": 0.25,
+                                      "n_filters": F or 2 * C, "spectral_kernel": 10, "dropout": 0.25}}
+
+
+@pytest.mark.parametrize("C,n_params", [(7, 27977), (8, 32309)])
+def test_ccnn_parameter_count_matches_the_source(C, n_params):
+  """Known answer ([M] ccnn.py R-8): 256 samples, 256 Hz, 3-50 Hz, 0.25 Hz (189 bins), 5 classes,
+  F = 2C: 27,977 parameters for C 7 and 32,309 for C 8; the builder refuses a missing parameter."""
+  _torch()
+  from eegpipe import networks as nw
+  from eegpipe.ssvep import ccnn  # noqa: F401  (registers CCNN)
+  m = nw.model_builder(ccnn_spec(C))(5, C, 256)
+  assert m.n_bins == 189 and nw.count_parameters(m) == n_params
+  bad = ccnn_spec(C)
+  del bad["params"]["fs"]
+  with pytest.raises(ValueError, match="fs"):
+    nw.model_builder(bad)
+
+
+def test_ccnn_spectrum_layout_real_then_imag_divided_by_T():
+  """Known answer: for x = cos(2 pi 10 t) on every channel (256 samples, 256 Hz, nfft 1024), the
+  spectrum map holds Re at position k and Im at n_bins + k; at 10 Hz Re = 0.5, Im ~ 0."""
+  torch = _torch()
+  from eegpipe.ssvep.ccnn import CCNN
+  m = CCNN(5, 3, 256, 256.0, 3.0, 50.0, 0.25, 6, 10, 0.0)
+  tt = torch.arange(256) / 256.0
+  x = torch.cos(2 * np.pi * 10 * tt).repeat(1, 3, 1)
+  s = m.spectrum(x)[0, 0, 0]
+  k = int(np.argmin(np.abs(m.bins_hz - 10.0)))
+  assert abs(float(s[k]) - 0.5) < 1e-6 and abs(float(s[m.n_bins + k])) < 1e-6
+
+
+def test_fusion_parameter_count_and_packing_known_answer():
+  """Known answer ([M] R-8): a 4 x 8 harmonic map and 5 FBCCA scores give 10,005 parameters; the
+  packed model hands the network exactly the (1, 4, 8) map and the 5 scores; harmonic targets are
+  f * m * h; the harmonic map picks the periodogram bin nearest each target; a target at Nyquist is
+  refused."""
+  torch = _torch()
+  from eegpipe import networks as nw
+  from eegpipe.ssvep import fusion as fu
+  m = fu.DualBranchFusionCNN(5, 4, 8, 5, 0.3)
+  assert nw.count_parameters(m) == 10005
+  rng = np.random.default_rng(0)
+  sp, sc = rng.normal(size=(3, 4, 8)), rng.normal(size=(3, 5))
+  P = fu.pack(sp, sc)
+  pm = nw.model_builder({"class": "PackedFusion", "params": {"n_spatial_channels": 4, "n_harmonic_bins": 8,
+                                                             "n_fbcca": 5, "dropout": 0.3}})(5, 1, P.shape[2])
+  seen = {}
+  orig = pm.net.forward
+  pm.net.forward = lambda a, b: (seen.update(a=a, b=b), orig(a, b))[1]
+  pm.eval()
+  assert pm(torch.from_numpy(P).float()).shape == (3, 5)
+  assert np.allclose(seen["a"].numpy()[:, 0], sp, atol=1e-6) and np.allclose(seen["b"].numpy(), sc, atol=1e-6)
+  assert fu.harmonic_targets([8.0, 10.0], 2) == [8.0, 16.0, 10.0, 20.0]
+  assert fu.harmonic_targets([7.5], 1, response_multiple=2) == [15.0]
+  tt = np.arange(256) / 256.0
+  x = np.sin(2 * np.pi * 12.0 * tt)[None, None, :] * np.ones((1, 2, 1))
+  hm = fu.harmonic_map(x, 256.0, [8.0, 12.0, 20.0])
+  assert hm[0, 0].argmax() == 1 and hm[0, 0, 1] > 100 * hm[0, 0, 0]
+  with pytest.raises(ValueError, match="Nyquist"):
+    fu.harmonic_map(x, 256.0, [128.0])
+
+
+def test_ccnn_and_fusion_learn_five_planted_frequencies_under_grouped_folds():
+  """Known answer (5 classes, label-balanced grouped folds by trial): CCNN on the band epochs and the
+  fusion network on packed (harmonic map, FBCCA scores) inputs reach BA >= 0.6 on planted
+  sinusoids (chance 0.2) with 10 epochs [own bounds, a priori]."""
+  _torch()
+  from eegpipe import networks as nw
+  from eegpipe.ssvep import ccnn, fusion as fu  # noqa: F401
+  names = [f"{f:g}Hz" for f in SSVEP_FREQS]
+  sess, _ = ssvep_session(70)
+  ul = np.array([sess["y"][sess["unit_uid"] == u][0] for u in np.unique(sess["unit_uid"])])
+  splits = fo.fold_splits(sess["unit_uid"], fo.assign_unit_folds(sess["unit_file"], 4, 1, unit_label=ul), 4)
+  ncfg = {"trainer": {**{k: v for k, v in PROFILE["networks"]["trainer"].items()
+                         if not isinstance(v, str) or k == "class_weights"}, "max_epochs": 10, "batch_size": 16},
+          "augmentation": {"enabled": False, "p_scale": 0, "scale_range": [1, 1], "p_noise": 0, "noise_std_frac": 0}}
+  Xb = sess["X_fb"][:, 0]                                    # first Chebyshev band, (n, C, T)
+  pred, _, _, _ = nw.cv_network(Xb, sess["y"], sess["unit_uid"], splits, ccnn_spec(Xb.shape[1], fs=256.0)
+                                | {"params": {**ccnn_spec(Xb.shape[1], fs=256.0)["params"], "resolution_hz": 0.5}},
+                                1, ncfg, "cpu", names)
+  assert evl.class_metrics(sess["y"], pred, names)["ba"] >= 0.6
+  scores = fb.fbcca_scores(sess["X_fb"], fb.reference_bases(256.0, sess["X_fb"].shape[-1], SSVEP_FREQS, 3), W3)
+  hm = fu.harmonic_map(Xb, 256.0, fu.harmonic_targets(SSVEP_FREQS, 2))
+  P = fu.pack(hm, scores)
+  spec = {"class": "PackedFusion", "params": {"n_spatial_channels": hm.shape[1], "n_harmonic_bins": hm.shape[2],
+                                              "n_fbcca": 5, "dropout": 0.3}}
+  pred, _, _, _ = nw.cv_network(P, sess["y"], sess["unit_uid"], splits, spec, 1, ncfg, "cpu", names,
+                                norm={"kind": "per_feature", "std_floor": 1e-8})
+  assert evl.class_metrics(sess["y"], pred, names)["ba"] >= 0.6
