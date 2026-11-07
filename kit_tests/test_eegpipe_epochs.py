@@ -272,3 +272,52 @@ def test_assembly_refuses_files_with_different_epoch_shapes():
   b = _prep(synth.recording(2, fs=FS, n_channels=3, rest=1200), s)
   with pytest.raises(ValueError, match="shape"):
     ds.assemble([a, b])
+
+
+# ------------------------------------------------------------------ network input
+def _ni_settings():
+  prof = __import__("json").loads((TOOLS / "eegpipe" / "profiles" / "erp.json").read_text())
+  return {k: v for k, v in prof["network_input"].items()}
+
+
+def test_network_input_equals_the_scipy_chain_and_is_one_to_one_with_kept_epochs():
+  """Known answer (moved from step2 ``network_epochs_equal_scipy_chain...``): with the P300 1-40 Hz
+  path (845 taps, 256 -> 128 Hz, 102 samples) and units far apart, the network epochs equal
+  filtfilt of the whole record, resample_poly, cut at floor(onset / 2), to 1e-12; one network epoch
+  per retained epoch, in the same order; odd onsets map by floor."""
+  from eegpipe import network_input as ni
+  data, events, _ = _file(rest=2400)
+  events = dict(events)
+  events["onset"] = events["onset"] + 1          # odd onsets
+  s = synth.erp_settings(FS)
+  kept = ep.prepare_file(data, FS, events, s)
+  g = _ni_settings()
+  out = ni.network_epochs(data, FS, events, kept, g, 1.0)
+  assert out["filtering"] == "continuous" and out["gate"]["span_samples"] == 884
+  taps = flt.design_bandpass(FS, g["band_hz"], g["numtaps"], g["window"], scale=g["firwin_scale"])
+  ref = flt.resample(flt.bandpass_continuous(data, taps, g["padtype"], g["padlen"]), 1, 2, g["resample_window"], g["resample_padtype"])
+  want = flt.cut_resampled(ref, kept["onset"], 2, 102)
+  assert out["X"].shape == (int(kept["keep"].sum()), 4, 102) and np.abs(out["X"] - want).max() < 1e-12
+
+
+def test_network_input_fallback_isolates_units_and_refuses_inconsistent_settings():
+  """Known answer: units of 48 events (segments longer than padlen 2535) 600 samples apart fail the
+  884-sample span gate: filtering is unit-wise,
+  segment starts are even, and a 5000 uV step from unit 1's start leaves unit-0 network epochs
+  unchanged; settings whose fs_out, resampler length or epoch length disagree are refused."""
+  from eegpipe import network_input as ni
+  data, events, _ = synth.recording(7, fs=FS, n_channels=4, n_units=3, n_epochs=48, isi=64, rest=600, tail=256)
+  s = synth.erp_settings(FS)
+  s["rejection"]["enabled"] = False
+  kept = ep.prepare_file(data, FS, events, s)
+  g = _ni_settings()
+  out = ni.network_epochs(data, FS, events, kept, g, 1.0)
+  assert out["filtering"] == "unitwise_fallback" and all(a % 2 == 0 for a, _ in out["segments"])
+  d2 = data.copy()
+  d2[:, events["unit_start"][1]:] += 5000.0
+  out2 = ni.network_epochs(d2, FS, events, kept, g, 1.0)
+  m0 = kept["unit"] == 0
+  assert np.allclose(out["X"][m0], out2["X"][m0], atol=1e-9)
+  for key, bad in (("fs_out_hz", 100.0), ("resample_numtaps", 39), ("epoch_samples_out", 101)):
+    with pytest.raises(ValueError):
+      ni.network_epochs(data, FS, events, kept, {**g, key: bad}, 1.0)
