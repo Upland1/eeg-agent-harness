@@ -136,8 +136,8 @@ def test_fbcca_classifier_never_reads_epochs_in_fit_and_refuses_unknown_labels()
   assert np.array_equal(a, b)                         # training data never change the decision
   with pytest.raises(ValueError, match="no stimulus frequency"):
     clf.fit(X, np.full(10, 7))
-  with pytest.raises(ValueError, match="rank deficient"):
-    fb.reference_bases(FS, T, [100.0], 3)              # harmonics above Nyquist
+  with pytest.raises(ValueError, match="below Nyquist"):
+    fb.reference_bases(FS, T, [130.0], 3)              # no reference frequency below Nyquist (125 Hz)
 
 
 # ------------------------------------------------------------------ CSP / FBCSP

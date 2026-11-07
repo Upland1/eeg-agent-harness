@@ -418,9 +418,11 @@ def cv_network(X, y, unit_uid, splits, spec, seed, ncfg, device, class_names, fo
     f = fit_network(X_tr, y[train], unit_uid[train], build, seed, tr["val_seed"], device, tr, aug, norm=norm,
                     n_classes=k)
     p, q = predict(f, X_te, device, tr["predict_chunk"])
+    p_tr, _ = predict(f, X_tr, device, tr["predict_chunk"])   # un-augmented training fold (G18)
     pred[test], pt[test] = p, q
     rows.append({"fold": fold, "n_train": int(len(train)), "n_test": int(len(test)),
-                 **evl.class_metrics(y[test], p, class_names), "n_fit": int(len(f["fit_idx"])),
+                 **evl.class_metrics(y[test], p, class_names),
+                 "train_ba": evl.class_metrics(y[train], p_tr, class_names)["ba"], "n_fit": int(len(f["fit_idx"])),
                  "n_val": int(len(f["val_idx"])), "n_val_units": int(len(np.unique(unit_uid[train][f["val_idx"]]))),
                  "best_epoch": f["best_epoch"], "epochs_run": f["epochs_run"], "hit_max_epochs": f["hit_max_epochs"],
                  "best_val_loss": f["best_val_loss"], "n_params": f["n_params"],

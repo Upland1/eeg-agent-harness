@@ -18,9 +18,24 @@ cannot ring into another trial's window.
 
 import numpy as np
 from scipy import signal
+from sklearn.base import BaseEstimator, TransformerMixin
 
 from eegpipe import filtering as flt
 from eegpipe import gates as gt
+
+
+class BandSlice(TransformerMixin, BaseEstimator):
+  """Selects bands [start, stop) of filter-bank epochs (n, B, C, T); nothing is fitted. Lets one union input
+  hold the FBCCA bank first and the FBCSP bank after it (v0.4 gap 1)."""
+
+  def __init__(self, start=0, stop=None):
+    self.start, self.stop = start, stop
+
+  def fit(self, X, y=None):
+    return self
+
+  def transform(self, X):
+    return np.asarray(X)[:, self.start:self.stop]
 
 
 def design(spec, fs):

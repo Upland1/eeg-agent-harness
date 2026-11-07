@@ -101,12 +101,36 @@ FB_SPACES = ("fbcsp", "fbcca", "fbcsp+fbcca")
 
 
 def input_kind(method_id):
-  """Which epoch array a method reads: 'clf' (classical epochs), 'fb' (filter-bank), 'phase'."""
-  if method_id == "ssvep/fbcca" or (method_id.startswith("f1/") and method_id.split("/")[1] in FB_SPACES):
+  """Which epoch array a method reads: 'clf' (classical epochs), 'fb' (FBCCA bank), 'fb_csp' (FBCSP bank),
+  'fb_both' (FBCCA bank then FBCSP bank, for the union), 'phase'."""
+  if method_id == "ssvep/fbcca":
     return "fb"
+  if method_id.startswith("f1/") and method_id.split("/")[1] in FB_SPACES:
+    return {"fbcca": "fb", "fbcsp": "fb_csp", "fbcsp+fbcca": "fb_both"}[method_id.split("/")[1]]
   if method_id.startswith("f3/"):
     return "phase"
   return "clf"
+
+
+def filterbank_inputs(raws, cfg):
+  """Filter-bank epochs of every file: {"fb", "fb_csp", "fb_both", "gates"}. ``ssvep.filterbank.fbcsp_bank``
+  (optional) is the FBCSP bank; without it FBCSP reads the FBCCA bank (v0.4 gap 1)."""
+  from eegpipe.ssvep import filterbank as fbank
+  fb = cfg["ssvep"]["filterbank"]
+  margin = cfg["epochs"]["fallback"]["margin_s"]
+
+  def run(bank):
+    outs = [fbank.subband_epochs(d, fs, e, r, fb["window_s"], fb["window_rounding"], bank, fb["padlen"],
+                                 fb.get("tol", 1e-3), margin) for _, d, fs, e, r in raws]
+    return np.concatenate([o["X"] for o in outs]), [o["filtering"] for o in outs]
+  x_cca, filt = run(fb["bank"])
+  out = {"fb": x_cca, "filtering": filt}
+  if fb.get("fbcsp_bank"):
+    x_csp, filt2 = run(fb["fbcsp_bank"])
+    out.update(fb_csp=x_csp, fb_both=np.concatenate([x_cca, x_csp], axis=1), filtering_csp=filt2)
+  else:
+    out.update(fb_csp=x_cca, fb_both=x_cca)
+  return out
 
 
 def classical_ids(cfg):
@@ -201,13 +225,12 @@ def run(cfg, out, root="."):
 
   inputs = {"clf": sess["X"]}
   if part == "classical" and cfg.get("ssvep", {}).get("enabled"):
-    from eegpipe.ssvep import filterbank as fbank
-    fb = cfg["ssvep"]["filterbank"]
-    outs = [fbank.subband_epochs(d, fs, e, r, fb["window_s"], fb["window_rounding"], fb["bank"], fb["padlen"],
-                                 fb.get("tol", 1e-3), cfg["epochs"]["fallback"]["margin_s"]) for _, d, fs, e, r in raws]
-    inputs["fb"] = np.concatenate([o["X"] for o in outs])
-    for g, o in zip(gate_rows, outs):
-      g["filterbank_filtering"] = o["filtering"]
+    fbi = filterbank_inputs(raws, cfg)
+    inputs.update(fb=fbi["fb"], fb_csp=fbi["fb_csp"], fb_both=fbi["fb_both"])
+    for i, g in enumerate(gate_rows):
+      g["filterbank_filtering"] = fbi["filtering"][i]
+      if "filtering_csp" in fbi:
+        g["filterbank_filtering_fbcsp"] = fbi["filtering_csp"][i]
   if part == "f3" or part.startswith("f4__"):
     from eegpipe import phase as ph
     inputs["phase"] = np.concatenate([ph.phase_epochs(d, fs, r["onset"], cfg["f3"]) for _, d, fs, e, r in raws])

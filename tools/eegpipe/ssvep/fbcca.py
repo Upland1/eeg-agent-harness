@@ -30,17 +30,36 @@ def reference_signals(f, fs, n_samples, n_harmonics):
   return np.stack(rows)
 
 
-def reference_bases(fs, n_samples, freqs, n_harmonics, response_multiple=1):
-  """(K, T, 2H) orthonormal bases of the mean-centred references of each target."""
+def reference_frequencies(f, n_harmonics, response_multiple, fs):
+  """Reference frequencies of one target: f * m * h for every response multiple m (an int or a list, e.g.
+  (1, 2) for on-off and checkerboard runs in one study) and h = 1..H, each once, in order of first
+  appearance (m outer, h inner), keeping only those below Nyquist (v0.4 gap 2)."""
+  ms = [response_multiple] if np.isscalar(response_multiple) else list(response_multiple)
   out = []
+  for m in ms:
+    for h in range(1, n_harmonics + 1):
+      v = float(f) * float(m) * h
+      if v < fs / 2.0 and not any(abs(v - u) < 1e-9 for u in out):
+        out.append(v)
+  return out
+
+
+def reference_bases(fs, n_samples, freqs, n_harmonics, response_multiple=1):
+  """(K, T, R) orthonormal bases of the mean-centred references of each target; R = 2 x the largest number of
+  reference frequencies (targets with fewer get zero columns, which add nothing to the canonical correlation)."""
+  t = np.arange(n_samples) / fs
+  qs = []
   for f in freqs:
-    ref = reference_signals(float(f) * response_multiple, fs, n_samples, n_harmonics).T
+    rf = reference_frequencies(f, n_harmonics, response_multiple, fs)
+    if not rf:
+      raise ValueError(f"no reference frequency of {f} Hz (x{response_multiple}) is below Nyquist at fs {fs}")
+    ref = np.stack([g(2 * np.pi * v * t) for v in rf for g in (np.sin, np.cos)], axis=1)
     q, r = np.linalg.qr(ref - ref.mean(axis=0, keepdims=True))
     if np.abs(np.diag(r)).min() <= 1e-10 * np.abs(np.diag(r)).max():
-      raise ValueError(f"references of {f} Hz (x{response_multiple}) are rank deficient at fs {fs}, T {n_samples} "
-                       "(a harmonic at or above Nyquist?)")
-    out.append(q)
-  return np.stack(out)
+      raise ValueError(f"references of {f} Hz (x{response_multiple}) are rank deficient at fs {fs}, T {n_samples}")
+    qs.append(q)
+  width = max(q.shape[1] for q in qs)
+  return np.stack([np.pad(q, ((0, 0), (0, width - q.shape[1]))) for q in qs])
 
 
 def weights(n_bands, a=1.25, b=0.25):
@@ -88,7 +107,7 @@ class FBCCAFeatures(TransformerMixin, BaseEstimator):
   def fit(self, X, y=None):
     X = np.asarray(X)
     self.bases_ = reference_bases(float(self.fs), X.shape[-1], self.stimulus_freqs_hz, int(self.n_harmonics),
-                                  int(self.response_multiple))
+                                  self.response_multiple)
     self.w_ = weights(X.shape[1], self.weight_a, self.weight_b)
     return self
 
@@ -126,6 +145,7 @@ class FBCCAClassifier(ClassifierMixin, BaseEstimator):
 def make_fbcca(cfg):
   """The training-free method ``ssvep/fbcca`` from the settings section ``ssvep.fbcca``."""
   c = cfg["ssvep"]["fbcca"]
+  rm = c["response_multiple"]
   return FBCCAClassifier(fs=float(cfg["fs_hz"]), stimulus_freqs_hz=list(cfg["ssvep"]["stimulus_freqs_hz"]),
-                         n_harmonics=int(c["n_harmonics"]), response_multiple=int(c["response_multiple"]),
+                         n_harmonics=int(c["n_harmonics"]), response_multiple=rm if np.isscalar(rm) else list(rm),
                          weight_a=float(c["weight_a"]), weight_b=float(c["weight_b"]))

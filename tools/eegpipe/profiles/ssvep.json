@@ -98,7 +98,7 @@
   "source": "mas-ssvep-eeg-xai v1.0.4 (f725369) get_sklearn_model_suite (the same 10 models as the erp profile); flagship FBCSP+FBCCA -> Shrinkage-LDA (scripts/benchmarks/benchmark_loso.py l.296-298)",
   "primary": {
    "model": "Shrinkage-LDA lsqr",
-   "features": "fbcsp"
+   "features": "fbcsp+fbcca"
   },
   "feature_spaces": [
    "fbcsp",
@@ -311,7 +311,9 @@
    "response_multiple": 1,
    "weight_a": 1.25,
    "weight_b": 0.25,
-   "source": "fs and frequencies from the header / PARADIGM (required); H 3, weights b^-1.25 + 0.25: [M] fbcca_extraction.py l.35, l.51 (Chen et al. 2015)"
+   "source": "fs and frequencies from the header / PARADIGM (required); H 3, weights b^-1.25 + 0.25: [M] fbcca_extraction.py l.35, l.51 (Chen et al. 2015)",
+   "n_bands": 3,
+   "n_bands_note": "number of bands of ssvep.filterbank.bank (the FBCCA bank); the union input holds those bands first, then the fbcsp_bank bands"
   }
  },
  "networks": {

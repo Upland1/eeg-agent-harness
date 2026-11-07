@@ -8,7 +8,8 @@ the same events from another signal):
   2. ``scipy.signal.resample_poly(up=1, down)`` with its window and padtype explicit; output
      sample k corresponds to input sample k * down;
   3. epochs of ``epoch_samples_out`` = floor((t1 - t0) * fs_out) samples starting at
-     floor(onset / down) (window must start at 0).
+     floor((onset + s0) / down), s0 = floor(t0 * fs) (t0 may be > 0, e.g. to leave out an onset
+     response; v0.4 gap 4).
 Span gate: (numtaps - 1) + (resample_numtaps - 1) between units' used input samples, on all
 events of the file (label-free). If it fails, the file is filtered unit by unit (gates.py
 fallback, margin ``fallback.margin_s``); each segment's first sample is moved up to the next
@@ -39,9 +40,10 @@ def network_epochs(data, fs, events, kept, s, fallback_margin_s):
   if float(s["fs_out_hz"]) != fs_out:
     raise ValueError(f"fs_out_hz {s['fs_out_hz']} != fs * up / down = {fs_out}")
   w0, w1 = s["epoch_window_s"]
-  if int(np.floor((w1 - w0) * fs_out)) != n_out or w0 != 0.0:
-    raise ValueError(f"epoch_samples_out {n_out} != floor({w1 - w0} * {fs_out}) or the window does not start at 0")
-  onset_all = np.asarray(events["onset"], dtype=np.int64)
+  if int(np.floor((w1 - w0) * fs_out)) != n_out or w0 < 0.0:
+    raise ValueError(f"epoch_samples_out {n_out} != floor({w1 - w0} * {fs_out}) or the window starts before the event")
+  s0 = int(np.floor(w0 * float(fs)))
+  onset_all = np.asarray(events["onset"], dtype=np.int64) + s0
   unit_all = np.asarray(events["unit"], dtype=np.int64)
   n_units = len(events["unit_start"])
   keep = np.asarray(kept["keep"], dtype=bool)

@@ -26,8 +26,17 @@ def _fbcca_step(f1cfg):
 
 
 def _union_step(f1cfg):
-  from sklearn.pipeline import FeatureUnion
-  return ("fbcsp+fbcca", FeatureUnion([_fbcsp_step(f1cfg), _fbcca_step(f1cfg)]))
+  """FBCSP features then FBCCA scores. With ``f1.fbcca.n_bands`` = n the input holds the n FBCCA-bank bands
+  first and the FBCSP-bank bands after them (runner input "fb_both"); without it both read the same bands."""
+  from sklearn.pipeline import FeatureUnion, Pipeline
+
+  from eegpipe.ssvep.filterbank import BandSlice
+  n = f1cfg["fbcca"].get("n_bands")
+  if n is None:
+    return ("fbcsp+fbcca", FeatureUnion([_fbcsp_step(f1cfg), _fbcca_step(f1cfg)]))
+  n = int(n)
+  return ("fbcsp+fbcca", FeatureUnion([("fbcsp", Pipeline([("bands", BandSlice(n, None)), _fbcsp_step(f1cfg)])),
+                                        ("fbcca", Pipeline([("bands", BandSlice(0, n)), _fbcca_step(f1cfg)]))]))
 
 
 _cl.FEATURE_STEPS.update({"fbcsp": _fbcsp_step, "fbcca": _fbcca_step, "fbcsp+fbcca": _union_step})

@@ -23,7 +23,14 @@ Applies Sebastian's pipeline to any EEG study (spec: `docs/v0.4_spec_draft.md`, 
   frozen commit); the guard protects `eegpipe/` like `eegharness/`; `new_project.py` vendors it.
 - New `/apply-pipeline` skill and `agent_runs/_templates/apply_pipeline/`; PARADIGM.md gains
   "Pipeline settings this study needs"; plan-audit and audit templates gain G24/G25 rows.
-- Kit tests: 384 passed (1 CUDA test skipped on CPU); torch, scipy and scikit-learn join the kit
+- Gaps found by the ssvep-apply plan audit, fixed with known-answer tests that fail on df717c2
+  (`kit_tests/test_eegpipe_v04_gaps.py`): FBCSP has its own bank (`ssvep.filterbank.fbcsp_bank`; the
+  union input holds both banks, `f1.fbcca.n_bands`, checked by the validator); FBCCA references
+  combine several response multiples (e.g. [1, 2] for on-off and checkerboard runs) and drop
+  harmonics at or above Nyquist; the ssvep profile's F1 primary is the cited flagship
+  `fbcsp+fbcca`; the network input window may start after the event; `cv_network` reports
+  `train_ba` on the un-augmented training fold (G18).
+- Kit tests: 390 passed (1 CUDA test skipped on CPU); torch, scipy and scikit-learn join the kit
   test environment. `eegharness` 0.4.0: version number only.
 
 ## 0.3.1 — 2026-11-06

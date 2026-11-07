@@ -98,6 +98,10 @@ def validate(cfg, require_sources=True):
     sv = cfg["ssvep"]
     if not sv.get("stimulus_freqs_hz") or len(sv["stimulus_freqs_hz"]) != k:
       probs.append("ssvep.stimulus_freqs_hz: one frequency per class, from PARADIGM.md (no default)")
+    nb = cfg.get("f1", {}).get("fbcca", {}).get("n_bands")
+    bank = sv.get("filterbank", {}).get("bank") or []
+    if nb is not None and int(nb) != len(bank):
+      probs.append(f"f1.fbcca.n_bands {nb} != the {len(bank)} bands of ssvep.filterbank.bank (the union input slices them)")
   for mid in cfg["statistics"].get("holm_family", []):
     if mid == cfg["comparator"]:
       probs.append("the comparator cannot be in the Holm family")
