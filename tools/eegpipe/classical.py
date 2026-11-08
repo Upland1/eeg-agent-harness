@@ -83,7 +83,7 @@ FEATURE_STEPS.update(raw=_raw, cca=_cca)
 
 
 def feature_step(space, f1cfg):
-  if space not in FEATURE_STEPS and space in ("fbcsp", "fbcca"):
+  if space not in FEATURE_STEPS and space in ("fbcsp", "fbcca", "fbcsp+fbcca"):
     import eegpipe.ssvep  # noqa: F401  (registers the SSVEP feature steps)
   if space not in FEATURE_STEPS:
     raise ValueError(f"unknown feature space {space!r}; known: {sorted(FEATURE_STEPS)}")

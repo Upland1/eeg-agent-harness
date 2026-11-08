@@ -1,11 +1,12 @@
-"""Known-answer tests for the five eegpipe gaps found by the ssvep-apply plan audit (2026-11-07).
+"""Known-answer tests for the eegpipe gaps found by the ssvep-apply plan audit and development run (2026-11-07).
 Each test fails on v0.4-dev @ df717c2 (shown in the commit that added it) and passes after the fix:
   1. FBCSP has its own filter bank (``ssvep.filterbank.fbcsp_bank``) and the union input keeps both banks;
   2. FBCCA references may combine several response multiples (on-off f and checkerboard 2f), with harmonics at or
      above Nyquist dropped instead of refusing the study;
   3. the ssvep profile's F1 primary is the flagship FBCSP + FBCCA it names as its source;
   4. the network input window may start after the event (e.g. [0.5, 4.5) s);
-  5. cv_network reports training accuracy on the un-augmented training fold (G18)."""
+  5. cv_network reports training accuracy on the un-augmented training fold (G18);
+  6. the union step fbcsp+fbcca registers the SSVEP steps in a fresh interpreter (spawned permutation workers)."""
 
 import copy
 import json
@@ -156,3 +157,15 @@ def test_settings_refuse_an_fbcca_band_count_that_does_not_match_the_bank():
   cfg["f1"]["fbcca"]["n_bands"] = 4
   with pytest.raises(st.SettingsError, match="n_bands"):
     st.validate(cfg, require_sources=False)
+
+
+def test_union_feature_step_registers_itself_in_a_fresh_interpreter():
+  """Gap 6 (found by the ssvep-apply development run): a spawned permutation worker imports only
+  eegpipe.classical, so ``fbcsp+fbcca`` must register the SSVEP steps the way ``fbcsp`` and ``fbcca`` do."""
+  import subprocess
+  code = ("import json, sys; sys.path.insert(0, sys.argv[1]); from eegpipe import classical as cl; "
+          "p = json.loads(open(sys.argv[2]).read()); print(cl.feature_step('fbcsp+fbcca', p['f1'])[0])")
+  out = subprocess.run([sys.executable, "-I", "-c", code, str(TOOLS), str(PROFILES / "ssvep.json")],
+                       capture_output=True, text=True)
+  assert out.returncode == 0, out.stderr
+  assert out.stdout.strip() == "fbcsp+fbcca"
