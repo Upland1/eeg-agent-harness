@@ -200,6 +200,7 @@ def run(cfg, out, root="."):
     raise ValueError("no files in this data part")
   cond_of = getattr(adapter, "condition_of", lambda p: Path(p).name)
   results, raws, gate_rows = [], [], []
+  torch_env = None
   for rel in files:
     path, data, fs, events = read_file(adapter, cfg, rel, root)
     r = ep.prepare_file(data, fs, events, cfg["epochs"])
@@ -296,6 +297,7 @@ def run(cfg, out, root="."):
                        "through eegpipe.ssvep.fusion (not a runner part in v0.4)")
     nw.set_determinism(ncfg["deterministic"])
     device = str(nw.resolve_device(ncfg["device"]))
+    torch_env = nw.environment(device)   # recorded in results.json (torch version, build, device)
     seed_rows = []
     try:
       if sec == "networks":
@@ -358,6 +360,8 @@ def run(cfg, out, root="."):
          "methods": statuses, "n_epochs": int(len(y)), "n_units": int(len(sess["unit_file"])), "files": files}
   prov = json.loads((out / "provenance.json").read_text())
   res["commit"], res["tracked_files_dirty"] = prov["commit_short"], prov["tracked_files_dirty"]
+  if torch_env is not None:
+    res["torch_environment"] = torch_env
   (out / "config_used.json").write_text(json.dumps(cfg, indent=1, ensure_ascii=False))
   (out / "results.json").write_text(json.dumps(res, indent=1, ensure_ascii=False))
   write_csv(out / "pooled.csv", pooled)

@@ -31,7 +31,9 @@ Applies Sebastian's pipeline to any EEG study (spec: `docs/v0.4_spec_draft.md`, 
   `fbcsp+fbcca`; the network input window may start after the event; `cv_network` reports
   `train_ba` on the un-augmented training fold (G18). Found by the ssvep-apply development run:
   `fbcsp+fbcca` registers the SSVEP steps in a spawned worker (it failed with `permutation.n_jobs` > 1).
-- Kit tests: 391 passed (1 CUDA test skipped on CPU); torch, scipy and scikit-learn join the kit
+- Network parts record torch's version and build (`build`: "cuda X.Y" or "cpu", `cuda_available`) in
+  `results.json["torch_environment"]`; a configured CUDA device without CUDA still stops the part (no CPU fallback).
+- Kit tests: 392 passed (1 CUDA test skipped on CPU); torch, scipy and scikit-learn join the kit
   test environment. `eegharness` 0.4.0: version number only.
 
 ## 0.3.1 — 2026-11-06

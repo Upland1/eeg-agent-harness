@@ -190,6 +190,8 @@ def resolve_device(name):
 def environment(device):
   dev = torch.device(device)
   return {"torch": torch.__version__, "torch_cuda": torch.version.cuda,
+          "build": f"cuda {torch.version.cuda}" if torch.version.cuda else "cpu",
+          "cuda_available": bool(torch.cuda.is_available()),
           "cudnn": torch.backends.cudnn.version() if torch.backends.cudnn.is_available() else None,
           "device": str(dev),
           "device_name": torch.cuda.get_device_name(dev) if dev.type == "cuda" else "cpu",

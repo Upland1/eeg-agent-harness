@@ -169,3 +169,18 @@ def test_union_feature_step_registers_itself_in_a_fresh_interpreter():
                        capture_output=True, text=True)
   assert out.returncode == 0, out.stderr
   assert out.stdout.strip() == "fbcsp+fbcca"
+
+
+def test_network_environment_records_the_torch_build(monkeypatch):
+  """Gap 7 (Sebastian, 2026-11-07): the run outputs record torch's version and build, so a CPU-only build is
+  visible; methods.run copies this into results.json["torch_environment"] for every network part."""
+  import torch
+
+  from eegpipe import networks as nw
+  monkeypatch.setattr(torch.version, "cuda", None)
+  env = nw.environment("cpu")
+  assert env["build"] == "cpu" and env["torch"] == torch.__version__ and isinstance(env["cuda_available"], bool)
+  monkeypatch.setattr(torch.version, "cuda", "12.8")
+  assert nw.environment("cpu")["build"] == "cuda 12.8"
+  src = (TOOLS / "eegpipe" / "runner" / "methods.py").read_text()
+  assert 'res["torch_environment"] = torch_env' in src and "torch_env = nw.environment(device)" in src
