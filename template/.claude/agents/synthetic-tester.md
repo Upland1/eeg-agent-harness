@@ -22,6 +22,12 @@ correct answer is known before the code runs (CLAUDE.md G2).
   timestamps, missing or extra events, NaNs where the format allows them.
 - Use the sampling rate, channel count and event codes measured in
   `docs/DATA_PROFILE.md`, never a literal copied from elsewhere.
+- Use the REAL identifiers in fixtures: method ids as the pipeline writes
+  them (`f1/raw/Shrinkage-LDA lsqr`, with its slashes and space), part names
+  and file names as `docs/DATA_PROFILE.md` lists them (e.g.
+  `Training 5 - F.edf`). Every parser, regex or matcher (log lines, CSV
+  filters, file selection) is tested on them, never on a made-up id without
+  spaces (G12, L30).
 - Plant what `docs/PARADIGM.md` says the signal is (where, when, at which
   frequency), and check the code recovers it; plant the opposite in the
   other class. Reader plugins: write a file with known values, read it back.

@@ -149,25 +149,15 @@ def _write(path, seed, scale):
            **{k: v for k, v in events.items()})
 
 
-@pytest.mark.parametrize("empty", ["f0", "f2"])
-def test_runner_writes_a_row_for_a_file_with_every_epoch_rejected(tmp_path, empty):
-  """Known answer (end to end, rm.run): three files, one (first or last) scaled x 1e4 so the artifact screen
-  rejects every epoch: per_file_tests.csv has 3 rows in file order, the empty file has status no_used_epochs,
-  BA NaN and p entering Holm 1, the others are ok with finite p; Holm m = 3 on every row; the empty file's
-  per_file.csv row has n = 0. (01d9573: an empty first file shifted every other file onto the previous file's
-  null column, and an empty last file had no row and a family of 2.)"""
-  root = tmp_path / "proj"
-  for i, f in enumerate(["f0", "f1", "f2"]):
-    _write(root / "data" / "raw" / "P1" / "s1" / f"{f}.npz", 500 + i, 1e4 if f == empty else 1.0)
-  (root / "adapter_lessons.py").write_text(ADAPTER)
+def _cfg(scheme="unit_target"):
   epochs = synth.erp_settings(FS)
   epochs.pop("classes")
   prof = json.loads((TOOLS / "eegpipe" / "profiles" / "erp.json").read_text())
   f1 = copy.deepcopy(prof["f1"])
   f1["feature_spaces"], f1["model_order"] = ["raw"], ["Shrinkage-LDA lsqr"]
-  cfg = {
+  return {
     "settings_version": 1, "classes": BIN, "fs_hz": FS, "channels": ["C0", "C1", "C2", "C3"],
-    "adapter": "adapter_lessons", "data_root": "data/raw", "label_scheme": "unit_target", "epochs": epochs,
+    "adapter": "adapter_lessons", "data_root": "data/raw", "label_scheme": scheme, "epochs": epochs,
     "folds": {"n_folds": 4, "seed": 20261107}, "baseline": copy.deepcopy(prof["baseline"]), "f1": f1,
     "permutation": {"methods": ["baseline"], "n_permutations": 4, "seed": 20261105, "alpha": 0.05,
                     "critical_value_percentile": 95.0, "percentile_method": "linear", "n_jobs": 1, "chunk_size": 8},
@@ -177,9 +167,29 @@ def test_runner_writes_a_row_for_a_file_with_every_epoch_rejected(tmp_path, empt
               "retry": {"max_attempts": 1}, "tracked": [], "selection_output": None,
               "part": "classical", "dataset_part": "P1/s1"},
   }
+
+
+def _out(tmp_path):
   out = tmp_path / "out"
   out.mkdir()
   (out / "provenance.json").write_text(json.dumps({"commit_short": "test", "tracked_files_dirty": False}))
+  return out
+
+
+@pytest.mark.parametrize("empty", ["f0", "f2"])
+def test_runner_writes_a_row_for_a_file_with_every_epoch_rejected(tmp_path, empty):
+  """Known answer (end to end, rm.run): three files, one (first or last) scaled x 1e4 so the artifact screen
+  rejects every epoch: per_file_tests.csv has 3 rows in file order, the empty file has status no_used_epochs,
+  BA NaN and p entering Holm 1, the others are ok with finite p; Holm m = 3 on every row; the empty file's
+  per_file.csv row has n = 0. (01d9573: the shuffle refused the empty file's units, which have no codes, so
+  the step stopped; behind it, an empty first file would have shifted every other file onto the previous
+  file's null column, and an empty last file would have had no row and a family of 2.)"""
+  root = tmp_path / "proj"
+  for i, f in enumerate(["f0", "f1", "f2"]):
+    _write(root / "data" / "raw" / "P1" / "s1" / f"{f}.npz", 500 + i, 1e4 if f == empty else 1.0)
+  (root / "adapter_lessons.py").write_text(ADAPTER)
+  cfg = _cfg()
+  out = _out(tmp_path)
   rm.run(cfg, out, root)
   rows = list(csv.DictReader(open(out / "per_file_tests.csv")))
   assert [r["file"] for r in rows] == ["P1/s1/f0.npz", "P1/s1/f1.npz", "P1/s1/f2.npz"]
@@ -195,3 +205,29 @@ def test_runner_writes_a_row_for_a_file_with_every_epoch_rejected(tmp_path, empt
   pf = {r["file"]: r for r in csv.DictReader(open(out / "per_file.csv")) if r["method"] == "baseline"}
   assert set(pf) == {r["file"] for r in rows}
   assert int(pf[f"P1/s1/{empty}.npz"]["n_target"]) == 0 and int(pf[f"P1/s1/{empty}.npz"]["n_nontarget"]) == 0
+
+
+# ------------------------------------------------------------------ known broken in v0.4 (unit_label)
+@pytest.mark.xfail(strict=True, raises=IndexError,
+                   reason="KNOWN BROKEN in v0.4 (CHANGELOG): under label_scheme unit_label (SSVEP trials) a unit with "
+                          "0 used epochs stops the run (its label is unknown: IndexError in the runner's unit labels "
+                          "for fold balancing; evaluate.unit_values refuses it next); deferred by decision 2026-11-09")
+def test_unit_label_unit_with_every_epoch_rejected_runs(tmp_path):
+  """The failing case: two files of 8 two-class trials (unit_label), the first trial of f0 scaled x 1e4 so the
+  artifact screen rejects all its epochs. Wanted: the run completes with one test row per file. Today it
+  stops; strict xfail, so a fix makes this test fail until the marker is removed."""
+  root = tmp_path / "proj"
+  for i, f in enumerate(["f0", "f1"]):
+    data, events, info = synth.recording(600 + i, fs=FS, n_channels=4, n_units=8, n_epochs=6, isi=64, rest=1200,
+                                         amp=2.0, scheme="per_unit", unit_classes=[0, 1] * 4)
+    if f == "f0":
+      data[:, events["unit_start"][0] - 300:events["unit_end"][0] + 300] *= 1e4
+    path = root / "data" / "raw" / "P1" / "s1" / f"{f}.npz"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(path, data=data, fs=FS, ch=np.array(info["ch_names"]), unit_target=np.zeros(8, dtype=np.int64),
+             **{k: v for k, v in events.items()})
+  (root / "adapter_lessons.py").write_text(ADAPTER)
+  out = _out(tmp_path)
+  rm.run(_cfg("unit_label"), out, root)
+  rows = list(csv.DictReader(open(out / "per_file_tests.csv")))
+  assert len(rows) == 2 and all(r["status"] == "ok" for r in rows)

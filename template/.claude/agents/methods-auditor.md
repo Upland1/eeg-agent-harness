@@ -78,9 +78,12 @@ FAIL if a design error would reach code. Append `## Round N` on re-audit.
 
 ## Results check (after 06_results.md, G23)
 Asked for a results check, read `06_results.md` and append `## Results
-check` to `05_audit.md`. For every number in `06_results.md`: find it
-verbatim in a logged output (file and line) or in the output of a committed,
-tested tool; list any that are not. Grep the handoffs of the run for paths
+check` to `05_audit.md`. Run `python -m eegharness.numbers check --numbers
+<numbers.json named in 06_results.md> --report <06_results.md>`: any problem
+is a FAIL; the spec must be committed (`git log -- configs/numbers/`). For
+every other number in `06_results.md`: find it verbatim in a logged output
+(file and line); a derived number (difference, pp, count, percentage, mean)
+without a `[num:key]` is a FAIL. Grep the handoffs of the run for paths
 outside the repository (`/tmp`, home folders, scratchpads): any such path in
 a READY handoff is a FAIL. Check G18 (seeds, spread) and G19 (only primary
 comparisons called significant). Verdict PASS / FAIL with the list.

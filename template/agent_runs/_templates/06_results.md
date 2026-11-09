@@ -29,8 +29,13 @@ table. -->
 <!-- Per participant: mean ± SD over seeds (n seeds), training accuracy, chance level for the
 number of test trials. Primary comparisons from 02_plan.md with their corrected p; every other
 comparison labelled exploratory. A difference smaller than the seed spread: "no difference
-shown". Every derived number from a committed, tested tool (G23); list missing ones under
-"Derived numbers needed" and set Status: BLOCKED. -->
+shown". Every derived number from `eegharness.numbers` (G23): its text followed by its key,
+e.g. `4.2 pp [num:gain_f1_pp]`; numbers the tool cannot derive go under "Derived numbers
+needed" with Status: BLOCKED. -->
+
+Numbers spec (committed): `configs/numbers/<run>.json` @ <commit>
+numbers.json: `outputs/numbers/<UTC>_<commit>/numbers.json`
+`eegharness.numbers check` (last line): 
 
 | Participant | Model / configuration | Test metric mean ± SD (n seeds) | Train accuracy | Chance level | Primary or exploratory |
 |---|---|---|---|---|---|

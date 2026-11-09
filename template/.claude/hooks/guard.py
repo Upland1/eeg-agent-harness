@@ -554,8 +554,13 @@ def check_auditor_bash(cmd: str, root: Path, cwd: str = ".") -> None:
                              and is_under(real(o if os.path.isabs(o) else Path(cwd) / o), runs) for o in outs):
         block(deny + "compare_runs only with --out inside the run folder (agent_runs/<run>/...).")
       continue
+    if re.fullmatch(r"python(3(\.\d+)?)?", name) and args[:2] == ["-m", "eegharness.numbers"]:
+      if args[2:3] != ["check"]:
+        block(deny + "eegharness.numbers only as `check` (it reads; `derive` writes and is the analyst's).")
+      continue
     block(deny + f"`{name}` is not on the auditor's list (read-only file tools, read-only git, "
-          "python -m pytest -p no:cacheprovider, python -m eegharness.compare_runs).")
+          "python -m pytest -p no:cacheprovider, python -m eegharness.compare_runs, "
+          "python -m eegharness.numbers check).")
 
 
 def check_analyst_bash(cmd: str, root: Path, cwd: str) -> None:

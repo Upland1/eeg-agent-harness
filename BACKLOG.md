@@ -36,3 +36,20 @@ on background work exists, but the skills don't say that a subagent counts. Prop
 next kit version: `onboard`, `assignment` and `apply-pipeline` say "run each agent in the
 foreground and wait for its handoff before the next step or the end of the turn". Workaround
 used: resume the session with that instruction.
+
+## L30 — a pre-declared check failed on the real method id (2026-11-09)
+
+In the P300 Stage-2 run, a pre-declared regression check parsed log lines with
+`^(?P<method>\S+): pooled BA`. The real F1 id `f1/raw/Shrinkage-LDA lsqr` has a space, so the check
+reported FAIL on real data; its synthetic tests had used a made-up id without a space. Fixed in 0.4.0:
+G12 and the synthetic-tester require the study's real identifiers (method ids, part and file names such
+as `Training 5 - F.ebr`) in fixtures for every parser and matcher; `kit_tests/test_real_identifiers.py`
+runs the kit's own matchers on them (the `eegharness.folds` key pattern refused real file names).
+
+## L31 — G11/G23 slipped again in the results step (2026-11-09)
+
+In the P300 Stage-2 results step, the results analyst computed derived report numbers (pp conversions,
+counts, percentages) in uncommitted /tmp scratch scripts, although G11, G23 and L27 forbid it: the kit
+had no ready tool, so the agent improvised one. Fixed in 0.4.0: `eegharness.numbers` (a committed spec
+of keyed derivations, a versioned numbers.json, `[num:key]` citations verified by `check`), used by the
+results-analyst, the 06_results template and the auditor's results check.

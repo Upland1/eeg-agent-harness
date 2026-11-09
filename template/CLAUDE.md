@@ -114,10 +114,14 @@ of their sampled numbers, mostly values computed in markdown (L3, L4).*
 **G12. Test a measurement before it measures.** Every new measurement, estimator,
 screening statistic or test statistic ships with known-answer tests (G2) that pass
 **before** its first run on real data, on realistic inputs (e.g. block-updated
-timestamps, uneven intervals, missing events). Every test statistic also gets a
-false-positive-rate test: on pure noise with no effect, it rejects at about its nominal
-rate, within a binomial tolerance stated in the test. *Incident: a survey script and a
-rate estimator gave wrong numbers on real data before any test existed (L5, L6, L17).*
+timestamps, uneven intervals, missing events) and with the study's real identifiers:
+method ids, part and file names as written, with their spaces, slashes and hyphens
+(`f1/raw/Shrinkage-LDA lsqr`, `Training 5 - F.edf`), for every parser and matcher. Every
+test statistic also gets a false-positive-rate test: on pure noise with no effect, it
+rejects at about its nominal rate, within a binomial tolerance stated in the test. *Incident: a survey script and a
+rate estimator gave wrong numbers on real data before any test existed (L5, L6, L17); a
+pre-declared check parsed `^(\S+): pooled BA` and failed on the real F1 id, which has a space,
+because its tests used a made-up id (L30).*
 
 **G13. State the exchangeability unit.** Every evaluation and every resampling procedure
 (permutation, bootstrap, cross-validation) names its exchangeable unit (epoch, trial,
@@ -242,8 +246,11 @@ configuration on the same folder is refused. Runtime and device are reported per
 **G23. Derivations go through committed, tested tools.** Any number derived for a handoff
 or write-up (difference, ratio, mean, interval, p-value, count) comes from a committed
 tool with a test before it enters the handoff; no scratch scripts, no inline arithmetic.
-A handoff that cites a path outside the repository cannot be READY. The auditor checks
-both in a results check. Extends G11. *Incident: the results-analyst computed write-up
+A handoff that cites a path outside the repository cannot be READY. The tool is
+`eegharness.numbers`: each number is declared under a stable key in a committed spec
+(`configs/numbers/<run>.json`), derived into a versioned folder, and cited in the report as
+`<text> [num:key]`; `python -m eegharness.numbers check` verifies every citation. The auditor
+checks both in a results check. Extends G11. *Incident: the results-analyst computed write-up
 numbers with scratch scripts in a temporary folder although G11 existed (L27).*
 
 **G24. The pipeline library is configured, never edited.** `eegpipe/` (Sebastian's pipeline:
@@ -282,8 +289,8 @@ running one).
 - Shared tools are vendored, committed code in `eegharness/`: versioned output folders
   and provenance (`outputs`), regression checks (`python -m eegharness.compare_runs`),
   grouped splits with a leakage check (`splits`), unit-level permutation tests
-  (`permutation`), chance levels (`chance`), seeding (`seeds`) and resumable folds
-  (`folds`). torch is never required by `eegharness`. Project code imports only committed
+  (`permutation`), chance levels (`chance`), seeding (`seeds`), resumable folds
+  (`folds`) and derived report numbers with stable keys (`python -m eegharness.numbers`, G23). torch is never required by `eegharness`. Project code imports only committed
   files, never `.harness/`.
 - Sebastian's pipeline is vendored, committed code in `eegpipe/` (G24): configured in
   `configs/pipeline.json` (`eegpipe.settings`; one profile per design family), read through the

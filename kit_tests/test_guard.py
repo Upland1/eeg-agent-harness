@@ -162,6 +162,8 @@ AUDITOR_ALLOW = [
   "sed -n 245,300p docs/DATA_PROFILE.json",   # wrongly blocked in the v0.2 end-to-end run
   "sed -n '1,5p;40,$p' src/a.py",
   "python -m eegharness.compare_runs --a outputs/x/1 --b outputs/x/2 --out agent_runs/2026-11-06_r/regression",
+  "python -m eegharness.numbers check --numbers 'outputs/numbers/20261109T150000Z_abc1234' "
+  "--report agent_runs/2026-11-09_p300-stage2/06_results.md",   # P300 Stage-2 lesson: numbers cited by key
 ]
 
 AUDITOR_BLOCK = [
@@ -183,6 +185,7 @@ AUDITOR_BLOCK = [
   "sed -n 1,5p src/a.py > copy.txt",
   "rm src/a.py",
   "python -m eegharness.compare_runs --a a --b b --out outputs/cmp",
+  "python -m eegharness.numbers derive --spec configs/numbers/r.json --out outputs/numbers",
 ]
 
 

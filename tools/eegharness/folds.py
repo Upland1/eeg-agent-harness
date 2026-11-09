@@ -15,7 +15,9 @@ Definitions:
   ``save`` refuses to overwrite a finished fold and writes atomically (temporary file, then
   rename), so an interrupted run never leaves a half-written fold. Arrays are stored with
   ``allow_pickle=False``; ``meta`` (JSON-serialisable) is stored inside the same file.
-  Keys are letters, digits, ``-``, ``_``, ``.`` and ``=`` only.
+  Keys may be real file or method names, with spaces, hyphens, ``+``, ``=``, ``,``, ``(``, ``)``;
+  never ``/``, ``\\``, ``:``, ``*``, ``?``, ``"``, ``<``, ``>``, ``|`` or a control character, and
+  they start with neither ``.`` nor a space and do not end with a space.
 """
 
 import json
@@ -25,7 +27,9 @@ from pathlib import Path
 
 import numpy as np
 
-KEY = re.compile(r"[A-Za-z0-9_.=-]+")
+# Keys may be real file and method names ("Training 5 - F.ebr", "Shrinkage-LDA lsqr", "fbcsp+fbcca"); they
+# exclude path separators and characters no common file system allows, and cannot start with "." or a space.
+KEY = re.compile(r"[^./\\\s:*?\"<>|\x00-\x1f][^/\\:*?\"<>|\x00-\x1f]*")
 
 
 class ConfigMismatch(RuntimeError):
@@ -51,7 +55,7 @@ class FoldStore:
       cfg_path.write_text(json.dumps(config, indent=1, sort_keys=True, default=str) + "\n")
 
   def _path(self, key: str) -> Path:
-    if not KEY.fullmatch(key) or key in (".", ".."):
+    if not isinstance(key, str) or not KEY.fullmatch(key) or key != key.rstrip():
       raise ValueError(f"invalid fold key {key!r}")
     return self.folder / f"{key}.npz"
 

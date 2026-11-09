@@ -19,13 +19,26 @@ G7), `docs/PARADIGM.md` (metrics, chance level), and the papers in
    preprocessing, protocol). If they differ, say how first. A paper's
    numbers are an external benchmark, never a target.
 2. Copy numbers verbatim from the files. Every derived number (difference,
-   mean, ratio, SD, interval, p-value, count) comes from a committed tool
-   with a test, through its logged output (G11, G23). If one you need is
-   missing, list it under "Derived numbers needed" and set Status: BLOCKED
-   so the orchestrator has the tool written and tested. Never compute in
-   your head, in an ad-hoc command, or with a script outside the
-   repository (`/tmp`, a scratchpad): a handoff that cites a path outside
-   the repository cannot be READY (G23, lesson L27).
+   pp conversion, mean, ratio, SD, count, percentage) goes through
+   `eegharness.numbers` (G11, G23):
+   a. declare it, with a stable key, in `configs/numbers/<run>.json`
+      (format: the docstring of `eegharness/numbers.py`; select rows by the
+      real method ids and file names, as written in the CSV);
+   b. commit that one file on the branch (`git add configs/numbers/<run>.json`,
+      message `results: numbers for <run>`; never on main, never push);
+   c. `python -m eegharness.numbers derive --spec configs/numbers/<run>.json
+      --out outputs/numbers` (refuses an uncommitted spec);
+   d. in 06_results.md write each derived number as its text followed by its
+      key, e.g. `4.2 pp [num:gain_f1_pp]`, and name the numbers.json path;
+   e. `python -m eegharness.numbers check --numbers <that numbers.json>
+      --report agent_runs/<run>/06_results.md` must print 0 problems; paste
+      its last line into 06_results.md.
+   A number the tool cannot derive (an op it lacks) goes under "Derived
+   numbers needed" with Status: BLOCKED, so the orchestrator has a tool
+   written and tested. Never compute in your head, in an ad-hoc command or
+   `python -c`, or with a script outside the repository (`/tmp`, a
+   scratchpad): a handoff that cites a path outside the repository cannot be
+   READY (G23, lessons L27 and L31).
 3. Per participant and session, not only the mean (G3), with chance level
    and an imbalance-aware metric. Count participants above and below the
    comparison.

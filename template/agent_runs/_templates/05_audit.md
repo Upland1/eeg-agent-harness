@@ -73,6 +73,8 @@ Verdict: PASS / FAIL
 |---|---|---|
 | | | |
 
+`eegharness.numbers check` on 06_results.md (last line; any problem → FAIL):
+Derived numbers without a [num:key]: (none / list → FAIL)
 Paths outside the repository cited in the run's handoffs: (none / list → FAIL)
 G18 seeds and spread reported: 
 G19 only primary comparisons called significant: 

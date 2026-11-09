@@ -43,7 +43,31 @@ Applies Sebastian's pipeline to any EEG study (spec: `docs/v0.4_spec_draft.md`, 
   `evaluate.n_strata`), never max(file_idx) + 1, and the null's width is checked (files + pooled
   column; one column per stratum in `per_stratum_tests`). New columns: `status`, `n_used_epochs`,
   `perm_p_entering_holm`, `holm_m`; `per_file.csv` has a row (n = 0) for an empty file.
-- Kit tests: 402 passed (1 CUDA test skipped on CPU); torch, scipy and scikit-learn join the kit
+- Real identifiers in tests (P300 Stage-2 lesson: a pre-declared check parsed `^(\S+): pooled BA` and
+  failed on the real F1 id, which has a space): `kit_tests/test_real_identifiers.py` runs the kit's
+  matchers on `f1/raw/Shrinkage-LDA lsqr`, `f1/fbcsp+fbcca/...`, data part `Sub-01/Session 1` and files
+  such as `Training 5 - F.ebr` and `Training 7, repeat - F.ebr` (runner end to end, selection, stage
+  slugs, fold keys). `eegharness.folds` keys now accept real file and method names (spaces, hyphens,
+  `+`, `,`, parentheses); they still refuse path separators, `:*?"<>|`, control characters and a
+  leading `.` or space (the old pattern refused `Training 5 - F.ebr` and accepted `.hidden`). G12 and the
+  synthetic-tester require real identifiers in fixtures for every parser and matcher.
+- G11/G23 slipped again in the P300 results step (derived numbers in uncommitted /tmp scripts): new
+  `eegharness.numbers` (standard library only). Each derived number (value, pp, difference, pp
+  difference, ratio, percent, count, sum, mean, SD, median, min, max) is declared under a stable key in
+  a committed spec (`configs/numbers/<run>.json`; `derive` refuses an uncommitted or modified spec and
+  any table outside the project), written to a versioned folder (`numbers.json` with the spec's and
+  each table's SHA-256, `numbers.csv`), and cited as `<text> [num:key]`; `check` verifies every
+  citation. Rows are selected by exact identifiers; exactly one row per single value; NaN refuses
+  unless dropped explicitly (counted). The results-analyst, the 06_results template, G23, the
+  auditor's results check and the 05_audit template use it; the guard lets the auditor run
+  `numbers check` (not `derive`). Tests: `kit_tests/test_eegharness_numbers.py`.
+- KNOWN BROKEN in 0.4.0: under `label_scheme` `unit_label` (SSVEP trials), a unit whose epochs are all
+  rejected stops the methods runner (`IndexError` in the runner's unit labels for fold balancing;
+  `evaluate.unit_values` refuses it next). Not fixed in 0.4.0 (decision 2026-11-09); the failing case is
+  the strict xfail `test_unit_label_unit_with_every_epoch_rejected_runs` in
+  `kit_tests/test_eegpipe_stage2_lessons.py` (a fix makes it XPASS, which fails the suite until the
+  marker is removed).
+- Kit tests: 433 passed, 1 xfailed (known broken, above), 1 CUDA test skipped on CPU; torch, scipy and scikit-learn join the kit
   test environment. `eegharness` 0.4.0: version number only.
 
 ## 0.3.1 — 2026-11-06
