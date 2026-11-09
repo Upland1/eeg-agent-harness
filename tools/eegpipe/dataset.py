@@ -53,6 +53,7 @@ def assemble(file_results):
   out["X"] = np.concatenate(Xs, axis=0)
   out["unit_file"] = np.asarray(unit_file, dtype=np.int64)
   out["unit_local_of_uid"] = np.asarray(unit_local_of_uid, dtype=np.int64)
+  out["n_files"] = len(file_results)   # files with 0 used epochs included (never max(file_idx) + 1)
   return out
 
 

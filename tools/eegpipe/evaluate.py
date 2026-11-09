@@ -22,7 +22,8 @@ LABEL UNIT of the study (G13), within each stratum, keeping the stratum's multis
     blocks: label = 1 iff code == target of the unit): the vector of unit targets is
     permuted across the stratum's units and labels are recomputed with the same rule
     (``labels_from_targets``); a target that is not among the codes of the unit it lands
-    in raises (never relabelled silently).
+    in raises (never relabelled silently). A unit with no retained epoch has no code set and
+    no epoch to relabel, so it takes any target.
 Permutation p uses ``numpy.random.default_rng([seed, p])``; strata in order, each draws
 ``rng.permutation(values)`` once (bitwise the P300 run's draws for the same seed). The whole
 method is refitted in every fold on the permuted labels and the per-stratum BA is read from
@@ -31,6 +32,14 @@ observed BA} (scikit-learn ``permutation_test_score``; Phipson and Smyth 2010); 
 floor 1 / n_distinct (n_distinct = multinomial number of distinct label vectors of the
 stratum) is reported separately with a flag when the Monte Carlo p is below it; Holm across
 the strata. All draws are made in the parent process, so results do not depend on n_jobs.
+
+Untestable strata (P300 Stage-2 lessons D-018 and DEV-2, 2026-11-09): a stratum with 0 used
+epochs (status ``no_used_epochs``) or with a class absent from its used epochs (status
+``missing_class``; its BA is NaN) gets a row with p NaN, enters Holm as p = 1 and is never
+above chance; the Holm family is always every stratum. ``permutation_p`` refuses a non-finite
+observed value (no null value is >= NaN, so it would return the minimum p). The number of
+strata is the number of files assembled (``n_strata``), never max(file index) + 1, and the
+null passed to ``per_stratum_tests`` must have exactly one column per stratum.
 """
 
 import math
@@ -148,9 +157,8 @@ def unit_values(sess, scheme, unit_targets=None):
 
   unit_label: the label of each unit (must be constant within the unit);
   unit_target: ``unit_targets[file]`` as given by the adapter (one target per unit)."""
-  n_files = int(sess["unit_file"].max()) + 1
   out = []
-  for f in range(n_files):
+  for f in range(n_strata(sess)):
     m = sess["file_idx"] == f
     n_u = int(np.sum(sess["unit_file"] == f))
     if scheme == "unit_label":
@@ -171,6 +179,18 @@ def unit_values(sess, scheme, unit_targets=None):
   return out
 
 
+def n_strata(sess):
+  """Number of files of the session: ``n_files`` (set by ``dataset.assemble``), else the number of
+  ``file_names``, else max(unit_file) + 1 (hand-built sessions; a file keeps its units when every
+  epoch is rejected). Never max(file_idx) + 1: a file with 0 used epochs has no index in file_idx,
+  so an empty last file would vanish and the null's pooled column would take its place."""
+  if "n_files" in sess:
+    return int(sess["n_files"])
+  if "file_names" in sess:
+    return len(sess["file_names"])
+  return int(sess["unit_file"].max()) + 1   # hand-built sessions: every file has units even with 0 epochs
+
+
 def unit_code_sets(sess, f):
   """Sorted code set of each unit of file f (scheme unit_target)."""
   m = sess["file_idx"] == f
@@ -182,7 +202,7 @@ def unit_code_sets(sess, f):
 def _check_targets_fit(x, cands):
   for v in sorted(set(np.asarray(x).tolist())):
     for u, c in enumerate(cands):
-      if v not in c:
+      if len(c) and v not in c:   # a unit with no retained epoch has nothing to relabel
         raise ValueError(f"target {v} can be shuffled into unit {u}, whose codes {c.tolist()} do not include it")
 
 
@@ -259,6 +279,9 @@ def larger_p_floor(n_perm, n_distinct):
 
 
 def permutation_p(observed, null):
+  if not np.isfinite(observed):
+    raise ValueError(f"observed value {observed} is not finite: no null value is >= it, so the p would be the "
+                     "minimum 1 / (n + 1); an untestable stratum enters Holm as p = 1 (per_stratum_tests)")
   null = np.asarray(null, dtype=np.float64)
   return float((np.sum(null >= observed) + 1.0) / (null.size + 1.0))
 
@@ -288,9 +311,8 @@ def labels_for(sess, values_per_stratum, scheme):
 def per_stratum_ba(sess, y, splits, make_est, class_names):
   """(per-stratum BA array, pooled BA) of one method under fixed folds."""
   pred, _, _ = cv_predict(sess["X"], y, splits, make_est, class_names)
-  n_files = int(sess["file_idx"].max()) + 1
   ba = np.array([class_metrics(y[sess["file_idx"] == f], pred[sess["file_idx"] == f], class_names)["ba"]
-                 for f in range(n_files)])
+                 for f in range(n_strata(sess))])
   return ba, class_metrics(y, pred, class_names)["ba"]
 
 
@@ -344,18 +366,60 @@ def permutation_null(sess, splits, method_ids, factory, cfg, scheme, class_names
   return np.stack([a for r in res for a in r], axis=1)
 
 
-def per_stratum_tests(observed_ba, null_ba, n_distinct, alpha, percentile, percentile_method):
-  """Per stratum: Monte Carlo p, floors and flag, null mean and critical value, Holm p, decision."""
+def stratum_status(counts):
+  """'ok', 'no_used_epochs' (no epoch) or 'missing_class' (a class has no epoch, so BA is NaN)."""
+  counts = np.asarray(counts)
+  if counts.sum() == 0:
+    return "no_used_epochs"
+  return "missing_class" if np.any(counts == 0) else "ok"
+
+
+def per_stratum_tests(observed_ba, null_ba, n_distinct, alpha, percentile, percentile_method, class_counts=None):
+  """Per stratum: status, Monte Carlo p, floors and flag, null mean and critical value, Holm p, decision.
+
+  ``null_ba`` is (n_perm, n_strata): one column per stratum, without the pooled column.
+  ``class_counts`` (n_strata, k) are the used epochs per class of each stratum; a stratum with
+  0 used epochs or a missing class is untestable: p NaN, enters Holm as p = 1 (module docstring).
+  Without class_counts every observed BA must be finite."""
+  observed_ba = np.asarray(observed_ba, dtype=np.float64)
+  null_ba = np.asarray(null_ba, dtype=np.float64)
+  n = observed_ba.size
+  if null_ba.ndim != 2 or null_ba.shape[1] != n:
+    raise ValueError(f"the null has shape {null_ba.shape}; it needs {n} columns, one per stratum "
+                     "(drop the pooled column; never align by position a null of another width)")
+  if len(n_distinct) != n:
+    raise ValueError(f"{len(n_distinct)} n_distinct values for {n} strata")
+  if class_counts is None:
+    if not np.all(np.isfinite(observed_ba)):
+      raise ValueError("an observed BA is NaN; pass class_counts so the stratum is marked untestable "
+                       "(no_used_epochs or missing_class) and enters Holm as p = 1")
+    status = ["ok"] * n
+    n_used = [None] * n
+  else:
+    class_counts = np.asarray(class_counts)
+    if class_counts.shape[0] != n:
+      raise ValueError(f"class_counts has {class_counts.shape[0]} rows for {n} strata")
+    status = [stratum_status(c) for c in class_counts]
+    n_used = [int(c.sum()) for c in class_counts]
+    for f in range(n):
+      if status[f] == "ok" and not np.isfinite(observed_ba[f]):
+        raise ValueError(f"stratum {f}: every class has epochs but the observed BA is {observed_ba[f]}")
   n_perm = null_ba.shape[0]
-  p = [permutation_p(o, null_ba[:, f]) for f, o in enumerate(observed_ba)]
-  ph = holm(p)
+  p = [permutation_p(observed_ba[f], null_ba[:, f]) if status[f] == "ok" else float("nan") for f in range(n)]
+  p_in = [p[f] if status[f] == "ok" else 1.0 for f in range(n)]
+  ph = holm(p_in)
   rows = []
-  for f in range(len(observed_ba)):
+  for f in range(n):
+    ok = status[f] == "ok"
     floor = exact_null_p_floor(int(n_distinct[f]))
-    rows.append({"perm_p_monte_carlo": float(p[f]), "monte_carlo_p_floor": monte_carlo_p_floor(n_perm),
+    rows.append({"status": status[f], "n_used_epochs": n_used[f],
+                 "perm_p_monte_carlo": float(p[f]), "perm_p_entering_holm": float(p_in[f]), "holm_m": n,
+                 "monte_carlo_p_floor": monte_carlo_p_floor(n_perm),
                  "n_distinct_shuffles": int(n_distinct[f]), "exact_null_p_floor": floor,
-                 "monte_carlo_p_below_exact_floor": bool(p[f] < floor),
-                 "null_ba_mean": float(np.mean(null_ba[:, f])),
-                 "null_ba_critical": float(np.percentile(null_ba[:, f], percentile, method=percentile_method)),
-                 "n_permutations": int(n_perm), "perm_p_holm": float(ph[f]), "above_chance_holm": bool(ph[f] < alpha)})
+                 "monte_carlo_p_below_exact_floor": bool(ok and p[f] < floor),
+                 "null_ba_mean": float(np.mean(null_ba[:, f])) if ok else float("nan"),
+                 "null_ba_critical": (float(np.percentile(null_ba[:, f], percentile, method=percentile_method))
+                                      if ok else float("nan")),
+                 "n_permutations": int(n_perm), "perm_p_holm": float(ph[f]),
+                 "above_chance_holm": bool(ok and ph[f] < alpha)})
   return rows

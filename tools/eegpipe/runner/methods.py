@@ -14,7 +14,9 @@ Generic version of the P300 project's ``scripts/run_ssvep_methods.py`` @ cd5db15
      (phase features, condition-level connectivity), ``f2__<model>`` (one network, every seed),
      ``f4__<model>`` (one GNN, every seed). A method that raises is recorded as
      "failed: <error>" and the run continues; a method that is also permuted stops the run;
-  4. per-stratum permutation tests for ``permutation.methods`` of this part (eegpipe.evaluate);
+  4. per-stratum permutation tests for ``permutation.methods`` of this part (eegpipe.evaluate); every
+     file has a row: a file with 0 used epochs (status no_used_epochs) or a missing class
+     (missing_class) has BA NaN, p NaN and enters Holm as p = 1; the family is every file;
   5. outputs in a new folder (eegharness.outputs, G9): results.json (commit, dirty flag, settings
      hash, epochs and folds hashes, method statuses), config_used.json, pooled.csv,
      per_file.csv, per_condition.csv, per_fold.csv, curves.csv, per_file_tests.csv, gates.csv,
@@ -156,7 +158,7 @@ def write_csv(path, rows, empty=("none",)):
 
 def group_rows(method, seed, y, pred, sess, names, conditions):
   per_file, per_cond = [], []
-  for f in np.unique(sess["file_idx"]):
+  for f in range(evl.n_strata(sess)):   # every file, also one with 0 used epochs (n = 0, BA NaN)
     m = sess["file_idx"] == f
     per_file.append(metric_row(y[m], pred[m], names, method=method, seed=seed, file=sess["file_names"][f]))
   cond = np.array([conditions[f] for f in sess["file_idx"]])
@@ -345,10 +347,15 @@ def run(cfg, out, root="."):
       s2["X"] = inputs[input_kind(mid)]
       null = evl.permutation_null(s2, splits, [mid], make_estimator, cfg, scheme, names, shuffles,
                                   int(cfg["permutation"].get("n_jobs", 1)), int(cfg["permutation"].get("chunk_size", 8)))[0]
-      obs = np.array([r["ba"] for r in per_file if r["method"] == mid and r["seed"] == ""])
-      rows = evl.per_stratum_tests(obs, null[:, :-1], nd, float(cfg["permutation"]["alpha"]),
+      if null.shape[-1] != len(files) + 1:
+        raise RuntimeError(f"{mid}: the null has {null.shape[-1]} columns; {len(files)} files + the pooled column "
+                           f"expected")
+      pf = {r["file"]: r for r in per_file if r["method"] == mid and r["seed"] == ""}
+      obs = np.array([pf[f]["ba"] for f in files], dtype=np.float64)
+      counts = np.array([[pf[f][f"n_{c}"] for c in names] for f in files])
+      rows = evl.per_stratum_tests(obs, null[:, :len(files)], nd, float(cfg["permutation"]["alpha"]),
                                    float(cfg["permutation"]["critical_value_percentile"]),
-                                   cfg["permutation"]["percentile_method"])
+                                   cfg["permutation"]["percentile_method"], class_counts=counts)
       for f, row in enumerate(rows):
         test_rows.append({"method": mid, "file": files[f], "observed_ba": float(obs[f]),
                           "n_redraws_total": None if redraws is None else int(redraws.sum()), **row})

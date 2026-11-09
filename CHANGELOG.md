@@ -33,7 +33,17 @@ Applies Sebastian's pipeline to any EEG study (spec: `docs/v0.4_spec_draft.md`, 
   `fbcsp+fbcca` registers the SSVEP steps in a spawned worker (it failed with `permutation.n_jobs` > 1).
 - Network parts record torch's version and build (`build`: "cuda X.Y" or "cpu", `cuda_available`) in
   `results.json["torch_environment"]`; a configured CUDA device without CUDA still stops the part (no CPU fallback).
-- Kit tests: 392 passed (1 CUDA test skipped on CPU); torch, scipy and scikit-learn join the kit
+- Two lessons from the P300 Stage-2 run (2026-11-09), fixed with known-answer tests that fail on 01d9573
+  (`kit_tests/test_eegpipe_stage2_lessons.py`): a file with 0 used epochs (every epoch rejected) no
+  longer stops the per-file permutation step (a unit with no retained epoch takes any shuffled target)
+  and gets a `per_file_tests.csv` row with status `no_used_epochs`, BA NaN, entering Holm as p = 1 with
+  the family kept at every file (P300 D-018); a file whose used epochs miss a class (BA NaN) is
+  `missing_class`, also entered as p = 1 (P300 DEV-2), and `permutation_p` refuses a NaN observed value
+  instead of returning the minimum p. The file count comes from the assembled files (`n_files`,
+  `evaluate.n_strata`), never max(file_idx) + 1, and the null's width is checked (files + pooled
+  column; one column per stratum in `per_stratum_tests`). New columns: `status`, `n_used_epochs`,
+  `perm_p_entering_holm`, `holm_m`; `per_file.csv` has a row (n = 0) for an empty file.
+- Kit tests: 402 passed (1 CUDA test skipped on CPU); torch, scipy and scikit-learn join the kit
   test environment. `eegharness` 0.4.0: version number only.
 
 ## 0.3.1 — 2026-11-06
