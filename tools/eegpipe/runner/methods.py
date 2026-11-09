@@ -334,7 +334,7 @@ def run(cfg, out, root="."):
   if pm and n_perm > 0:
     if scheme == "unit_target":
       vals = evl.unit_values(sess, scheme, [r.get("unit_target") for r in results])
-      codes = [evl.unit_code_sets(sess, f) for f in range(len(files))]
+      codes = [evl.unit_code_sets_of_events(e) for _, _, _, e, _ in raws]   # design, before rejection (P300)
       shuffles = evl.draw_shuffles(vals, n_perm, int(cfg["permutation"]["seed"]), code_sets=codes)
       redraws = None
     else:

@@ -61,13 +61,27 @@ Applies Sebastian's pipeline to any EEG study (spec: `docs/v0.4_spec_draft.md`, 
   unless dropped explicitly (counted). The results-analyst, the 06_results template, G23, the
   auditor's results check and the 05_audit template use it; the guard lets the auditor run
   `numbers check` (not `derive`). Tests: `kit_tests/test_eegharness_numbers.py`.
+- P300 golden regression (spec §4, D3), after the P300 Stage-2 run ended: `kit_tests/golden/make_p300_goldens.py`
+  runs the frozen P300 code (a read-only `git archive` export of `d833264`) on a fixed synthetic P300 study (3 files,
+  one filtered block by block, artifact rejections) with the P300 Stage-2 settings, one BLAS/OpenMP and one torch
+  thread (two runs give identical files); `kit_tests/test_eegpipe_p300_golden.py` (18 tests) requires eegpipe to
+  reproduce every output bit for bit: epochs, counts and gates, the network input (and its refusal on the fallback
+  file), session and folds, out-of-fold predictions of the baseline and all 20 F1 methods (both QDA fail alike),
+  permutation draws, null and per-file tests, phase epochs and the F3 classifiers, condition-level connectivity,
+  EEGNet, ShallowConvNet and the GNN on CPU, BH-FDR and NBS, and the paired statistics. The P300 suite at `d833264`
+  ran once on a scratch export: 391 passed.
+- Found by the golden: with rejection on, the runner checked shuffled unit targets against the codes of the
+  RETAINED epochs and refused a study whenever the screen had removed every epoch of a code from a unit; P300
+  checks against each block's codes before rejection. New `evaluate.unit_code_sets_of_events` (the adapter's full
+  event table), used by the runner; known-answer test `test_runner_shuffle_check_uses_codes_before_rejection`
+  (fails on f11889a).
 - KNOWN BROKEN in 0.4.0: under `label_scheme` `unit_label` (SSVEP trials), a unit whose epochs are all
   rejected stops the methods runner (`IndexError` in the runner's unit labels for fold balancing;
   `evaluate.unit_values` refuses it next). Not fixed in 0.4.0 (decision 2026-11-09); the failing case is
   the strict xfail `test_unit_label_unit_with_every_epoch_rejected_runs` in
   `kit_tests/test_eegpipe_stage2_lessons.py` (a fix makes it XPASS, which fails the suite until the
   marker is removed).
-- Kit tests: 433 passed, 1 xfailed (known broken, above), 1 CUDA test skipped on CPU; torch, scipy and scikit-learn join the kit
+- Kit tests: 452 passed, 1 xfailed (known broken, above), 1 CUDA test skipped on CPU; torch, scipy and scikit-learn join the kit
   test environment. `eegharness` 0.4.0: version number only.
 
 ## 0.3.1 — 2026-11-06

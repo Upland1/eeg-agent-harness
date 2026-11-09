@@ -191,8 +191,21 @@ def n_strata(sess):
   return int(sess["unit_file"].max()) + 1   # hand-built sessions: every file has units even with 0 epochs
 
 
+def unit_code_sets_of_events(events):
+  """Sorted code set of each unit of one file, from the adapter's FULL event table (every labelled epoch,
+  before rejection): the unit's design, as P300 ``events.flash_table`` block_codes (scheme unit_target).
+
+  This is what the target shuffle is checked against. A target shuffled into a unit whose epochs of that code
+  were all rejected is legal: the unit then has no target epoch. (Before 0.4.0 the runner used the retained
+  epochs' codes, ``unit_code_sets``, and refused such a study; found by the P300 golden regression test.)"""
+  code = np.asarray(events["code"], dtype=np.int64)
+  unit = np.asarray(events["unit"], dtype=np.int64)
+  return [np.asarray(sorted(set(code[unit == u].tolist())), dtype=np.int64) for u in range(len(events["unit_start"]))]
+
+
 def unit_code_sets(sess, f):
-  """Sorted code set of each unit of file f (scheme unit_target)."""
+  """Sorted code set of each unit of file f over its RETAINED epochs. Not the shuffle check's input (rejection
+  changes it): use ``unit_code_sets_of_events``."""
   m = sess["file_idx"] == f
   n_u = int(np.sum(sess["unit_file"] == f))
   return [np.asarray(sorted(set(sess["code"][m & (sess["unit_local"] == u)].tolist())), dtype=np.int64)

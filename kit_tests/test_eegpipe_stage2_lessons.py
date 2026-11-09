@@ -231,3 +231,33 @@ def test_unit_label_unit_with_every_epoch_rejected_runs(tmp_path):
   rm.run(_cfg("unit_label"), out, root)
   rows = list(csv.DictReader(open(out / "per_file_tests.csv")))
   assert len(rows) == 2 and all(r["status"] == "ok" for r in rows)
+
+
+# ------------------------------------------------------------------ shuffle check uses the design, not the retained epochs
+def test_runner_shuffle_check_uses_codes_before_rejection(tmp_path):
+  """Known answer (found by the P300 golden regression test, 2026-11-09): two files of 6 units x 4 epochs (codes
+  0-3 once per unit; unit targets 0,1,2,3,0,1), epochs 400 samples apart so rejection windows never overlap. In
+  f0, unit 0's code-2 epoch (target of unit 2, not of unit 0) is rejected (x 1e4 step). P300 checks shuffled
+  targets against each block's codes before rejection (events.flash_table block_codes), so the study runs: two
+  ok test rows. (f11889a: the runner took the codes of the retained epochs and refused the study, here already
+  through the screen's other rejections: 'target 0 can be shuffled into unit 1, whose codes [1, 2, 3] do not
+  include it'.)"""
+  root = tmp_path / "proj"
+  for i, f in enumerate(["f0", "f1"]):
+    data, events, info = synth.recording(800 + i, fs=FS, n_channels=4, n_units=6, n_epochs=4, isi=400, rest=1200,
+                                         amp=2.0, unit_targets=np.arange(6) % 4)
+    if f == "f0":
+      k = int(np.flatnonzero((events["unit"] == 0) & (events["code"] == 2))[0])
+      data[:, events["onset"][k] + 20:events["onset"][k] + 40] += 1e4
+    path = root / "data" / "raw" / "P1" / "s1" / f"{f}.npz"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(path, data=data, fs=FS, ch=np.array(info["ch_names"]), unit_target=info["unit_targets"],
+             **{k2: v for k2, v in events.items()})
+  (root / "adapter_lessons.py").write_text(ADAPTER)
+  out = _out(tmp_path)
+  rm.run(_cfg(), out, root)
+  gates = list(csv.DictReader(open(out / "per_file.csv")))
+  base = {r["file"]: r for r in gates if r["method"] == "baseline"}
+  assert int(base["P1/s1/f0.npz"]["n_nontarget"]) + int(base["P1/s1/f0.npz"]["n_target"]) < 24   # rejection happened
+  rows = list(csv.DictReader(open(out / "per_file_tests.csv")))
+  assert [r["status"] for r in rows] == ["ok", "ok"]
