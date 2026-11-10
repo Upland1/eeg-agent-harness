@@ -1,6 +1,52 @@
 # Changelog
 
-## 0.4.0 — unreleased (tag after the P300 Stage-2 run ends and its suite has run once; spec §0 D3)
+## 0.4.1 — unreleased (tag after Sebastian's approval)
+
+MAS's P20 within-subject network protocol in `eegpipe` (Sebastian's decisions 2026-11-10; ssvep-apply D-008/D-009).
+Every ported piece is checked bit for bit against MAS's own code, copied verbatim into
+`kit_tests/mas_p20_reference.py` from mas-ssvep-eeg-xai @ f725369 (`kit_tests/test_eegpipe_v041_p20.py`).
+
+- New `eegpipe.network_windows`:
+  - `iir_network_input`: MAS's broadband filter (Butterworth band-pass and 60 Hz notch, `filtfilt(b, a)` with
+    SciPy's default padding) on the continuous record, no resampling. Equal to MAS's `broadband_filter`.
+    The leakage gate between units uses the cascade's effective span (impulse response below `span_tol`,
+    doubled). If the gate fails, the record is filtered unit by unit.
+  - 1 s windows every 0.25 s inside each trial, carrying the trial id (13 in a 4 s trial; MAS has 17 in its
+    5 s stimulus).
+  - Folds: StratifiedGroupKFold(5, shuffle) over the windows grouped by trial, with no trial on both sides.
+  - Fold seed = seed base + fold, for the model, the DataLoader, the augmentation and the inner validation
+    split (MAS `nn_sweep` l.117).
+  - Trial probability = mean of its windows' probabilities.
+  - `EEGNetSSVEP`: exact port of MAS (2,349 parameters at 7 x 256, the same weights and outputs as MAS for
+    the same seed).
+  - `MasAugmentedDataset`: exact port of MAS `SSVEPAugmentedDataset`.
+- `networks.fit_network` takes `augmentation.kind` "mas_p10". With the P20 trainer settings it equals MAS's
+  `fit_network` exactly on CPU: split, normalisation, best epoch, losses, predictions.
+- The runner runs a network part under P20 when `networks.windows.enabled`:
+  - `network_input.kind` "iir_ba";
+  - a `results.json["network_protocol"]` section, with a window-folds hash per seed;
+  - window BA and accuracy in `pooled.csv`;
+  - fold seed, training and validation accuracy and best epoch in `per_fold.csv`;
+  - the network input filtering and gate in `gates.csv`.
+
+  The part keeps the study's `epochs_sha256` and `folds_sha256`, so the stage runner's identity check across
+  parts is unchanged.
+- Settings rules:
+  - windows need `networks.cv.scheme` "window_grouped" and `label_scheme` "unit_label";
+  - seed bases closer than `networks.cv.n_splits` are refused, because they share fold seeds (G18);
+  - an `iir_ba` input must not resample;
+  - a `mas_p10` augmentation must name all of its values.
+- The ssvep profile now holds MAS's P20 values: windows, grouped folds, no class weights, unweighted
+  validation loss, augmentation ON (mas_p10), EEGNetSSVEP with kernel fs // 2, the iir_ba network input, and
+  seed bases 20261107, 20262107, 20263107. Correction: 0.4.0 cited `training.py::fit_network` but used whole
+  trials, the study folds and augmentation OFF, which matches no MAS network result.
+- Correction to `networks.AugmentedDataset` (docstring): it is not MAS's augmentation (order, mixup lambda,
+  shift rounding). The P300 golden outputs are unchanged.
+- Positive control (Sebastian 2026-11-10): planted SSVEP at the five study frequencies reaches trial BA
+  >= 0.9 with both networks under P20, and noise stays near chance.
+- `eegharness` 0.4.1: version number only.
+
+## 0.4.0 — 2026-11-09 (tag v0.4.0 at f6c238c; P300 Stage-2 ended and its suite ran once, spec §0 D3)
 
 Applies Sebastian's pipeline to any EEG study (spec: `docs/v0.4_spec_draft.md`, decisions §0).
 

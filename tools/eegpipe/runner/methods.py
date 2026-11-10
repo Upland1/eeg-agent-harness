@@ -182,7 +182,7 @@ def seed_mean(rows, keys):
     m["seed"] = "mean"
     m["n_seeds"] = len(rs)
     for col in rs[0]:
-      if col.startswith(("ba", "ca_")):
+      if col.startswith(("ba", "ca_", "window_")):
         m[col] = float(np.mean([float(r[col]) for r in rs]))
       elif col.startswith("n_") and col not in m:
         m[col] = rs[0][col]
@@ -203,6 +203,7 @@ def run(cfg, out, root="."):
   cond_of = getattr(adapter, "condition_of", lambda p: Path(p).name)
   results, raws, gate_rows = [], [], []
   torch_env = None
+  net_info = None
   for rel in files:
     path, data, fs, events = read_file(adapter, cfg, rel, root)
     r = ep.prepare_file(data, fs, events, cfg["epochs"])
@@ -301,12 +302,37 @@ def run(cfg, out, root="."):
     device = str(nw.resolve_device(ncfg["device"]))
     torch_env = nw.environment(device)   # recorded in results.json (torch version, build, device)
     seed_rows = []
+    windowed = sec == "networks" and ncfg.get("windows", {}).get("enabled", False)
     try:
       if sec == "networks":
-        from eegpipe import network_input as ni
-        Xn = np.concatenate([ni.network_epochs(d, fs, e, r, cfg["network_input"], cfg["epochs"]["fallback"]["margin_s"])["X"]
-                             for _, d, fs, e, r in raws])
+        margin = cfg["epochs"]["fallback"]["margin_s"]
+        if cfg["network_input"].get("kind", "fir_resample") == "iir_ba":
+          from eegpipe import network_windows as nwin
+          outs = [nwin.iir_network_input(d, fs, e, r, cfg["network_input"], margin) for _, d, fs, e, r in raws]
+        else:
+          from eegpipe import network_input as ni
+          outs = [ni.network_epochs(d, fs, e, r, cfg["network_input"], margin) for _, d, fs, e, r in raws]
+        Xn = np.concatenate([o["X"] for o in outs])
+        for g, o in zip(gate_rows, outs):
+          g["network_input_filtering"] = o["filtering"]
+          g["network_input_gate_passes"] = bool(o["gate"]["passes"])
+      if windowed:
+        from eegpipe import network_windows as nwin
+        if len(np.unique(sess["unit_uid"])) != len(y):
+          raise ValueError("networks.windows needs one epoch per unit (a trial = a unit, label_scheme unit_label)")
+        net_info = {"protocol": "windows (P20)", "windows": ncfg["windows"], "cv": ncfg["cv"], "per_seed": {}}
       for seed in ncfg["seeds"]:
+        if windowed:
+          pred, _, rows_f, cur, info = nwin.cv_network_windows(Xn, y, sess["unit_uid"], ncfg["models"][name], int(seed),
+                                                               ncfg, device, names, float(outs[0]["fs_out"]))
+          net_info["per_seed"][str(int(seed))] = info
+          hit = sum(bool(r["hit_max_epochs"]) for r in rows_f)
+          record(mid, int(seed), pred, rows_f, {"n_folds_hit_max_epochs": hit, "window_ba": info["window_ba"],
+                                                "window_acc": info["window_acc"],
+                                                "n_folds_best_epoch_le_3": sum(int(r["best_epoch"]) <= 3 for r in rows_f)})
+          seed_rows.append(pooled[-1])
+          curves.extend([{"method": mid, "seed": int(seed), **c} for c in cur])
+          continue
         if sec == "networks":
           pred, _, rows_f, cur = nw.cv_network(Xn, y, sess["unit_uid"], splits, ncfg["models"][name], int(seed), ncfg,
                                                device, names)
@@ -367,6 +393,8 @@ def run(cfg, out, root="."):
          "methods": statuses, "n_epochs": int(len(y)), "n_units": int(len(sess["unit_file"])), "files": files}
   prov = json.loads((out / "provenance.json").read_text())
   res["commit"], res["tracked_files_dirty"] = prov["commit_short"], prov["tracked_files_dirty"]
+  if net_info is not None:
+    res["network_protocol"] = net_info
   if torch_env is not None:
     res["torch_environment"] = torch_env
   (out / "config_used.json").write_text(json.dumps(cfg, indent=1, ensure_ascii=False))

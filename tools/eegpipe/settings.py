@@ -34,6 +34,11 @@ PARADIGM_KEYS = ("classes", "fs_hz", "channels", "label_scheme", "epochs.epoch.w
                  "folds.n_folds", "folds.seed")
 
 
+IIR_INPUT_KEYS = ("band_hz", "order", "notch_hz", "notch_q", "fs_out_hz", "epoch_window_s", "epoch_samples_out",
+                  "span_tol")
+MAS_AUG_KEYS = ("p_noise", "p_scale", "p_shift", "p_mixup", "noise_std_frac", "scale_range", "shift_frac", "mixup_alpha")
+
+
 class SettingsError(ValueError):
   pass
 
@@ -84,11 +89,42 @@ def validate(cfg, require_sources=True):
     probs.append("label_scheme 'unit_target' (label = code == unit target) needs exactly 2 classes")
   fs = float(cfg["fs_hz"])
   ni = cfg.get("network_input")
-  if cfg.get("networks", {}).get("enabled") and ni:
-    if abs(float(ni["fs_out_hz"]) - fs * ni["resample_up"] / ni["resample_down"]) > 1e-9:
+  net = cfg.get("networks", {})
+  if net.get("enabled") and ni:
+    if ni.get("kind", "fir_resample") == "iir_ba":
+      miss = [x for x in IIR_INPUT_KEYS if x not in ni]
+      if miss:
+        probs.append(f"network_input (kind iir_ba) misses {miss}")
+      elif abs(float(ni["fs_out_hz"]) - fs) > 1e-9:
+        probs.append("network_input (kind iir_ba) does not resample: fs_out_hz must equal fs_hz")
+    elif ni.get("kind", "fir_resample") != "fir_resample":
+      probs.append(f"network_input.kind {ni.get('kind')!r}: known fir_resample, iir_ba")
+    elif abs(float(ni["fs_out_hz"]) - fs * ni["resample_up"] / ni["resample_down"]) > 1e-9:
       probs.append("network_input.fs_out_hz != fs_hz * up / down")
-  if cfg.get("networks", {}).get("enabled") and len(cfg["networks"].get("seeds", [])) < 3:
+  if net.get("enabled") and len(net.get("seeds", [])) < 3:
     probs.append("networks.seeds: at least 3 seeds (G18)")
+  if net.get("enabled") and net.get("windows", {}).get("enabled"):
+    w, cv = net["windows"], net.get("cv", {})
+    if cv.get("scheme") != "window_grouped":
+      probs.append("networks.windows needs networks.cv.scheme 'window_grouped' (folds grouped by trial)")
+    elif int(cv.get("n_splits", 0)) < 2:
+      probs.append("networks.cv.n_splits must be >= 2")
+    else:
+      s = sorted(int(x) for x in net.get("seeds", []))
+      if any(b - a < int(cv["n_splits"]) for a, b in zip(s, s[1:])):
+        probs.append(f"networks.seeds: seed bases closer than networks.cv.n_splits ({cv['n_splits']}) share fold "
+                     f"seeds (seed base + fold); space them (G18)")
+    if not (float(w.get("window_s", 0)) > 0 and float(w.get("stride_s", 0)) > 0):
+      probs.append("networks.windows.window_s and stride_s must be > 0")
+    if w.get("aggregate") != "mean_proba":
+      probs.append("networks.windows.aggregate must be 'mean_proba' (trial = mean of its windows' probabilities)")
+    if cfg["label_scheme"] != "unit_label":
+      probs.append("networks.windows needs label_scheme 'unit_label' (one trial = one unit)")
+  aug = net.get("augmentation", {})
+  if net.get("enabled") and aug.get("enabled") and aug.get("kind") == "mas_p10":
+    miss = [x for x in MAS_AUG_KEYS if x not in aug]
+    if miss:
+      probs.append(f"networks.augmentation (kind mas_p10) misses {miss}")
   f3 = cfg.get("f3", {})
   if f3.get("enabled"):
     c = f3["condition_level"].get("contrast", [1, 0])

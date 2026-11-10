@@ -272,7 +272,11 @@ class AugmentedDataset(Dataset):
   [M] operations the P300 run did not use: time shift (circular, up to ``shift_frac`` of the
   length) and same-class mixup (convex combination with a random epoch OF THE SAME CLASS,
   lambda ~ U(0, 1); classes are never mixed). An operation with probability 0 draws nothing,
-  so with p_shift = p_mixup = 0 the random stream equals the P300 run's."""
+  so with p_shift = p_mixup = 0 the random stream equals the P300 run's.
+  NOT [M]'s operations (v0.4.1 correction): [M] applies mixup -> scale -> shift -> noise, mixup lambda ~
+  Beta(0.4, 0.4) folded to max(lam, 1 - lam), shift s = int(frac * T); this class keeps the P300 order,
+  lambda ~ U(0, 1) and round(frac * T). The exact [M] operations are ``augmentation.kind`` "mas_p10"
+  (``network_windows.MasAugmentedDataset``)."""
 
   def __init__(self, X, y, p_scale, scale_range, p_noise, noise_std_frac, seed, p_shift=0.0, shift_frac=0.0,
                p_mixup=0.0):
@@ -341,9 +345,16 @@ def fit_network(X, y, groups, build, seed, val_seed, device, tr, aug, norm=None,
   crit = nn.CrossEntropyLoss(weight=None if cw is None else torch.tensor(cw, dtype=torch.float32, device=dev),
                              label_smoothing=tr["label_smoothing"])
   gen = torch.Generator().manual_seed(seed)
-  data = (AugmentedDataset(Xf, yf, aug["p_scale"], aug["scale_range"], aug["p_noise"], aug["noise_std_frac"], seed,
-                           aug.get("p_shift", 0.0), aug.get("shift_frac", 0.0), aug.get("p_mixup", 0.0))
-          if aug["enabled"] else TensorDataset(torch.from_numpy(Xf), torch.from_numpy(yf)))
+  if not aug["enabled"]:
+    data = TensorDataset(torch.from_numpy(Xf), torch.from_numpy(yf))
+  elif aug.get("kind", "eegpipe") == "mas_p10":      # [M] SSVEPAugmentedDataset, exact (v0.4.1, P20 protocol)
+    from eegpipe import network_windows as nwin
+    data = nwin.mas_dataset(Xf, yf, aug, seed)
+  elif aug.get("kind", "eegpipe") == "eegpipe":
+    data = AugmentedDataset(Xf, yf, aug["p_scale"], aug["scale_range"], aug["p_noise"], aug["noise_std_frac"], seed,
+                            aug.get("p_shift", 0.0), aug.get("shift_frac", 0.0), aug.get("p_mixup", 0.0))
+  else:
+    raise ValueError(f"unknown augmentation kind {aug.get('kind')!r}; known: eegpipe, mas_p10")
   loader = DataLoader(data, batch_size=tr["batch_size"], shuffle=True, generator=gen, num_workers=0)
   if max_norm:
     max_norm()
