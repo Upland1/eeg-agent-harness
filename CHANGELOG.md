@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.1 — unreleased (tag after Sebastian's approval)
+## 0.4.1 — 2026-11-10 (tag v0.4.1 at 3233ff4)
 
 MAS's P20 within-subject network protocol in `eegpipe` (Sebastian's decisions 2026-11-10; ssvep-apply D-008/D-009).
 Every ported piece is checked bit for bit against MAS's own code, copied verbatim into
