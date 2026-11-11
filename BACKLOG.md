@@ -53,3 +53,42 @@ counts, percentages) in uncommitted /tmp scratch scripts, although G11, G23 and 
 had no ready tool, so the agent improvised one. Fixed in 0.4.0: `eegharness.numbers` (a committed spec
 of keyed derivations, a versioned numbers.json, `[num:key]` citations verified by `check`), used by the
 results-analyst, the 06_results template and the auditor's results check.
+
+## L32 — a check frozen as "report only", with no decision rule (2026-11-10)
+
+In cold-pressor onboarding, the rest-period control M7 was frozen as "report only (no criterion,
+cannot change the 8b verdict)". G10 asks for code and threshold to be fixed before real data, but a
+report-only check has no threshold, so freezing it fixed nothing that decided anything, and the
+reading of its result was left open until after the output was seen. Sebastian had M7 given a rule
+before it ran (statistic and resampling unit, α, one- or two-sided, windows, and what each outcome
+changes in the plan). Proposed for the next kit version: G10 and the plan/handoff templates require
+every frozen check to state its decision rule, sidedness with a reason, and the consequence of each
+outcome; a check without them is labelled descriptive and cannot gate or steer anything.
+
+## L33 — participant free text quoted or paraphrased in committed docs (2026-11-10)
+
+In cold-pressor onboarding, a draft committed file (76fae15, never pushed) quoted Formulario.docx (the
+filled protocol form) verbatim, and docs/PARADIGM.md (lines 33 and 38 of Revision 1) paraphrased what
+one participant wrote about their sensations. No personal details were included, but single-participant
+free text can identify a person, and the paradigm description did not need it. "Data handling" covers
+only the recordings. Proposed for the next kit version: a rule that committed files never quote or
+paraphrase participants' own answers, comments or free text, or personal details from forms; protocol
+facts from such documents are stated in the agent's own words without per-participant content; the
+paradigm-analyst and auditor check it.
+
+## L34 — a decision claimed more than its test checks (2026-11-10)
+
+In cold-pressor onboarding, D-002 stated filter limits and named alternatives that the cited test did
+not check (audit items R2-2, R3-1); it took three audit rounds to make the decision text and the test
+agree. Proposed for the next kit version: a DECISIONS.md entry that cites a test as evidence names
+exactly what that test asserts (the alternatives it rules out and the limits it checks) and nothing
+beyond; the auditor compares the entry with the test's assertions.
+
+## L35 — placeholder text logged as a human's answers (2026-11-10)
+
+In cold-pressor onboarding, Sebastian sent a reply containing unfilled bracketed placeholders for the
+human-only questions Q1–Q7 ("[answer / UNKNOWN, …]"); the orchestrator logged the defaults inside the
+brackets as his provisional answers in human_contacts.md (it did not write them into PARADIGM.md).
+Proposed for the next kit version: G16 and the human-contact template state that only an explicit
+answer counts; template text, placeholders or suggested defaults are recorded as "no answer", and the
+agent asks once more, grouped.
