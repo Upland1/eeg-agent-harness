@@ -54,6 +54,10 @@ had no ready tool, so the agent improvised one. Fixed in 0.4.0: `eegharness.numb
 of keyed derivations, a versioned numbers.json, `[num:key]` citations verified by `check`), used by the
 results-analyst, the 06_results template and the auditor's results check.
 
+L32–L36 come from cold-pressor onboarding. That project stays on its current pin, v0.4.0, with no
+upgrade mid-onboarding; these proposals apply from the next kit version on, each rule wording approved by
+Sebastian separately.
+
 ## L32 — a check frozen as "report only", with no decision rule (2026-11-10)
 
 In cold-pressor onboarding, the rest-period control M7 was frozen as "report only (no criterion,
@@ -61,9 +65,9 @@ cannot change the 8b verdict)". G10 asks for code and threshold to be fixed befo
 report-only check has no threshold, so freezing it fixed nothing that decided anything, and the
 reading of its result was left open until after the output was seen. Sebastian had M7 given a rule
 before it ran (statistic and resampling unit, α, one- or two-sided, windows, and what each outcome
-changes in the plan). Proposed for the next kit version: G10 and the plan/handoff templates require
-every frozen check to state its decision rule, sidedness with a reason, and the consequence of each
-outcome; a check without them is labelled descriptive and cannot gate or steer anything.
+changes in the plan). Proposed for the next kit version, as an amendment to G10: a frozen check
+states its decision rule, its sidedness (with a reason) and the consequence of each outcome; a check
+without them is descriptive and gates nothing.
 
 ## L33 — participant free text quoted or paraphrased in committed docs (2026-11-10)
 
@@ -79,16 +83,31 @@ paradigm-analyst and auditor check it.
 ## L34 — a decision claimed more than its test checks (2026-11-10)
 
 In cold-pressor onboarding, D-002 stated filter limits and named alternatives that the cited test did
-not check (audit items R2-2, R3-1); it took three audit rounds to make the decision text and the test
-agree. Proposed for the next kit version: a DECISIONS.md entry that cites a test as evidence names
-exactly what that test asserts (the alternatives it rules out and the limits it checks) and nothing
-beyond; the auditor compares the entry with the test's assertions.
+not check: Round 2 R2-2 (G11; `05_audit.md` l.344) and Round 3 R3-1 (G26; `05_audit.md` l.555). It took
+three audit rounds to make the decision text and the test agree. The project already had its own rule
+G26 ("Evidence must be able to fail"), but G26 does not say what a decision may claim from its
+evidence; that missing clause is why it still took three rounds. Proposed for the next kit version:
+promote cold-pressor's project rule G26 into the kit, and add the missing clause: a decision that cites
+a test states exactly what the test asserts (the alternatives it rules out and the limits it checks),
+and nothing beyond; the auditor compares the entry with the test's assertions.
 
 ## L35 — placeholder text logged as a human's answers (2026-11-10)
 
 In cold-pressor onboarding, Sebastian sent a reply containing unfilled bracketed placeholders for the
 human-only questions Q1–Q7 ("[answer / UNKNOWN, …]"); the orchestrator logged the defaults inside the
 brackets as his provisional answers in human_contacts.md (it did not write them into PARADIGM.md).
-Proposed for the next kit version: G16 and the human-contact template state that only an explicit
-answer counts; template text, placeholders or suggested defaults are recorded as "no answer", and the
-agent asks once more, grouped.
+Proposed for the next kit version, as an amendment to G16's logging clause: only an explicit answer
+is logged as an answer; template text, placeholders or suggested defaults are logged as "no answer",
+and the agent asks once more, grouped.
+
+## L36 — the orchestrator appended and reworded the paradigm-analyst's revision (2026-11-11)
+
+In cold-pressor onboarding, the paradigm-analyst could not edit docs/PARADIGM.md: it has Write but no
+Edit, and Write rewrites the whole file, frozen sections included (as in an earlier fix, where the
+orchestrator could check the rewrite only by reading). For Revision 3 it therefore wrote its block to a
+scratch file; the orchestrator appended the block and reworded one of its sentences (R3.4, marked in
+PARADIGM.md as an orchestrator correction with the analyst's original sentence; log.md rows 5c Append
+and 5c Note). The paradigm text is the analyst's; an orchestrator edit to it, even marked, is a change
+nobody owns. Proposed for the next kit version: give the paradigm-analyst Edit for docs/PARADIGM.md
+only, so it appends its own revisions; frozen text is kept unchanged and checked by diff; a correction
+goes back to the analyst instead of being made by the orchestrator.
