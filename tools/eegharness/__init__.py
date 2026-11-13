@@ -1,7 +1,8 @@
 """Shared tools for EEG analysis projects: versioned output folders with provenance (G9),
 a regression check between two output folders, grouped splits with a leakage check,
 unit-level permutation tests and chance levels (core, numpy only), and seeds and resumable
-folds for long or deep-learning jobs (torch optional, never required).
+folds for long or deep-learning jobs (torch optional, never required); compute time per
+output (``outputs``) and a check that committed files quote the instructions they cite (``sources``).
 
 Vendored: each project holds a committed copy of this package at its root
 (``eegharness/``), so project code never imports uncommitted files. Do not edit the copy;

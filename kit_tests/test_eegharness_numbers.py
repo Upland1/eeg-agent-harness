@@ -141,6 +141,8 @@ def test_cli_derive_needs_a_committed_spec_and_writes_a_versioned_output(tmp_pat
   assert nb.main(argv) == 0
   out = sorted((root / "outputs" / "numbers").iterdir())
   assert len(out) == 1 and (out[0] / "provenance.json").is_file()
+  from eegharness.outputs import check_compute_time  # 0.5.0 (L37)
+  assert check_compute_time(out[0]) == []
   data = json.loads((out[0] / "numbers.json").read_text())
   assert data["tool"] == "eegharness.numbers" and data["spec"] == "reports/numbers_spec.json"
   assert set(data["tables"]) == {t} and len(data["numbers"]) == 10

@@ -96,12 +96,13 @@ def select(cfg, adapter, root="."):
 
 
 def main(argv=None):
-  from eegharness.outputs import new_output_dir
+  from eegharness.outputs import ComputeTimer, new_output_dir, record_compute_time
   ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
   ap.add_argument("--config", required=True)
   ap.add_argument("--out", required=True)
   ap.add_argument("--root", default=".")
   a = ap.parse_args(argv)
+  timer = ComputeTimer(device="cpu")
   cfg = json.loads(Path(a.config).read_text())
   res = select(cfg, load_adapter(cfg, a.root), a.root)
   out = new_output_dir(a.out, inputs=[a.config], params={"config": a.config}, root=a.root)
@@ -112,6 +113,7 @@ def main(argv=None):
     for s in res["stage2_parts"]:
       w.writerow({"participant": s["participant"], "part": s["part"], "role": s["role"], "n_files": len(s["files"])})
   (out / "summary.txt").write_text(json.dumps({k: res[k] for k in ("rule", "chosen_parts", "excluded")}, indent=1) + "\n")
+  record_compute_time(out, timer)
   print(f"written: {out}")
   return out
 

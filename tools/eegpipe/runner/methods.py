@@ -411,15 +411,18 @@ def run(cfg, out, root="."):
 
 
 def main(argv=None):
-  from eegharness.outputs import new_output_dir
+  from eegharness.outputs import ComputeTimer, new_output_dir, record_compute_time
   ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
   ap.add_argument("--config", required=True)
   ap.add_argument("--out", required=True)
   ap.add_argument("--root", default=".", help="project root (git tree, adapter location)")
   a = ap.parse_args(argv)
   cfg = json.loads(Path(a.config).read_text())
+  net = cfg.get("networks", {})
+  timer = ComputeTimer(device=net.get("device") if net.get("enabled") else "cpu")
   out = new_output_dir(a.out, inputs=[a.config], params={"config": a.config}, root=a.root)
   run(copy.deepcopy(cfg), out, a.root)
+  record_compute_time(out, timer)
   print(f"written: {out}")
   return out
 

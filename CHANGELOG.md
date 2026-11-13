@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.0 — unreleased (v0.5-dev)
+
+Two lessons from cold-pressor onboarding (BACKLOG L37, L38), each with known-answer tests
+(`kit_tests/test_eegharness_v05_lessons.py`). No change to `template/` or the G-rules yet: the rule
+wordings in BACKLOG wait for Sebastian's approval.
+
+- `eegharness.outputs`: `ComputeTimer`, `record_compute_time`, `record_no_compute`, `check_compute_time`
+  and `python -m eegharness.outputs check`. `compute_time` in `provenance.json`: wall s, CPU s (process
+  and finished children), device, UTC end; null with `compute_time_reason` when nothing is computed;
+  never written by default, recorded once. Recorded by `eegpipe.runner.methods` (each stage part; device
+  from the networks settings, else cpu), `eegpipe.runner.select`, `eegpipe.runner.collect`,
+  `eegharness.numbers derive` and `eegharness.compare_runs`.
+- New `eegharness.sources`: `python -m eegharness.sources check` reports, in git-tracked files (vendored
+  `eegpipe/`, `eegharness/` and git's own files skipped), any `agent_runs/` reference and any paragraph
+  citing a human contact without quoting it (at least 3 quoted words or a `>` block quote).
+
 ## 0.4.1 — 2026-11-10 (tag v0.4.1 at 3233ff4)
 
 MAS's P20 within-subject network protocol in `eegpipe` (Sebastian's decisions 2026-11-10; ssvep-apply D-008/D-009).

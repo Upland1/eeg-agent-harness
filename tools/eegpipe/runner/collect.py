@@ -154,13 +154,14 @@ def write_csv(path, rows, empty=("none",)):
 
 
 def main(argv=None):
-  from eegharness.outputs import new_output_dir
+  from eegharness.outputs import ComputeTimer, new_output_dir, record_compute_time
   ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
   ap.add_argument("--stage", required=True)
   ap.add_argument("--out", required=True)
   ap.add_argument("--root", default=".")
   ap.add_argument("--interim", action="store_true")
   a = ap.parse_args(argv)
+  timer = ComputeTimer(device="cpu")
   try:
     col = collect(a.stage)
   except Refusal as exc:
@@ -192,6 +193,7 @@ def main(argv=None):
   write_csv(out / "pending.csv", stamp(col["pending"]), ("run_status", "participant", "method", "state"))
   lines = [f"run_status: {run_status}"] + [f"  {json.dumps(t, default=str)}" for t in tests]
   (out / "summary.txt").write_text("\n".join(lines) + "\n")
+  record_compute_time(out, timer)
   for t in tests:
     print(f"{t['method']}: n {t['n']}, p_holm {t['p_holm']}, HL {t.get('hodges_lehmann')} -> {t['verdict']}")
   print(f"written: {out}  [{run_status}]")

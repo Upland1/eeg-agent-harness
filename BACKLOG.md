@@ -111,3 +111,38 @@ and 5c Note). The paradigm text is the analyst's; an orchestrator edit to it, ev
 nobody owns. Proposed for the next kit version: give the paradigm-analyst Edit for docs/PARADIGM.md
 only, so it appends its own revisions; frozen text is kept unchanged and checked by diff; a correction
 goes back to the analyst instead of being made by the orchestrator.
+
+## L37 — measurement and reporting outputs without their compute time (2026-11-13)
+
+In cold-pressor onboarding, the measurement outputs did not record how long they took: the audit
+noted "runtimes are not measured" (`05_audit.md` C5, carried over as N5), so G22's expected
+runtimes could not be checked against real ones and the next plan had to estimate again. Built in
+v0.5-dev (`eegharness.outputs`, known-answer tests `kit_tests/test_eegharness_v05_lessons.py`): a
+`ComputeTimer` started before the work and `record_compute_time(out, timer)` add `compute_time`
+(wall seconds, CPU seconds of the process and of its finished children, device, UTC end) to the
+output's `provenance.json`; an output with no computation records `compute_time: null` with a
+`compute_time_reason`; nothing is written by default, so a forgotten one fails
+`python -m eegharness.outputs check <folder>`. The kit's own writers (stage parts, select, collect,
+numbers, compare_runs) record it. Proposed rule wording, as an amendment to G22 (for Sebastian's
+approval; template not changed): "Every measurement and reporting output records its compute time
+(`record_compute_time`; no computation: null with a reason); the auditor runs
+`python -m eegharness.outputs check` on the outputs a result cites."
+
+## L38 — an instruction cited only from git-ignored agent_runs/ (2026-11-13)
+
+In cold-pressor onboarding, docs/PARADIGM.md cites Sebastian's decisions by contact number only
+("by Sebastian's decision (onboarding contact #3, 2026-11-11)", l.908 @ a558941; also l.807, 915,
+1015, 1336); the contact log is in git-ignored agent_runs/, so the committed file points at text no
+reader of the repository can see. In ssvep-apply, D-011 and D-015 first cited agent_runs/ paths
+(audit Round 6 R3, Round 7 R5). G15 forbids the path but not the bare contact number. Built in
+v0.5-dev (`eegharness.sources`, same test file): `python -m eegharness.sources check` reads the
+committed files and reports an `agent_runs/` reference (quoted or not) and a paragraph that cites a
+contact (`contact #N`, `contact N`, `human_contacts`) without quoting it (a quoted span of at least
+3 words, or a `>` block quote, in the same paragraph; JSON string values checked one by one). On
+the real repositories: cold-pressor 5 findings (the PARADIGM lines above), ssvep-apply 0. Open
+choice for Sebastian: attributions by name and date without a contact number ("Sebastian
+2026-11-10: ...", 51 lines in ssvep-apply, 6 in cold-pressor) are not detected; detecting them would
+tie the check to a name. Proposed rule wording, as an amendment to G15 (for Sebastian's approval;
+template not changed): "A source that is an orchestrator's or a human's instruction is quoted, in
+its own words, in the committed file that relies on it; a contact number or an `agent_runs/` path is
+never the only citation. `python -m eegharness.sources check` passes before a commit."

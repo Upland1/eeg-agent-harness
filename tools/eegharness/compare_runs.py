@@ -207,6 +207,8 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
   except SystemExit as e:
     return 2 if e.code else 0
+  from eegharness.outputs import ComputeTimer, record_compute_time
+  timer = ComputeTimer()
   da, db = Path(a.a), Path(a.b)
   for d in (da, db):
     if not d.is_dir():
@@ -230,6 +232,7 @@ def main(argv=None) -> int:
   (out / "compare.txt").write_text("\n".join(lines) + "\n")
   (out / "compare.json").write_text(json.dumps({"a": str(da), "b": str(db), "params": params, **result},
                                                indent=1, default=str) + "\n")
+  record_compute_time(out, timer)
   print("\n".join(lines[-1:]) + f"\noutput: {out}")
   return 0 if result["equal"] else 1
 

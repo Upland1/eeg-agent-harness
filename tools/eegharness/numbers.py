@@ -238,7 +238,8 @@ def main(argv=None) -> int:
       print(p)
     print(f"{n} citation(s), {len(problems)} problem(s)")
     return 1 if problems else 0
-  from eegharness.outputs import new_output_dir
+  from eegharness.outputs import ComputeTimer, new_output_dir, record_compute_time
+  timer = ComputeTimer()
   root = Path(a.root).resolve()
   spec_path = Path(a.spec).resolve()
   if not spec_path.is_relative_to(root) or not spec_path.is_file():
@@ -263,6 +264,7 @@ def main(argv=None) -> int:
     w.writerow(["key", "text", "value", "op", "unit"])
     for r in recs:
       w.writerow([r["key"], r["text"], repr(r["value"]), r["op"], r["unit"]])
+  record_compute_time(out, timer)
   print(f"written: {out} ({len(recs)} numbers)")
   return 0
 

@@ -195,6 +195,13 @@ def test_stage_end_to_end_resume_and_collect(project, tmp_path):
   assert res["methods"]["baseline"].startswith("ok") and res["tracked_files_dirty"] is False
   pft = list(__import__("csv").DictReader(open(Path(first[idx[0]["data_part"]]) / "per_file_tests.csv")))
   assert len(pft) == 2 and all(float(r["perm_p_monte_carlo"]) >= 1 / 5 - 1e-12 for r in pft)
+  from eegharness.outputs import check_compute_time  # 0.5.0 (L37): every kit writer records its compute time
+  sel_out = sel.main(["--config", str(project / "configs" / "pipeline.json"), "--out", str(tmp_path / "sel"),
+                      "--root", str(project)])
+  for folder in [*first.values(), outdir, sel_out]:
+    assert check_compute_time(folder) == [], folder
+    ct = json.loads((Path(folder) / "provenance.json").read_text())["compute_time"]
+    assert ct["wall_s"] > 0 and ct["device"] == "cpu"
   (project / "adapter.py").write_text(ADAPTER + "\n# edit\n")
   with pytest.raises(SystemExit, match="clean, frozen commit"):
     stg.main(argv)
