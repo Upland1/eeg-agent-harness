@@ -188,3 +188,83 @@ def test_repo_check_reads_only_committed_files_and_skips_vendored(tmp_path, caps
   (root / "docs" / "DECISIONS.md").write_text('## D-001\n\n- Window 4 s (contact #2: "use the four second window").\n')
   _git(root, "commit", "-qam", "quote it")
   assert src.main(["check", "--root", str(root)]) == 0
+
+
+# ---------------------------------------------------------------- L38: attributions by name and date
+# Real lines, as committed: ssvep-apply configs/pipeline.json "primary_source" @ f2e7f68 (a JSON string
+# value) and cold-pressor docs/DECISIONS.md l.521 and docs/COMPUTE.md l.14 @ its HEAD of 2026-11-15.
+SSVEP_PRIMARY_SOURCE = ("Decision 3 = B (Sebastian 2026-11-07): his MAS flagship, FBCSP + FBCCA features -> shrinkage LDA. "
+                        "Chosen from his earlier pipeline: this study is a reproduction, not a blind test")
+CP_CHOICE = "- **Choice (Sebastian, 2026-11-13).** 8 cores per job; GPU allowed through the CUDA build of torch\n"
+CP_COMPUTE = "The SSVEP study's run has finished (Sebastian, 2026-11-13); the 2-core cap of 2026-11-10 is\n"
+SSVEP_NO_DATE = "MAS (Sebastian's earlier pipeline, commit f725369) shallow_conv_net.py l.26-28"
+
+
+def test_attribution_needs_configured_names_and_is_found_on_real_lines():
+  for t in (SSVEP_PRIMARY_SOURCE, CP_CHOICE, CP_COMPUTE):
+    assert kinds(t) == []  # no names configured: the check is off (the 0.5-dev default)
+    assert kinds(t, names=["Sebastian"]) == ["unquoted_attribution"], t
+  assert kinds(SSVEP_NO_DATE, names=["Sebastian"]) == []  # a name without a date is not an attribution
+  assert kinds(CP_CHOICE, names=["Someone"]) == []
+
+
+def test_attribution_window_order_and_quote():
+  n = ["Sebastian"]
+  assert kinds("Set on 2026-11-13 by Sebastian.", names=n) == ["unquoted_attribution"]  # date before the name
+  far = "Sebastian " + "x" * (src.ATTRIBUTION_SPAN + 5) + " 2026-11-13"
+  assert kinds(far, names=n) == []
+  assert kinds("Sebastian, 2026-11-13:\n> 8 cores per job, and the GPU is allowed.\n", names=n) == []
+  assert kinds('Sebastian 2026-11-07: "his MAS flagship, FBCSP plus FBCCA".', names=n) == []
+  assert kinds("Sebastiano 2026-11-13 chose it.", names=n) == []  # whole names only
+  # a contact citation in the same paragraph is reported once, as unquoted_contact
+  assert kinds("Sebastian's decision (onboarding contact #3, 2026-11-11).", names=n) == ["unquoted_contact"]
+
+
+def _project(tmp_path, harness_json=None, commit_config=False):
+  root = tmp_path / "proj"
+  (root / "docs").mkdir(parents=True)
+  (root / "docs" / "COMPUTE.md").write_text(CP_COMPUTE)
+  (root / ".gitignore").write_text("agent_runs/\n")
+  if harness_json is not None:
+    (root / ".claude").mkdir()
+    (root / ".claude" / "harness.json").write_text(json.dumps(harness_json))
+  _git(root, "init", "-q", "-b", "main")
+  _git(root, "add", "docs", ".gitignore", *([".claude/harness.json"] if commit_config else []))
+  _git(root, "commit", "-qm", "c")
+  return root
+
+
+def test_names_come_from_the_local_harness_json_and_the_command_line(tmp_path, capsys):
+  root = _project(tmp_path)  # no harness.json: off
+  assert src.main(["check", "--root", str(root)]) == 0
+  assert src.main(["check", "--root", str(root), "--name", "Sebastian"]) == 1
+  root = _project(tmp_path / "b", {"mode": "harness", "sources": {"names": ["Sebastian"]}})
+  assert [f["kind"] for f in src.check_repo(root)] == ["unquoted_attribution"]
+  assert src.main(["check", "--root", str(root)]) == 1
+  out = capsys.readouterr().out
+  assert "docs/COMPUTE.md:1: unquoted_attribution" in out and "committed_names" not in out
+  bad = _project(tmp_path / "c", {"sources": {"names": "Sebastian"}})
+  with pytest.raises(ValueError, match="list"):
+    src.check_repo(bad)
+
+
+def test_a_committed_names_list_is_reported(tmp_path, capsys):
+  root = _project(tmp_path, {"sources": {"names": ["Sebastian"]}}, commit_config=True)
+  assert sorted(f["kind"] for f in src.check_repo(root)) == ["committed_names", "unquoted_attribution"]
+  assert src.main(["check", "--root", str(root)]) == 1
+  assert ".claude/harness.json: committed_names" in capsys.readouterr().out
+
+
+def test_new_project_update_keeps_the_names_list(tmp_path):
+  sys.path.insert(0, str(TOOLS.parent))
+  import new_project
+  dest = tmp_path / "p"
+  (dest / ".claude").mkdir(parents=True)
+  (dest / ".claude" / "harness.json").write_text(json.dumps({"mode": "harness", "sources": {"names": ["Sebastian"]}}))
+  new_project.write_build(dest, {"version": "0.5.0"}, "harness", None, None)
+  cfg = json.loads((dest / ".claude" / "harness.json").read_text())
+  assert cfg["sources"] == {"names": ["Sebastian"]} and cfg["harness"] == {"version": "0.5.0"}
+  fresh = tmp_path / "q"
+  fresh.mkdir()
+  new_project.write_build(fresh, {"version": "0.5.0"}, "harness", None, None)
+  assert "sources" not in json.loads((fresh / ".claude" / "harness.json").read_text())

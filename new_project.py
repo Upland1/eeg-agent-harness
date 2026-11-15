@@ -75,7 +75,15 @@ def write_build(dest: Path, info: dict, mode: str, eval_dir, case):
   if case:
     cfg["case"] = Path(case).name
   (dest / ".claude").mkdir(exist_ok=True)
-  (dest / ".claude" / "harness.json").write_text(json.dumps(cfg, indent=1) + "\n")
+  hj = dest / ".claude" / "harness.json"
+  if hj.exists():  # keep the project's own local settings (e.g. the eegharness.sources names list) on --update
+    try:
+      old = json.loads(hj.read_text())
+    except ValueError:
+      old = {}
+    if isinstance(old, dict) and "sources" in old:
+      cfg["sources"] = old["sources"]
+  hj.write_text(json.dumps(cfg, indent=1) + "\n")
 
 
 def make_control(dest: Path, a, info):

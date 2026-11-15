@@ -10,7 +10,18 @@ committed (git-tracked) text files of a project and reports:
   unquoted_contact   a paragraph that cites a human contact (``contact #N``, ``contact N``,
                      ``human_contacts``) without quoting it: no quoted span of at least
                      ``min_quote_words`` words ("...", “...”, or a ``>`` block-quote line) in the
-                     same paragraph.
+                     same paragraph;
+  unquoted_attribution  a paragraph that attributes something to a named person with a date
+                     ("Sebastian 2026-11-10: ...", "(Sebastian, 2026-11-13)": the name and an ISO
+                     date within ``ATTRIBUTION_SPAN`` characters, either order) without quoting
+                     them, as above. Only with names configured; a paragraph already reported as
+                     unquoted_contact is not reported again;
+  committed_names    the names list is in a git-tracked ``.claude/harness.json`` (it is meant to
+                     stay local).
+
+Names are not in the code: they come from the project's local, uncommitted ``.claude/harness.json``
+(``{"sources": {"names": ["Sebastian"]}}``; none by default, so the attribution check is off) and
+from ``--name`` on the command line.
 
 A paragraph is a block of lines between blank lines. In a JSON file every string value is checked
 on its own (the JSON quotes themselves do not count as a quotation). Untracked and ignored files
@@ -18,7 +29,7 @@ are not read: they are not committed; nor are git's own files (``.gitignore`` na
 ignore it). The vendored copies ``eegpipe/`` and ``eegharness/`` are
 skipped by default.
 
-    python -m eegharness.sources check [--root .] [--min-quote-words 3] [paths ...]   # exit 1 on a finding
+    python -m eegharness.sources check [--root .] [--min-quote-words 3] [--name N ...] [paths ...]   # exit 1 on a finding
 """
 
 import argparse
@@ -34,6 +45,9 @@ QUOTED = re.compile(r'"([^"]+)"|“([^”]+)”')
 TEXT_SUFFIXES = {".md", ".txt", ".py", ".json", ".sh", ".toml", ".cfg", ".ini", ".yaml", ".yml", ".csv", ".rst", ""}
 DEFAULT_SKIP = ("eegpipe/", "eegharness/")
 GIT_CONFIG = {".gitignore", ".gitattributes", ".gitmodules"}  # name agent_runs/ to ignore it, not to cite it
+DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
+ATTRIBUTION_SPAN = 60  # characters between the name and the date, either order, in the paragraph's text
+HARNESS_JSON = ".claude/harness.json"
 
 
 def _paragraphs(text):
@@ -58,19 +72,42 @@ def _has_quote(par, min_words):
   return any(len(s.split()) >= min_words for s in spans)
 
 
-def check_text(text, path="<text>", min_quote_words=3, line_offset=0):
+def _name_pattern(names):
+  names = [n.strip() for n in names or () if n and n.strip()]
+  if not names:
+    return None
+  return re.compile(r"\b(?:%s)(?:'s)?\b" % "|".join(re.escape(n) for n in names))
+
+
+def _attribution(par, name_re):
+  """Offset of the first name that has an ISO date within ATTRIBUTION_SPAN characters, else None."""
+  dates = [(m.start(), m.end()) for m in DATE.finditer(par)]
+  for m in name_re.finditer(par):
+    if any(-ATTRIBUTION_SPAN <= ds - m.end() <= ATTRIBUTION_SPAN or -ATTRIBUTION_SPAN <= m.start() - de <= ATTRIBUTION_SPAN
+           for ds, de in dates):
+      return m.start()
+  return None
+
+
+def check_text(text, path="<text>", min_quote_words=3, line_offset=0, names=()):
   """Findings in one text: dicts with path, line, kind, excerpt."""
   found = []
+  name_re = _name_pattern(names)
   for start, par in _paragraphs(text):
     for m in UNCOMMITTED.finditer(par):
       line = start + par[:m.start()].count("\n") + line_offset
       found.append({"path": str(path), "line": line, "kind": "uncommitted_path",
                     "excerpt": par.splitlines()[par[:m.start()].count("\n")].strip()[:160]})
+    if _has_quote(par, min_quote_words):
+      continue
     m = CONTACT.search(par)
-    if m and not _has_quote(par, min_quote_words):
-      line = start + par[:m.start()].count("\n") + line_offset
-      found.append({"path": str(path), "line": line, "kind": "unquoted_contact",
-                    "excerpt": par.splitlines()[par[:m.start()].count("\n")].strip()[:160]})
+    at, kind = (m.start(), "unquoted_contact") if m else (None, None)
+    if at is None and name_re is not None:
+      at, kind = _attribution(par, name_re), "unquoted_attribution"
+    if at is not None:
+      k = par[:at].count("\n")
+      found.append({"path": str(path), "line": start + k + line_offset, "kind": kind,
+                    "excerpt": par.splitlines()[k].strip()[:160]})
   return found
 
 
@@ -85,21 +122,40 @@ def _json_strings(obj, where=""):
       yield from _json_strings(v, f"{where}[{i}]")
 
 
-def check_file(path, rel=None, min_quote_words=3):
+def check_file(path, rel=None, min_quote_words=3, names=()):
   rel = rel or str(path)
   text = Path(path).read_text(errors="replace")
   if str(path).endswith(".json"):
     try:
       obj = json.loads(text)
     except ValueError:
-      return check_text(text, rel, min_quote_words)
+      return check_text(text, rel, min_quote_words, names=names)
     found = []
     for where, s in _json_strings(obj):
-      for f in check_text(s, f"{rel}:{where}", min_quote_words):
+      for f in check_text(s, f"{rel}:{where}", min_quote_words, names=names):
         f["line"] = None
         found.append(f)
     return found
-  return check_text(text, rel, min_quote_words)
+  return check_text(text, rel, min_quote_words, names=names)
+
+
+def config_names(root="."):
+  """The names list from the project's local .claude/harness.json (``sources.names``); [] if absent."""
+  p = Path(root) / HARNESS_JSON
+  if not p.is_file():
+    return []
+  try:
+    names = json.loads(p.read_text()).get("sources", {}).get("names", [])
+  except (ValueError, AttributeError):
+    raise ValueError(f"{p}: not a JSON object with sources.names")
+  if not isinstance(names, list) or not all(isinstance(n, str) and n.strip() for n in names):
+    raise ValueError(f"{p}: sources.names must be a list of non-empty strings")
+  return names
+
+
+def _tracked(root, rel):
+  r = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", "--", rel], capture_output=True, text=True)
+  return r.returncode == 0
 
 
 def tracked_files(root, paths=(), skip=DEFAULT_SKIP):
@@ -111,9 +167,17 @@ def tracked_files(root, paths=(), skip=DEFAULT_SKIP):
           and (Path(root) / f).is_file()]
 
 
-def check_repo(root=".", paths=(), min_quote_words=3, skip=DEFAULT_SKIP):
+def check_repo(root=".", paths=(), min_quote_words=3, skip=DEFAULT_SKIP, names=None):
+  """Findings in the committed files. ``names=None`` reads the local .claude/harness.json list."""
   root = Path(root)
-  return [f for rel in tracked_files(root, paths, skip) for f in check_file(root / rel, rel, min_quote_words)]
+  found = []
+  if names is None:
+    names = config_names(root)
+    if names and _tracked(root, HARNESS_JSON):
+      found.append({"path": HARNESS_JSON, "line": None, "kind": "committed_names",
+                    "excerpt": "the sources.names list is in a committed file; keep .claude/harness.json local"})
+  return found + [f for rel in tracked_files(root, paths, skip)
+                  for f in check_file(root / rel, rel, min_quote_words, names)]
 
 
 def main(argv=None) -> int:
@@ -124,8 +188,14 @@ def main(argv=None) -> int:
   c.add_argument("--root", default=".")
   c.add_argument("--min-quote-words", type=int, default=3)
   c.add_argument("--include-vendored", action="store_true", help="also read eegpipe/ and eegharness/")
+  c.add_argument("--name", action="append", default=[],
+                 help="a person's name for the attribution check, added to .claude/harness.json sources.names")
   a = ap.parse_args(argv)
-  found = check_repo(a.root, a.paths, a.min_quote_words, () if a.include_vendored else DEFAULT_SKIP)
+  names = config_names(a.root) + a.name
+  found = check_repo(a.root, a.paths, a.min_quote_words, () if a.include_vendored else DEFAULT_SKIP, names=names)
+  if config_names(a.root) and _tracked(a.root, HARNESS_JSON):
+    found.insert(0, {"path": HARNESS_JSON, "line": None, "kind": "committed_names",
+                     "excerpt": "the sources.names list is in a committed file; keep .claude/harness.json local"})
   for f in found:
     loc = f"{f['path']}:{f['line']}" if f["line"] else f["path"]
     print(f"{loc}: {f['kind']}: {f['excerpt']}")

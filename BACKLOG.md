@@ -139,10 +139,16 @@ v0.5-dev (`eegharness.sources`, same test file): `python -m eegharness.sources c
 committed files and reports an `agent_runs/` reference (quoted or not) and a paragraph that cites a
 contact (`contact #N`, `contact N`, `human_contacts`) without quoting it (a quoted span of at least
 3 words, or a `>` block quote, in the same paragraph; JSON string values checked one by one). On
-the real repositories: cold-pressor 5 findings (the PARADIGM lines above), ssvep-apply 0. Open
-choice for Sebastian: attributions by name and date without a contact number ("Sebastian
-2026-11-10: ...", 51 lines in ssvep-apply, 6 in cold-pressor) are not detected; detecting them would
-tie the check to a name. Proposed rule wording, as an amendment to G15 (for Sebastian's approval;
+the real repositories: cold-pressor 5 findings (the PARADIGM lines above), ssvep-apply 0. Attributions
+by name and date without a contact number ("Sebastian 2026-11-10: ...") are detected too, as Sebastian
+chose on 2026-11-15 ("Yes to the names check via the uncommitted list in .claude/harness.json"): the
+names come from the project's local `.claude/harness.json` (`{"sources": {"names": [...]}}`, empty by
+default, so the check is off; `--name` adds one), never from the code; a name and an ISO date within 60
+characters, either order, in a paragraph with no quote is `unquoted_attribution`; a names list in a
+committed harness.json is reported (`committed_names`); `new_project.py --update` keeps the list. With
+"Sebastian" on 2026-11-15: ssvep-apply 48 attributions and 2 contacts (both committed after the first
+count: D-016 and the kit session's own rerun provenance), cold-pressor 7 attributions and 6 contacts.
+Proposed rule wording, as an amendment to G15 (for Sebastian's approval;
 template not changed): "A source that is an orchestrator's or a human's instruction is quoted, in
 its own words, in the committed file that relies on it; a contact number or an `agent_runs/` path is
 never the only citation. `python -m eegharness.sources check` passes before a commit."
