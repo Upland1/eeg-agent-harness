@@ -15,7 +15,9 @@ committed (git-tracked) text files of a project and reports:
                      ("Sebastian 2026-11-10: ...", "(Sebastian, 2026-11-13)": the name and an ISO
                      date within ``ATTRIBUTION_SPAN`` characters, either order) without quoting
                      them, as above. Only with names configured; a paragraph already reported as
-                     unquoted_contact is not reported again;
+                     unquoted_contact is not reported again. An approval line in the standard
+                     form "Approved by <name>, <date>[, <what>]" (a whole line; a list marker
+                     allowed) records an approval and is not an attribution;
   committed_names    the names list is in a git-tracked ``.claude/harness.json`` (it is meant to
                      stay local).
 
@@ -48,6 +50,8 @@ GIT_CONFIG = {".gitignore", ".gitattributes", ".gitmodules"}  # name agent_runs/
 DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
 ATTRIBUTION_SPAN = 60  # characters between the name and the date, either order, in the paragraph's text
 HARNESS_JSON = ".claude/harness.json"
+# "Approved by <name>, <date>[, <what>]" as a whole line (Sebastian, 2026-11-15); a list marker is allowed
+APPROVAL = re.compile(r"^\s*(?:[-*]\s+)?Approved by ([^,\n]+?), \d{4}-\d{2}-\d{2}(?:, [^\n]+)?\s*$")
 
 
 def _paragraphs(text):
@@ -79,8 +83,18 @@ def _name_pattern(names):
   return re.compile(r"\b(?:%s)(?:'s)?\b" % "|".join(re.escape(n) for n in names))
 
 
+def _approval_lines(par, name_re):
+  """``par`` with every standard-form approval line of a configured name blanked (offsets kept)."""
+  out = []
+  for line in par.split("\n"):
+    m = APPROVAL.match(line)
+    out.append(" " * len(line) if m and name_re.fullmatch(m.group(1)) else line)
+  return "\n".join(out)
+
+
 def _attribution(par, name_re):
   """Offset of the first name that has an ISO date within ATTRIBUTION_SPAN characters, else None."""
+  par = _approval_lines(par, name_re)
   dates = [(m.start(), m.end()) for m in DATE.finditer(par)]
   for m in name_re.finditer(par):
     if any(-ATTRIBUTION_SPAN <= ds - m.end() <= ATTRIBUTION_SPAN or -ATTRIBUTION_SPAN <= m.start() - de <= ATTRIBUTION_SPAN

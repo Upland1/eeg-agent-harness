@@ -268,3 +268,27 @@ def test_new_project_update_keeps_the_names_list(tmp_path):
   fresh.mkdir()
   new_project.write_build(fresh, {"version": "0.5.0"}, "harness", None, None)
   assert "sources" not in json.loads((fresh / ".claude" / "harness.json").read_text())
+
+
+# Approval lines in the standard form "Approved by <name>, <date>[, <what>]" (Sebastian, 2026-11-15).
+# Real lines: cold-pressor docs/PARADIGM.md l.7-8 (standard form) and l.6 (not), @ its HEAD of 2026-11-15.
+CP_APPROVED_R4 = "Approved by Sebastian, 2026-11-12, Revision 4\n"
+CP_APPROVED_R5 = "Approved by Sebastian, 2026-11-13, Revision 5\n"
+CP_APPROVED_BOX = "Approved by Sebastian: [x]   Date: 2026-11-12\n"
+
+
+def test_standard_approval_lines_pass_and_an_unquoted_instruction_is_still_flagged():
+  n = ["Sebastian"]
+  assert kinds(CP_APPROVED_R4, names=n) == [] and kinds(CP_APPROVED_R5, names=n) == []
+  assert kinds("Approved by Sebastian, 2026-11-12\n", names=n) == []          # <what> is optional
+  assert kinds("- Approved by Sebastian, 2026-11-12, Revision 4\n", names=n) == []
+  assert kinds(CP_APPROVED_BOX, names=n) == ["unquoted_attribution"]         # not the standard form
+  # an approval line does not hide an unquoted instruction in the same paragraph
+  assert kinds(CP_APPROVED_R4 + CP_CHOICE, names=n) == ["unquoted_attribution"]
+  assert kinds(CP_APPROVED_R4 + CP_COMPUTE, names=n) == ["unquoted_attribution"]
+  # the form is the whole line: an approval sentence inside an instruction is not exempt
+  assert kinds("Set to 8 cores. Approved by Sebastian, 2026-11-13, on the call.\n", names=n) == ["unquoted_attribution"]
+  assert kinds("Approved by Someone, 2026-11-12, Revision 4\n" + CP_COMPUTE, names=n) == ["unquoted_attribution"]
+  assert kinds("Approved by Sebastian, 2026-11-13 to use 8 cores per job.\n", names=n) == ["unquoted_attribution"]
+  # only the configured person's own approval line is exempt
+  assert kinds("Approved by the lab manager, 2026-11-13, as Sebastian asked\n", names=n) == ["unquoted_attribution"]

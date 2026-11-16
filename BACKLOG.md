@@ -148,7 +148,30 @@ characters, either order, in a paragraph with no quote is `unquoted_attribution`
 committed harness.json is reported (`committed_names`); `new_project.py --update` keeps the list. With
 "Sebastian" on 2026-11-15: ssvep-apply 48 attributions and 2 contacts (both committed after the first
 count: D-016 and the kit session's own rerun provenance), cold-pressor 7 attributions and 6 contacts.
-Proposed rule wording, as an amendment to G15 (for Sebastian's approval;
+Approved approval-line exemption (Sebastian, 2026-11-16: "Exempt approval lines in the standard form
+("Approved by <name>, <date>[, <what>]")"): a whole line in that form, by a configured name, is not an
+attribution; an unquoted instruction in the same paragraph is still flagged.
+
+**Approved and done in 0.5.0** (Sebastian, 2026-11-16: "Approve the extended L38 wording, applied from
+v0.5 on, with no fixes to past commits; the existing findings stay listed in BACKLOG L38"). G15 now reads,
+after its first sentences: "A source that is an orchestrator's or a human's instruction is quoted, in its
+own words, in the committed file that relies on it; a contact number, a name with a date, or an
+`agent_runs/` path is never the only citation. `python -m eegharness.sources check` passes before a
+commit." "Sebastian" goes into each project's `.claude/harness.json` `sources.names` when that project
+moves to v0.5 (his choice, 2026-11-16), not before.
+
+Existing findings, not fixed (past commits; `--name Sebastian`, 2026-11-16):
+- ssvep-apply @ 841e833, 50: `configs/pipeline.json` 23 attributions (source and note fields of the
+  settings); `docs/DECISIONS.md` 9 attributions and 1 contact (D-016, "as Sebastian instructed (contact
+  9)"); `docs/PARADIGM.md` 7; `docs/COMPUTE.md` 2; `tools/dev_mas_networks.py` 3; `inputs/request.md`,
+  `tests/test_p20_settings.py`, `tests/test_positive_control_p20.py`, `tools/exploratory_paired.py` 1
+  each; `configs/mas_rerun/20261115_trial_grouped_rerun.provenance.json` `imported.by` 1 contact (written
+  by the kit session: "per D-015 and Sebastian's contact 9").
+- cold-pressor @ 72860f3, 13: `docs/PARADIGM.md` 5 contacts (l.807, 821, 908, 915, 1015, as above) and 4
+  attributions (one is the approval box "Approved by Sebastian: [x]   Date: 2026-11-12", not the
+  standard form); `docs/DECISIONS.md` 1 contact and 1 attribution; `docs/COMPUTE.md` 2 attributions.
+
+Earlier proposal (superseded by the approved wording above): Proposed rule wording, as an amendment to G15 (for Sebastian's approval;
 template not changed): "A source that is an orchestrator's or a human's instruction is quoted, in
 its own words, in the committed file that relies on it; a contact number or an `agent_runs/` path is
 never the only citation. `python -m eegharness.sources check` passes before a commit."

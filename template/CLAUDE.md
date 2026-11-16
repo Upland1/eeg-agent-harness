@@ -142,8 +142,14 @@ results. *Incident: a pooled label check passed with one participant reversed; a
 
 **G15. Committed files cite committed things.** Committed code, decisions and docs never
 reference uncommitted files (`agent_runs/`, scratchpads, local notes). They cite commit
-hashes and committed or reproducible output paths. *Incident: audits found committed
-decisions pointing at local run files (L22).*
+hashes and committed or reproducible output paths. A source that is an orchestrator's or a
+human's instruction is quoted, in its own words, in the committed file that relies on it; a
+contact number, a name with a date, or an `agent_runs/` path is never the only citation.
+`python -m eegharness.sources check` passes before a commit (the names it looks for are in the
+project's local `.claude/harness.json`, `sources.names`; an approval line in the form "Approved
+by <name>, <date>[, <what>]" is a record, not a citation). *Incident: audits found committed
+decisions pointing at local run files (L22); a committed paradigm cited Sebastian's decisions by
+contact number only, and settings by name and date only (L38).*
 
 **G16. Use every written source before asking a human.** Before any question goes to
 Sebastian, the agents check, and record what each said ("searched, not found" included):
