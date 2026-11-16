@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased (after 0.5.0)
+
+- New `run_cost.py` (evaluator-side, like `cost_report.py`): the cost of a finished run in a versioned
+  folder with provenance: agent cost in USD from the headless invocations' cumulative `total_cost_usd`,
+  tokens from the transcripts (`cost_report.report`), and CPU and GPU wall time per phase from the job
+  wrappers' run logs, minus the laptop's suspend intervals (`journalctl` excerpt). Known-answer tests
+  `kit_tests/test_run_cost.py` on the real log formats and job names of ssvep-apply.
+
 ## 0.5.0 — 2026-11-15 (tag v0.5.0 at 67defdb)
 
 Lessons L37 and L38 from cold-pressor onboarding, the approved rule wordings (G15, G10, G16, G22, new G26,
