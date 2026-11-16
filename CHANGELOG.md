@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 — unreleased (v0.5-dev; not tagged)
+## 0.5.0 — 2026-11-15 (tag v0.5.0 at 67defdb)
 
 Lessons L37 and L38 from cold-pressor onboarding, the approved rule wordings (G15, G10, G16, G22, new G26,
 Data handling, the workflow skills, the paradigm-analyst), and the release files
