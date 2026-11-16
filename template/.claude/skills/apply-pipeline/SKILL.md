@@ -8,6 +8,8 @@ Run "apply the pipeline" for the request in the arguments, through the handoff c
 the orchestrator. Update `log.md` after every agent call; log every contact with Sebastian in
 `human_contacts.md` (G16) before sending it. Cite the source of every choice (G6).
 
+**Agents.** Run each agent in the foreground and wait for its handoff before the next step or the end of the turn; a subagent still running when the turn ends is stopped.
+
 **What is fixed and what is decided here.** The methods are Sebastian's, vendored in
 `eegpipe/` (G24): never edited, never re-implemented. What this run decides, and justifies, is
 how they meet THIS study: the adapter (recording -> events -> labels and units), every
@@ -42,7 +44,7 @@ C. **Plan** (pipeline-engineer, `02_plan.md` + the section of
    within `docs/COMPUTE.md`, longer ones as exact commands); what is exploratory.
 
 D. **Plan audit** (methods-auditor, `02b_plan_audit.md` with the rows of
-   `_templates/apply_pipeline/02b_audit_rows.md`): G1-G25; every profile default confirmed;
+   `_templates/apply_pipeline/02b_audit_rows.md`): G1-G26; every profile default confirmed;
    unit and strata argued (G13); development and confirmatory data disjoint (G19); label
    scheme matches PARADIGM. FAIL -> back to C. **STOP: Sebastian approves the plan and the
    settings.**

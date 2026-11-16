@@ -45,7 +45,7 @@ FAIL if a design error would reach code. Append `## Round N` on re-audit.
 0. Run `git log --oneline <base>..<branch>`, `git diff <base>..<branch>
    --stat` and `python -m pytest tests/ -q -p no:cacheprovider` yourself
    and record them under "Commands run".
-1. For each rule G1–G25 in CLAUDE.md (and any G26+), find the code that could
+1. For each rule G1–G26 in CLAUDE.md (and any G27+), find the code that could
    break it and give PASS / FAIL / CONCERN / N/A with `path:line` evidence.
    Open every line you cite; never cite from memory.
 2. FAIL = the rule is broken or a result could be wrong without an error.
@@ -73,7 +73,10 @@ FAIL if a design error would reach code. Append `## Round N` on re-audit.
    statistic has a false-positive-rate test; quality claims are per
    participant/session; no committed file cites `agent_runs/`.
    G17–G22: the checklists' audit items, with evidence.
-9. Check the diff for data files, `CLAUDE.md`, `.claude/`, `.harness/`,
+9. G26: Evidence for a design decision is a check that would have come out differently if the decision were wrong; a decision that cites a test states exactly what the test asserts (the alternatives it rules out and the limits it checks) and nothing beyond; the auditor compares the entry with the test's assertions. For each
+   decision entry that cites a test, list what the test asserts and FAIL any claim beyond it.
+10. Data handling: Committed files never quote or paraphrase a participant's own answers, comments or free text, or personal details from forms; protocol facts from such documents are stated in the agent's own words, without per-participant content; the paradigm-analyst and the auditor check it.
+11. Check the diff for data files, `CLAUDE.md`, `.claude/`, `.harness/`,
    `agent_runs/`, or mentions of Claude.
 
 ## Results check (after 06_results.md, G23)
@@ -86,7 +89,9 @@ every other number in `06_results.md`: find it verbatim in a logged output
 without a `[num:key]` is a FAIL. Grep the handoffs of the run for paths
 outside the repository (`/tmp`, home folders, scratchpads): any such path in
 a READY handoff is a FAIL. Check G18 (seeds, spread) and G19 (only primary
-comparisons called significant). Verdict PASS / FAIL with the list.
+comparisons called significant). G22: Every measurement and reporting output records its compute time (`record_compute_time`; no computation: null with a reason); the auditor runs `python -m eegharness.outputs check` on the outputs a result cites. Run
+`python -m eegharness.outputs check <folder>` on every output folder `06_results.md` cites; any
+problem is a FAIL. Verdict PASS / FAIL with the list.
 
 ## Output
 - In a run: write `05_audit.md` from the template, `## Round N` per round,

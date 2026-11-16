@@ -8,6 +8,8 @@ You are the orchestrator of the onboarding run (`agent_runs/README.md`,
 wall time from `cost.jsonl`). Do not interpret the data yourself; the
 profiler measures and the paradigm-analyst interprets.
 
+**Agents.** Run each agent in the foreground and wait for its handoff before the next step or the end of the turn; a subagent still running when the turn ends is stopped.
+
 **Contacts with Sebastian.** Before any question, apply G16 (CLAUDE.md, "When
 you don't know"): inputs in full, documents in the data folder,
 documentation the inputs point to, measurement. Log every contact (question,
@@ -51,6 +53,9 @@ in step 7.
    - Ask the paradigm-analyst for a revision (`## Revision N`) with the
      logged outputs, the label check reported per participant and session
      (G14).
+   - The paradigm-analyst has Edit for `docs/PARADIGM.md` only and appends its own revisions; frozen text stays unchanged and is checked by diff; a correction goes back to the analyst, never made by the orchestrator. After each revision run
+     `python .harness/tools/check_frozen_text.py docs/PARADIGM.md --base <last commit of it>`;
+     a FAIL goes back to the paradigm-analyst.
 6. **Before asking.** Check every question in PARADIGM section 10: does it
    list the sources searched? Could a document in the data folder or the
    documentation an input names answer it? If so, send it back to the

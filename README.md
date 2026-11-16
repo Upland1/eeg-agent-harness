@@ -51,7 +51,7 @@ not a method ranking. See `examples/ssvep_synthetic/README.md`.
 | Path | What |
 |---|---|
 | `VERSION` | harness version; every project records the version that built it |
-| `template/` | copied into each project: `CLAUDE.md` (general rules G1–G25), `.claude/` (6 agents; skills `onboard`, `assignment`, `apply-pipeline`, `cite-sources` and the method checklists `deep-learning`, `connectivity`, `compute-jobs`; guard, test and cost hooks), `agent_runs/` (handoff contract and templates, including the plan audit and the human-contact log), `tests/conftest.py`, `docs/COMPUTE.md` (per-job CPU/GPU limits, set by Sebastian) |
+| `template/` | copied into each project: `CLAUDE.md` (general rules G1–G26), `.claude/` (6 agents; skills `onboard`, `assignment`, `apply-pipeline`, `cite-sources` and the method checklists `deep-learning`, `connectivity`, `compute-jobs`; guard, test and cost hooks), `agent_runs/` (handoff contract and templates, including the plan audit and the human-contact log), `tests/conftest.py`, `docs/COMPUTE.md` (per-job CPU/GPU limits, set by Sebastian) |
 | `tools/` | deterministic tools: the dataset profiler `run_profile.py` and its reader registry (`eegprofile/`), copied to `<project>/.harness/tools/`; the `eegharness` package (versioned output folders with provenance, `compare_runs` regression check, `numbers` (derived report numbers with stable keys from a committed spec, G23); core: grouped `splits` with a leakage check, unit-level `permutation`, `chance` levels; optional for deep learning: `seeds`, resumable `folds`; numpy only, torch never required), **vendored** as committed code to `<project>/eegharness/`; the `eegpipe` package (Sebastian's pipeline: classical suite and baseline, EEGNet/ShallowConvNet with the trainer, phase features, condition-level connectivity with debiased wPLI, BH-FDR and NBS, the edge-gated GNN, grouped folds with leakage gates, the settings validator and profiles, the dev → freeze → confirm runner, paired statistics, and the SSVEP option FBCCA, FBCSP, CCNN, DualBranchFusionCNN; numpy, scipy, scikit-learn; torch for the networks), **vendored** to `<project>/eegpipe/` and protected by the guard (G24) |
 | `new_project.py` | creates or updates a project (harness arm or control arm) |
 | `check_install.py` | install check: packages, tools, smoke tests and the worked example |
@@ -176,7 +176,7 @@ python -m pytest kit_tests -q -p no:cacheprovider
 The full suite needs numpy, scipy, scikit-learn, mne and pytest (`requirements.txt`),
 `pdftotext`, and torch (CPU build) for the network tests; with them only the CUDA test is skipped
 on a machine without a GPU (v0.2.0: 190 passed; v0.3.0: 211; v0.3.1: 249; v0.4.0: 392 passed, 1
-skipped without CUDA; v0.4.1: 464 passed, 1 skipped, 1 xfailed; v0.5.0: 485 passed, 1 skipped, 1 xfailed). Keep the virtual environment
+skipped without CUDA; v0.4.1: 464 passed, 1 skipped, 1 xfailed; v0.5.0: 497 passed, 1 skipped, 1 xfailed). Keep the virtual environment
 outside the repository (e.g. `~/.venvs/eeg-harness-kit`).
 
 ## Release and privacy

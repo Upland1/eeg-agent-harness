@@ -29,6 +29,8 @@ reproduced from the repository.
 
 ## L29 — headless orchestrator ended its turn with a subagent still running (2026-11-07)
 
+**Approved and done in 0.5.0** (Sebastian, 2026-11-16: "Approved, all seven as worded: L37, L29, L32, L33, L34, L35, L36"), with the wording proposed on 2026-11-16, in onboard, assignment and apply-pipeline skills (**Agents.**); known-answer tests `kit_tests/test_v05_rules.py`, failing on 03c00f6.
+
 In ssvep-apply, the headless `/apply-pipeline` run (claude -p) started the plan subagent in the
 background and ended its turn. Claude Code stopped the background subagent 10 minutes later and
 the run ended mid step C ($8.25 spent; adapter done at 84a3c6b). The CLAUDE.md "Never do" rule
@@ -60,6 +62,8 @@ Sebastian separately.
 
 ## L32 — a check frozen as "report only", with no decision rule (2026-11-10)
 
+**Approved and done in 0.5.0** (Sebastian, 2026-11-16: "Approved, all seven as worded: L37, L29, L32, L33, L34, L35, L36"), with the wording proposed on 2026-11-16, in G10; known-answer tests `kit_tests/test_v05_rules.py`, failing on 03c00f6.
+
 In cold-pressor onboarding, the rest-period control M7 was frozen as "report only (no criterion,
 cannot change the 8b verdict)". G10 asks for code and threshold to be fixed before real data, but a
 report-only check has no threshold, so freezing it fixed nothing that decided anything, and the
@@ -70,6 +74,8 @@ states its decision rule, its sidedness (with a reason) and the consequence of e
 without them is descriptive and gates nothing.
 
 ## L33 — participant free text quoted or paraphrased in committed docs (2026-11-10)
+
+**Approved and done in 0.5.0** (Sebastian, 2026-11-16: "Approved, all seven as worded: L37, L29, L32, L33, L34, L35, L36"), with the wording proposed on 2026-11-16, in Data handling; paradigm-analyst and methods-auditor; known-answer tests `kit_tests/test_v05_rules.py`, failing on 03c00f6.
 
 In cold-pressor onboarding, a draft committed file (76fae15, never pushed) quoted Formulario.docx (the
 filled protocol form) verbatim, and docs/PARADIGM.md (lines 33 and 38 of Revision 1) paraphrased what
@@ -82,6 +88,8 @@ paradigm-analyst and auditor check it.
 
 ## L34 — a decision claimed more than its test checks (2026-11-10)
 
+**Approved and done in 0.5.0** (Sebastian, 2026-11-16: "Approved, all seven as worded: L37, L29, L32, L33, L34, L35, L36"), with the wording proposed on 2026-11-16, in new kit rule G26; methods-auditor item 9; 05_audit row; known-answer tests `kit_tests/test_v05_rules.py`, failing on 03c00f6.
+
 In cold-pressor onboarding, D-002 stated filter limits and named alternatives that the cited test did
 not check: Round 2 R2-2 (G11; `05_audit.md` l.344) and Round 3 R3-1 (G26; `05_audit.md` l.555). It took
 three audit rounds to make the decision text and the test agree. The project already had its own rule
@@ -93,6 +101,8 @@ and nothing beyond; the auditor compares the entry with the test's assertions.
 
 ## L35 — placeholder text logged as a human's answers (2026-11-10)
 
+**Approved and done in 0.5.0** (Sebastian, 2026-11-16: "Approved, all seven as worded: L37, L29, L32, L33, L34, L35, L36"), with the wording proposed on 2026-11-16, in G16; known-answer tests `kit_tests/test_v05_rules.py`, failing on 03c00f6.
+
 In cold-pressor onboarding, Sebastian sent a reply containing unfilled bracketed placeholders for the
 human-only questions Q1–Q7 ("[answer / UNKNOWN, …]"); the orchestrator logged the defaults inside the
 brackets as his provisional answers in human_contacts.md (it did not write them into PARADIGM.md).
@@ -101,6 +111,8 @@ is logged as an answer; template text, placeholders or suggested defaults are lo
 and the agent asks once more, grouped.
 
 ## L36 — the orchestrator appended and reworded the paradigm-analyst's revision (2026-11-11)
+
+**Approved and done in 0.5.0** (Sebastian, 2026-11-16: "Approved, all seven as worded: L37, L29, L32, L33, L34, L35, L36"), with the wording proposed on 2026-11-16, in paradigm-analyst tools (Edit) and Output; guard (Edit only on docs/PARADIGM.md, no Write once it is committed); `tools/check_frozen_text.py`; onboard step 5; known-answer tests `kit_tests/test_v05_rules.py`, failing on 03c00f6.
 
 In cold-pressor onboarding, the paradigm-analyst could not edit docs/PARADIGM.md: it has Write but no
 Edit, and Write rewrites the whole file, frozen sections included (as in an earlier fix, where the
@@ -113,6 +125,8 @@ only, so it appends its own revisions; frozen text is kept unchanged and checked
 goes back to the analyst instead of being made by the orchestrator.
 
 ## L37 — measurement and reporting outputs without their compute time (2026-11-13)
+
+**Approved and done in 0.5.0** (Sebastian, 2026-11-16: "Approved, all seven as worded: L37, L29, L32, L33, L34, L35, L36"), with the wording proposed on 2026-11-16, in G22; methods-auditor results check; known-answer tests `kit_tests/test_v05_rules.py`, failing on 03c00f6.
 
 In cold-pressor onboarding, the measurement outputs did not record how long they took: the audit
 noted "runtimes are not measured" (`05_audit.md` C5, carried over as N5), so G22's expected

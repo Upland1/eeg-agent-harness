@@ -583,6 +583,21 @@ def check_analyst_bash(cmd: str, root: Path, cwd: str) -> None:
       block(deny + f"{d} is not a document; recordings are read only by project code.")
 
 
+def check_analyst_write(tool: str, resolved, root: Path) -> None:
+  """L36: the paradigm-analyst edits docs/PARADIGM.md only, and once that file is committed it appends with
+  Edit; a Write would rewrite frozen text."""
+  try:
+    rel = resolved[0].relative_to(real(root)).as_posix() if resolved else ""
+  except ValueError:
+    rel = ""
+  if tool in ("Edit", "NotebookEdit") and rel != "docs/PARADIGM.md":
+    block("the paradigm-analyst has Edit for docs/PARADIGM.md only (L36).")
+  if tool == "Write" and rel == "docs/PARADIGM.md":
+    r = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", "--", rel], capture_output=True, text=True)
+    if r.returncode == 0:
+      block("docs/PARADIGM.md is committed: append your revision with Edit; frozen text stays unchanged (L36).")
+
+
 def main() -> None:
   event = json.load(sys.stdin)
   tool = event.get("tool_name", "")
@@ -652,6 +667,8 @@ def main() -> None:
       block("eegpipe/ is the vendored pipeline; configure it in configs/pipeline.json, never edit it (G24; a deviation is a new project module with tests).")
     resolved = resolve_token(target, real(cwd), {})
     check_written(resolved, raw_only=False)
+    if event.get("agent_type") == "paradigm-analyst":
+      check_analyst_write(tool, resolved, root)
     if event.get("agent_type") == "methods-auditor":
       try:
         rel = resolved[0].relative_to(real(root)).as_posix() if resolved else ""

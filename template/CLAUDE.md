@@ -102,8 +102,8 @@ overwritten and survived only in a transcript (harness lesson L1).*
 **G10. Checks are frozen before they see real data.** Any gate, screening rule, quality
 check, threshold or selection rule is fixed and committed (code and threshold) before it
 runs on real recordings. A change after that is a deviation, recorded with the output
-that had been seen. *Incident: evaluation round 1, a statistic was changed after seeing
-one file's output (L2).*
+that had been seen. A frozen check states its decision rule (statistic, resampling unit, α, windows), its sidedness with a reason, and what each outcome changes in the plan; a check without them is descriptive and gates nothing. *Incident: evaluation round 1, a statistic was changed after seeing
+one file's output (L2); a control was frozen as "report only", with no rule (L32).*
 
 **G11. Derived numbers come from scripts too.** Differences, ratios, p-values, means and
 any other number derived from results are computed by a committed script and written to
@@ -162,9 +162,10 @@ with project code. A question goes to Sebastian only if none of these answers it
 lists the sources checked. Every human contact (question, approval, request) is logged
 in the run's `human_contacts.md` as **approval**, **human-only fact** or
 **should-have-found** (the answer was in a source in reach); the agent proposes the
-category and Sebastian confirms it. *Incident: in onboarding, several questions sent to
+category and Sebastian confirms it. Only an explicit answer is logged as an answer; template text, placeholders or suggested defaults are logged as 'no answer', and the agent asks once more, grouped. *Incident: in onboarding, several questions sent to
 Sebastian were answered by the input paper's appendix, the public documentation the
-paper names, or the lab log in the data folder (L25).*
+paper names, or the lab log in the data folder (L25); bracketed defaults in a reply were
+logged as answers (L35).*
 
 Rules G17–G23 make G1, G4 and G7 concrete for neural networks, connectivity and long
 jobs. When a plan uses one of these methods, every agent working on it reads the matching
@@ -248,6 +249,7 @@ remote hardware, goes to Sebastian as exact commands with expected runtime and t
 outputs to return. Long jobs
 save each fold with its configuration (`eegharness.folds`); a rerun with a different
 configuration on the same folder is refused. Runtime and device are reported per job.
+Every measurement and reporting output records its compute time (`record_compute_time`; no computation: null with a reason); the auditor runs `python -m eegharness.outputs check` on the outputs a result cites. *Incident: an audit found the runtimes of the measurement outputs unmeasured (L37).*
 
 **G23. Derivations go through committed, tested tools.** Any number derived for a handoff
 or write-up (difference, ratio, mean, interval, p-value, count) comes from a committed
@@ -280,8 +282,11 @@ confirmatory. The auditor checks the freeze commit, the selection and every refu
 *Incident: in a methods port the development session re-entered the confirmatory test, and a
 part was nearly rerun at a different commit (L28; methods-port audit C4).*
 
+**G26. Evidence must be able to fail.** Evidence for a design decision is a check that would have come out differently if the decision were wrong; a decision that cites a test states exactly what the test asserts (the alternatives it rules out and the limits it checks) and nothing beyond; the auditor compares the entry with the test's assertions. *Incident: a decision claimed filter limits and
+alternatives its test did not check; three audit rounds to make the entry and the test agree (L34).*
+
 **Rules grow from experience.** When a test or the auditor catches a new kind of mistake,
-the orchestrator writes up the incident and proposes a new rule (G26, G27, …). Sebastian
+the orchestrator writes up the incident and proposes a new rule (G27, G28, …). Sebastian
 approves it before it is added here, with a one-line reference to the incident. Rules
 that apply to any EEG study are also proposed to the harness (next version, never the
 running one).
@@ -302,6 +307,8 @@ running one).
   `configs/pipeline.json` (`eegpipe.settings`; one profile per design family), read through the
   project's `adapter.py` (recording -> event table), run with `eegpipe.runner` (G25). It needs
   numpy, scipy and scikit-learn; torch only for the networks and the GNN.
+- Committed files never quote or paraphrase a participant's own answers, comments or free text, or personal details from forms; protocol facts from such documents are stated in the agent's own words, without per-participant content; the paradigm-analyst and the auditor check it. *Incident: a draft commit quoted a filled protocol form, and a paradigm
+  description paraphrased one participant's sensations (L33).*
 - Jobs run under the limits in `docs/COMPUTE.md` (G22); longer or remote jobs are listed in
   the plan's "Runs" section for Sebastian.
 

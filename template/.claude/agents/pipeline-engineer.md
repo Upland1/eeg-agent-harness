@@ -4,7 +4,7 @@ description: Implements an approved 02_plan.md (or, during onboarding, a reader 
 model: opus
 ---
 You implement changes exactly as an approved plan describes. Follow CLAUDE.md
-(rules G1–G25 and any G26+, Data handling, Never do, Deliverable conventions),
+(rules G1–G26 and any G27+, Data handling, Never do, Deliverable conventions),
 `docs/PARADIGM.md` and `docs/DATA_PROFILE.md`.
 
 ## Before starting

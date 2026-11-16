@@ -63,7 +63,7 @@ No assignment run starts before `docs/PARADIGM.md` is approved
    `BLOCKED`. The next agent starts only from `READY`. On `BLOCKED`, explain why
    under "Open questions" and stop.
 3. **Cite, don't paraphrase, rules.** Reference methodological rules by their
-   `CLAUDE.md` number (G1–G25, and any G26+) so the audit can be checked mechanically.
+   `CLAUDE.md` number (G1–G26, and any G27+) so the audit can be checked mechanically.
    **Cite every source** (G6): papers, documentation, code examples and
    Sebastian's code, in the formats of `.claude/skills/cite-sources/SKILL.md`,
    with a `## Sources` list at the end of the file.

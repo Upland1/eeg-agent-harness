@@ -136,16 +136,16 @@ def test_vendored_package_conftest_and_first_commit(made):
 
 
 def test_templates_carry_v03_rules_and_files():
-  """Known answer: CLAUDE.md defines G1-G25; run templates include the plan audit and the human-contact log."""
+  """Known answer: CLAUDE.md defines G1-G26 (G26 from 0.5.0, L34); run templates include the plan audit and the human-contact log."""
   claude = (KIT / "template" / "CLAUDE.md").read_text()
-  assert all(f"**G{n}." in claude for n in range(1, 26)) and "**G26." not in claude
+  assert all(f"**G{n}." in claude for n in range(1, 27)) and "**G27." not in claude
   tpl = KIT / "template" / "agent_runs" / "_templates"
   assert (tpl / "02b_plan_audit.md").exists()
   head = (tpl / "human_contacts.md").read_text()
   for col in ("Sources checked", "Proposed category", "Confirmed category", "should-have-found", "human-only fact"):
     assert col in head
   auditor = (KIT / "template" / ".claude" / "agents" / "methods-auditor.md").read_text()
-  assert "Bash" in auditor.split("---")[1] and "G1–G25" in auditor and "## Results check" in auditor
+  assert "Bash" in auditor.split("---")[1] and "G1–G26" in auditor and "## Results check" in auditor
 
 
 def test_v03_checklists_rows_and_compute_limits():

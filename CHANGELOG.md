@@ -2,16 +2,32 @@
 
 ## 0.5.0 — unreleased (v0.5-dev; not tagged)
 
-Lessons L37 and L38 from cold-pressor onboarding, the approved G15 amendment, and the release files
+Lessons L37 and L38 from cold-pressor onboarding, the approved rule wordings (G15, G10, G16, G22, new G26,
+Data handling, the workflow skills, the paradigm-analyst), and the release files
 (install check, worked example, README). Known-answer tests in
-`kit_tests/test_eegharness_v05_lessons.py`, `kit_tests/test_worked_example.py` and
-`kit_tests/test_check_install.py`.
+`kit_tests/test_eegharness_v05_lessons.py`, `kit_tests/test_v05_rules.py`, `kit_tests/test_worked_example.py`
+and `kit_tests/test_check_install.py`.
 
 - Rules: **G15 amended** (L38, approved by Sebastian on 2026-11-16, applied from v0.5 on, no fixes to
   past commits): an orchestrator's or a human's instruction is quoted in the committed file that relies
   on it; a contact number, a name with a date or an `agent_runs/` path is never the only citation;
-  `python -m eegharness.sources check` passes before a commit. The G22 amendment for L37 is proposed in
-  BACKLOG and not in the template.
+  `python -m eegharness.sources check` passes before a commit.
+- Rules approved by Sebastian on 2026-11-16 ("Approved, all seven as worded"), with known-answer tests
+  in `kit_tests/test_v05_rules.py` that fail on 03c00f6:
+  - G22 (L37): every measurement and reporting output records its compute time; the auditor runs
+    `python -m eegharness.outputs check` on the outputs a result cites (results check).
+  - onboard, assignment, apply-pipeline (L29): run each agent in the foreground and wait for its handoff.
+  - G10 (L32): a frozen check states its decision rule, sidedness and the consequence of each outcome;
+    otherwise it is descriptive and gates nothing.
+  - Data handling (L33): committed files never quote or paraphrase a participant's free text or form
+    details; the paradigm-analyst and the auditor check it.
+  - New **G26 Evidence must be able to fail** (L34, from cold-pressor's project rule G26): a decision
+    citing a test claims exactly what the test asserts; auditor item 9 and an audit-template row. Project
+    rules now start at G27; cold-pressor's own G26 becomes the kit's when it moves to 0.5.
+  - G16 (L35): only an explicit answer is logged as an answer; placeholders and defaults are "no answer".
+  - paradigm-analyst (L36): Edit for `docs/PARADIGM.md` only (guard), no Write once that file is committed;
+    new `tools/check_frozen_text.py` (shipped in `.harness/tools/`): a file may only gain lines after a
+    committed version; the onboard skill runs it after every revision.
 - `eegharness.outputs` (L37): `ComputeTimer`, `record_compute_time`, `record_no_compute`,
   `check_compute_time` and `python -m eegharness.outputs check`. `compute_time` in `provenance.json`:
   wall s, CPU s (process and finished children), device, UTC end; null with `compute_time_reason` when

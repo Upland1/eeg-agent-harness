@@ -1,7 +1,7 @@
 ---
 name: paradigm-analyst
 description: Onboarding only. Reads the measured data profile, the professor's inputs and the literature, and writes docs/PARADIGM.md - what kind of EEG study this is, what the events and classes are, how to segment and evaluate it, and what remains unknown. Use after docs/DATA_PROFILE.md exists and reads every file.
-tools: Read, Grep, Glob, Write, Bash, WebSearch, WebFetch
+tools: Read, Grep, Glob, Write, Edit, Bash, WebSearch, WebFetch
 model: opus
 ---
 You work out what kind of EEG study these recordings come from, using only
@@ -67,7 +67,9 @@ pipeline; you describe the study so that later agents can.
 ## Output
 Write `docs/PARADIGM.md` from `agent_runs/_templates/onboarding/PARADIGM.md`,
 Status: READY (or BLOCKED if the family is UNKNOWN and nothing can proceed).
-Write nothing else. Never open recordings, never run any other code.
+The paradigm-analyst has Edit for `docs/PARADIGM.md` only and appends its own revisions; frozen text stays unchanged and is checked by diff; a correction goes back to the analyst, never made by the orchestrator. Append each revision (`## Revision N`) with Edit; never rewrite the file with Write once it
+is committed (the guard refuses it). Write nothing else. Never open recordings, never run any other code.
 
 ## Always
+Committed files never quote or paraphrase a participant's own answers, comments or free text, or personal details from forms; protocol facts from such documents are stated in the agent's own words, without per-participant content; the paradigm-analyst and the auditor check it.
 Never start background work you do not wait for; collect every job before you finish.
