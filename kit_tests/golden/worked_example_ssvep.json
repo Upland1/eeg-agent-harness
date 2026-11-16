@@ -1,0 +1,113 @@
+{
+ "source": "examples/ssvep_synthetic/run_example.py, defaults (8 participants, seed 20261116), kit v0.5-dev; written 2026-11-16 from a run whose outputs were identical on a second run",
+ "participants_ba": [
+  [
+   "P01",
+   "f1/fbcsp+fbcca/Shrinkage-LDA lsqr",
+   "0.6"
+  ],
+  [
+   "P01",
+   "ssvep/fbcca",
+   "0.625"
+  ],
+  [
+   "P02",
+   "f1/fbcsp+fbcca/Shrinkage-LDA lsqr",
+   "0.2875"
+  ],
+  [
+   "P02",
+   "ssvep/fbcca",
+   "0.4"
+  ],
+  [
+   "P03",
+   "f1/fbcsp+fbcca/Shrinkage-LDA lsqr",
+   "0.6125"
+  ],
+  [
+   "P03",
+   "ssvep/fbcca",
+   "0.5625"
+  ],
+  [
+   "P04",
+   "f1/fbcsp+fbcca/Shrinkage-LDA lsqr",
+   "0.425"
+  ],
+  [
+   "P04",
+   "ssvep/fbcca",
+   "0.55"
+  ],
+  [
+   "P05",
+   "f1/fbcsp+fbcca/Shrinkage-LDA lsqr",
+   "0.2125"
+  ],
+  [
+   "P05",
+   "ssvep/fbcca",
+   "0.3125"
+  ],
+  [
+   "P06",
+   "f1/fbcsp+fbcca/Shrinkage-LDA lsqr",
+   "0.9375"
+  ],
+  [
+   "P06",
+   "ssvep/fbcca",
+   "0.9375"
+  ],
+  [
+   "P07",
+   "f1/fbcsp+fbcca/Shrinkage-LDA lsqr",
+   "0.2875"
+  ],
+  [
+   "P07",
+   "ssvep/fbcca",
+   "0.4625"
+  ],
+  [
+   "P08",
+   "f1/fbcsp+fbcca/Shrinkage-LDA lsqr",
+   "0.3375"
+  ],
+  [
+   "P08",
+   "ssvep/fbcca",
+   "0.425"
+  ]
+ ],
+ "test": {
+  "method": "f1/fbcsp+fbcca/Shrinkage-LDA lsqr",
+  "comparator": "ssvep/fbcca",
+  "n": "8",
+  "n_positive": "1",
+  "n_negative": "6",
+  "n_zero_differences": "1",
+  "hodges_lehmann": "-0.071875",
+  "hl_ci_low": "-0.125",
+  "hl_ci_high": "-0.018749999999999996",
+  "p": "0.04181054297657881",
+  "p_holm": "0.04181054297657881",
+  "verdict": "worse than the ssvep/fbcca"
+ },
+ "numbers_text": {
+  "n": "8",
+  "p_holm": "0.0418",
+  "hl_pp": "-7.2 pp",
+  "hl_low_pp": "-12.5 pp",
+  "hl_high_pp": "-1.9 pp",
+  "n_positive": "1",
+  "n_negative": "6",
+  "n_zero_differences": "1",
+  "ba_primary_mean_frac": "0.4625",
+  "ba_primary_mean": "46.2%",
+  "ba_comparator_mean_frac": "0.5344",
+  "ba_comparator_mean": "53.4%"
+ }
+}

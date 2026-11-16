@@ -9,4 +9,4 @@ Vendored: each project holds a committed copy of this package at its root
 a new harness version replaces it.
 """
 
-__version__ = "0.4.1"
+__version__ = "0.5.0"

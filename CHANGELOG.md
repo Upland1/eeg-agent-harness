@@ -1,20 +1,41 @@
 # Changelog
 
-## 0.5.0 — unreleased (v0.5-dev)
+## 0.5.0 — unreleased (v0.5-dev; not tagged)
 
-Two lessons from cold-pressor onboarding (BACKLOG L37, L38), each with known-answer tests
-(`kit_tests/test_eegharness_v05_lessons.py`). No change to `template/` or the G-rules yet: the rule
-wordings in BACKLOG wait for Sebastian's approval.
+Lessons L37 and L38 from cold-pressor onboarding, the approved G15 amendment, and the release files
+(install check, worked example, README). Known-answer tests in
+`kit_tests/test_eegharness_v05_lessons.py`, `kit_tests/test_worked_example.py` and
+`kit_tests/test_check_install.py`.
 
-- `eegharness.outputs`: `ComputeTimer`, `record_compute_time`, `record_no_compute`, `check_compute_time`
-  and `python -m eegharness.outputs check`. `compute_time` in `provenance.json`: wall s, CPU s (process
-  and finished children), device, UTC end; null with `compute_time_reason` when nothing is computed;
-  never written by default, recorded once. Recorded by `eegpipe.runner.methods` (each stage part; device
-  from the networks settings, else cpu), `eegpipe.runner.select`, `eegpipe.runner.collect`,
-  `eegharness.numbers derive` and `eegharness.compare_runs`.
-- New `eegharness.sources`: `python -m eegharness.sources check` reports, in git-tracked files (vendored
-  `eegpipe/`, `eegharness/` and git's own files skipped), any `agent_runs/` reference and any paragraph
-  citing a human contact without quoting it (at least 3 quoted words or a `>` block quote).
+- Rules: **G15 amended** (L38, approved by Sebastian on 2026-11-16, applied from v0.5 on, no fixes to
+  past commits): an orchestrator's or a human's instruction is quoted in the committed file that relies
+  on it; a contact number, a name with a date or an `agent_runs/` path is never the only citation;
+  `python -m eegharness.sources check` passes before a commit. The G22 amendment for L37 is proposed in
+  BACKLOG and not in the template.
+- `eegharness.outputs` (L37): `ComputeTimer`, `record_compute_time`, `record_no_compute`,
+  `check_compute_time` and `python -m eegharness.outputs check`. `compute_time` in `provenance.json`:
+  wall s, CPU s (process and finished children), device, UTC end; null with `compute_time_reason` when
+  nothing is computed; never written by default, recorded once. Recorded by `eegpipe.runner.methods`
+  (each stage part; device from the networks settings, else cpu), `eegpipe.runner.select`,
+  `eegpipe.runner.collect`, `eegharness.numbers derive` and `eegharness.compare_runs`.
+- New `eegharness.sources` (L38): `python -m eegharness.sources check` reports, in git-tracked files
+  (vendored `eegpipe/`, `eegharness/` and git's own files skipped):
+  - any `agent_runs/` reference;
+  - a paragraph citing a human contact without quoting it (at least 3 quoted words or a `>` block quote);
+  - a paragraph attributing something to a configured name with an ISO date within 60 characters,
+    unquoted; the names come only from the project's local `.claude/harness.json` (`sources.names`,
+    none by default) or `--name`; an approval line "Approved by <name>, <date>[, <what>]" is exempt;
+  - a names list in a committed `.claude/harness.json`.
+- `new_project.py --update` keeps the `sources` section of a project's `.claude/harness.json`.
+- New `check_install.py`: Python, the required packages against `requirements.txt`, git; optional
+  torch (and its device), `pdftotext`, `claude`; then a smoke subset of `kit_tests` with the worked
+  example (about 1 min; `--quick` skips it).
+- New worked example `examples/ssvep_synthetic/run_example.py`: a synthetic 5-class SSVEP study run
+  through settings → select and freeze → stage → collect → numbers with a cited `results.md`, on CPU in
+  about 30 s; outputs pinned (`kit_tests/golden/worked_example_ssvep.json`).
+- README: install, quickstart, measured costs (ssvep-apply), limitations, the names list.
+- Versions: `VERSION`, `eegpipe` and `eegharness` 0.5.0.
+- Still known broken: the `unit_label` case of 0.4.0 (below), unchanged.
 
 ## 0.4.1 — 2026-11-10 (tag v0.4.1 at 3233ff4)
 
