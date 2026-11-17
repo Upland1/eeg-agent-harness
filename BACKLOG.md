@@ -189,3 +189,47 @@ Earlier proposal (superseded by the approved wording above): Proposed rule wordi
 template not changed): "A source that is an orchestrator's or a human's instruction is quoted, in
 its own words, in the committed file that relies on it; a contact number or an `agent_runs/` path is
 never the only citation. `python -m eegharness.sources check` passes before a commit."
+
+## L39 — a core limit is not a thermal limit (2026-11-17)
+
+**Proposed for the next version, not approved** (Sebastian, 2026-11-17: "add its thermal lesson ... and the
+proposed G27 to the kit BACKLOG, as proposals for the next version, each citing its source run"). Template
+not changed.
+
+Source run: cold-pressor `agent_runs/2026-11-12_apply-pipeline/harness_lessons.md` ("L-thermal", sha256
+701422bf0cd5b9211b0ad9a6518a8ca718560132447602c8fb2d515bca4ae4a5; git-ignored), with its temperature log
+`h_temps.csv` (one sample per minute, written by the run's step H driver). Committed in the project:
+`docs/COMPUTE.md` section "Thread limit after the confirmatory stage of 2026-11-16/17", commit 7384894.
+
+Step H (the confirmatory stage) ran about 8.8 h with 8 threads (`OMP_NUM_THREADS`, `MKL_NUM_THREADS`,
+`OPENBLAS_NUM_THREADS` and torch) on the laptop CPU, within the 8-core per-job limit of its COMPUTE.md. The
+CPU package temperature was at 95-98 °C in 7 of 528 samples (6 during the 42-part CPU stage at 95.0 °C,
+peak 98.0 °C during a sanity null), against the 100 °C critical limit `sensors` reports; GPU peak 87 °C.
+The limit was approached, not reached. Sebastian set 4-6 threads for long runs on that machine.
+
+Proposal: the `compute-jobs` skill and the template `docs/COMPUTE.md` gain a "working threads for long runs"
+value (set by Sebastian, e.g. 4-6 on a laptop), separate from the per-job core limit, which stays the upper
+bound; and every long-run driver logs CPU (and GPU) temperature per minute alongside its job table.
+
+## L40 — a group statistic took units by another method's validity flag (2026-11-17)
+
+**Proposed for the next version, not approved** (same instruction as L39). Template not changed.
+
+Source run: cold-pressor `agent_runs/2026-11-12_apply-pipeline/harness_lessons.md` ("G27", same sha256 as
+L39). Committed in the project: `docs/DECISIONS.md` D-011 (commit f312769) and the fix in
+`trialpair.conn_group` with known-answer tests at 1, 2 and 3 epochs per class (commit 214888c).
+
+The connectivity group step selected participants by the f3 classifier row's validity. S1 (1 contributing
+trial) was left out with no reason row; its debiased-wPLI difference is a structural zero (with a
+class-mean stratum, 1 epoch per class leaves a zero residual and 2 epochs per class give wPLI 1 in both
+classes; the estimate is defined only from 3). A 2-trial participant would have been kept. Caught by the
+orchestrator (20 participants in the step versus 21 in the primary step) and ruled on by the methods-auditor
+before any value of that step was opened.
+
+Proposed rule, as the project approved it (project rule G27, approved by Sebastian 2026-11-17, in the
+project's local CLAUDE.md; its kit number is set at approval, since project rules start after the kit's):
+"A group statistic takes only estimates that exist at that sample size. Extends G20 (a). A per-participant
+(or per-unit) estimate enters a group statistic only if its estimator is defined and non-degenerate at that
+unit's sample size; the minimum is derived from the estimator and tested (a test at the minimum and one
+below it), and inclusion is decided by the estimator's own criterion, never by another method's validity
+flag. Every unit left out is listed with its reason in that runner's output."
