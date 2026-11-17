@@ -233,3 +233,53 @@ project's local CLAUDE.md; its kit number is set at approval, since project rule
 unit's sample size; the minimum is derived from the estimator and tested (a test at the minimum and one
 below it), and inclusion is decided by the estimator's own criterion, never by another method's validity
 flag. Every unit left out is listed with its reason in that runner's output."
+
+## L41 — new_project.py without --case leaves no data/ and no inputs/ (2026-11-17)
+
+**Proposed for the next version, not approved** (Sebastian, 2026-11-17: "Record as BACKLOG entries on
+v0.6-dev, all \"not approved\""). Template not changed.
+
+Source: imagined-speech-eeg, built with kit v0.5.0 (`.claude/harness.json`, created 2026-11-17T17:02:48-0600;
+skeleton commit 5b6e7d2). `new_project.py` creates `inputs/` only inside `copy_inputs`, which returns at once
+without `--case`, and never creates `data/`. Its last line and README step 1 still say to put the recordings in
+`<dir>/data/raw/` and the material in `<dir>/inputs/`, so `ln -s <recordings> <dir>/data/raw` fails until
+`data/` is made by hand (the project's `data/` was made at 17:07, after the build).
+
+Proposal: `new_project.py` always creates `data/` and `inputs/` (harness and control arms, with or without
+`--case`). Known-answer test: build without `--case` and assert both folders exist.
+
+## L42 — a template request with placeholders committed as the professor's request (2026-11-17)
+
+**Proposed for the next version, not approved** (same instruction as L41). Template not changed.
+
+Source: imagined-speech-eeg commit e147a9a ("inputs: request") committed `inputs/request.md` with unfilled
+`<...>` placeholders, among them an example goal ("compare HI vs HP") that the professor never stated; it was
+replaced by the professor's notes verbatim in b71401a two minutes later, before `/onboard` ran. Had onboarding
+started, the example goal would have been read as the professor's request.
+
+Proposal: `/onboard` refuses to start while any file in `inputs/` holds a `<...>` placeholder, and names the
+file and line. Same family as L35 (placeholder text logged as a human's answers; G16).
+
+## L43 — the project made its own .venv instead of the kit's (2026-11-17)
+
+**Proposed for the next version, not approved** (same instruction as L41). Template not changed.
+
+Source: imagined-speech-eeg created its own `.venv` (17:17), because there is no `python` on PATH (only
+`/usr/bin/python3`), and does not use `~/.venvs/eeg-harness-kit`. Nothing in the project records which
+interpreter it is meant to use.
+
+To decide: either `new_project.py --venv <path>`, recorded in `.claude/harness.json` and used by the hooks and
+agents, or document the per-project `.venv` as the intended setup.
+
+## L44 — recordings on a removable drive (2026-11-17)
+
+**Proposed for the next version, not approved** (same instruction as L41). Template not changed.
+
+Source: imagined-speech-eeg `data/raw` is a symlink to a folder on a removable exFAT drive
+(`/media/user/USBDRIVE`, `/dev/sda1`); the recordings take 38 GB, more than the 28 GB free on the local
+disk, so they cannot be copied. A long run depends on the drive staying mounted at the same path; an unmount
+mid-run would fail parts or, worse, let a part see an empty or missing folder.
+
+Proposal: the profiler records the mount point and filesystem type of `data/raw` (resolved) in DATA_PROFILE;
+the compute rules (G22) say a run checks that `data/raw` resolves, and holds the profiled recordings, before
+each part, and stops if not.
