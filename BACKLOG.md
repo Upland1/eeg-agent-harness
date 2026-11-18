@@ -283,3 +283,45 @@ mid-run would fail parts or, worse, let a part see an empty or missing folder.
 Proposal: the profiler records the mount point and filesystem type of `data/raw` (resolved) in DATA_PROFILE;
 the compute rules (G22) say a run checks that `data/raw` resolves, and holds the profiled recordings, before
 each part, and stops if not.
+
+## L45 — a wording-only audit failure stopped the reader step (2026-11-17)
+
+**Proposed for the next version, not approved** (Sebastian, 2026-11-17: "Add to BACKLOG on v0.6-dev, not
+approved"). Template not changed.
+
+Source run: imagined-speech-eeg `agent_runs/2026-11-17_onboarding/` (git-ignored): `log.md` rows "3 Reader"
+to "3 Reader audit R2", `05_audit.md`, `cost.jsonl`.
+
+The onboarding reader step (`readers/ebr.py`, D-001) failed audit twice, so the orchestrator stopped as onboard
+step 3 requires. Round 1 found code, test and wording faults (G15 citations in tests, G2 missing buggy-variant
+test, G26 overclaims in D-001). Round 2 failed on one required fix, wording only: two passages of D-001 claimed
+more than the evidence showed (G26, L34): `:93-96` (a transposed memmap "reports a problem", but `load()`
+raises ValueError first and the test accepts either) and `:80-82` ("shown for 3 files above", which was
+reasoning, not printed output). The reader and its 42 tests were already correct in round 2.
+
+Cost of the step, from `cost.jsonl`: about 7.9 M tokens (agents 6,168,009; orchestrator 1,753,635, the
+growth of its running total from 17:18:25 to 18:35:53) and 1.3 h wall (17:18:25 to 18:35:53). The audit R2
+call alone took 943,799 tokens and 3,242 s, most of it probably spent waiting on blocked or prompted commands
+(its log row). Sebastian's figures of 16.2 M tokens and 3.0 h equal the sum of every `cost.jsonl` row except
+the last; the `session` rows are running totals (`log_cost.py`, docstring), so that sum counts the
+orchestrator several times. To be confirmed by Sebastian.
+
+Proposal:
+1. The auditor sorts each required fix as "code/test" or "wording".
+2. A failure whose required fixes are all wording gets one fix round, limited to the named lines (checked by
+   diff), and does not count toward the two-round limit (onboard step 3, assignment steps).
+3. The run log records the tokens and wall time of each round, taken as differences of the running totals.
+
+## L46 — inputs/ text paraphrased a human without a quote (2026-11-17)
+
+**Proposed for the next version, not approved** (same instruction as L45). Template not changed.
+
+Source: imagined-speech-eeg `inputs/request.md`, committed in b71401a, was written by the orchestrating session
+outside the project's agents. Line 3 reports Sebastian's words in paraphrase ("Sebastian says they are not the
+complete information"), with no quote. The G15 source check flagged it (`inputs/request.md:3:
+unquoted_attribution`, in the reader's `03_changes.md`), and the reader step's agents could not fix it because
+the file was not theirs.
+
+Proposal: any text in `inputs/` that reports a human's words quotes them verbatim, with the date. `/onboard`
+runs this check before it starts, together with L42's placeholder check, and refuses to start while either
+fails.
