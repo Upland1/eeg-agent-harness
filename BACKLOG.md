@@ -302,15 +302,23 @@ reasoning, not printed output). The reader and its 42 tests were already correct
 Cost of the step, from `cost.jsonl`: about 7.9 M tokens (agents 6,168,009; orchestrator 1,753,635, the
 growth of its running total from 17:18:25 to 18:35:53) and 1.3 h wall (17:18:25 to 18:35:53). The audit R2
 call alone took 943,799 tokens and 3,242 s, most of it probably spent waiting on blocked or prompted commands
-(its log row). Sebastian's figures of 16.2 M tokens and 3.0 h equal the sum of every `cost.jsonl` row except
-the last; the `session` rows are running totals (`log_cost.py`, docstring), so that sum counts the
-orchestrator several times. To be confirmed by Sebastian.
+(its log row).
+
+The orchestrator reported the step's cost as 16.2 M tokens and 3.0 h (Sebastian, 2026-11-17: "The 16.2 M /
+3.0 h figure came from the imagined-speech orchestrator's own report, not from me"), and later, after round 3
+(L47), as 31.0 M / 9.0 h. 16.2 M is the sum of every `cost.jsonl` row except the last: the `session` rows are
+running totals (`log_cost.py`, docstring), so adding rows counts the orchestrator several times. With the 20
+rows logged by 18:51:45, the plain row sum is 35.2 M tokens and 10.6 h; the correct total (last line per agent
+id and per session, as `log_cost.py`'s summary takes them) is 11.6 M tokens, and the session wall time is
+1.6 h.
 
 Proposal:
 1. The auditor sorts each required fix as "code/test" or "wording".
 2. A failure whose required fixes are all wording gets one fix round, limited to the named lines (checked by
    diff), and does not count toward the two-round limit (onboard step 3, assignment steps).
 3. The run log records the tokens and wall time of each round, taken as differences of the running totals.
+4. `/onboard`, `/assignment` and `/apply-pipeline` take cost figures only from `cost_report.py` or
+   `run_cost.py` (or the `log_cost.py` summary), never by adding up `cost.jsonl` rows.
 
 ## L46 — inputs/ text paraphrased a human without a quote (2026-11-17)
 
@@ -325,3 +333,25 @@ the file was not theirs.
 Proposal: any text in `inputs/` that reports a human's words quotes them verbatim, with the date. `/onboard`
 runs this check before it starts, together with L42's placeholder check, and refuses to start while either
 fails.
+
+## L47 — the auditor's own suggested wording failed its next audit (2026-11-17)
+
+**Proposed for the next version, not approved** (Sebastian, 2026-11-17: "L47 (not approved)"). Template not
+changed.
+
+Source run: imagined-speech-eeg `agent_runs/2026-11-17_onboarding/` (git-ignored): `05_audit.md` (R2 required
+fix, R3 table and required fix), `log.md` rows "3 Reader fix R2 (round 3, approved)" and "3 Reader audit R3".
+
+In audit round 2 the methods-auditor's required fix for D-001 `:80-82` proposed wording with a number, "a median
+of about 1e-315", that the printed output does not give: the reader printed 6.68569e-315, 7.95758e-315 and
+8.021e-315 for the 3 files (`03_changes.md:69,75,80`), about 7-8e-315. The pipeline-engineer copied it into
+`docs/DECISIONS.md:82`, and the auditor failed that line in round 3 under G26/G7, writing "**The wrong figure is
+mine.** My round-2 required fix suggested 'a median of about 1e-315', and the engineer copied it." Round 3
+(510,079 tokens, 104 s for the audit) was caused by the auditor's own text, and its failure stopped the step
+again.
+
+Proposal:
+1. Wording an auditor suggests in a required fix is held to G7 and G26 like any other text: a number in it is
+   quoted from printed output with the line it comes from, or the suggestion gives no number.
+2. An audit failure on text the auditor itself proposed is recorded in the audit and the run log as an auditor
+   error. (How it counts toward the round limit is to be decided with L45.)
