@@ -363,8 +363,8 @@ changed.
 
 Source: imagined-speech-eeg commit 23f8a5d (PARADIGM revisions 2-3, approved) changed the template line
 `Approved by Sebastian: [ ]   Date:` to `Approved by Sebastian, 2026-11-19, [x] docs/PARADIGM.md draft with
-Revisions 1-3`, because the ticked template form fails G15's check. Reproduced on v0.6-dev f89b429's
-successor ed49d0d: a committed `docs/PARADIGM.md` holding `Approved by Sebastian: [x]   Date: 2026-11-19`,
+Revisions 1-3`, because the ticked template form fails G15's check. Reproduced with the kit at
+ed49d0d: a committed `docs/PARADIGM.md` holding `Approved by Sebastian: [x]   Date: 2026-11-19`,
 with `sources.names` ["Sebastian"], gives `docs/PARADIGM.md:3: unquoted_attribution` (rc 1). The check accepts
 only `Approved by <name>, <date>[, <what>]` as a whole line (`tools/eegharness/sources.py:53-54`, the form
 set on 2026-11-15); the template boxes in `template/agent_runs/_templates/onboarding/PARADIGM.md:6` and
