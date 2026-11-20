@@ -355,3 +355,27 @@ Proposal:
    quoted from printed output with the line it comes from, or the suggestion gives no number.
 2. An audit failure on text the auditor itself proposed is recorded in the audit and the run log as an auditor
    error. (How it counts toward the round limit is to be decided with L45.)
+
+## L48 — the template's approval line fails the kit's own sources check (2026-11-19)
+
+**Proposed for the next version, not approved** (Sebastian, 2026-11-19: "L48 (not approved)"). Template not
+changed.
+
+Source: imagined-speech-eeg commit 23f8a5d (PARADIGM revisions 2-3, approved) changed the template line
+`Approved by Sebastian: [ ]   Date:` to `Approved by Sebastian, 2026-11-19, [x] docs/PARADIGM.md draft with
+Revisions 1-3`, because the ticked template form fails G15's check. Reproduced on v0.6-dev f89b429's
+successor ed49d0d: a committed `docs/PARADIGM.md` holding `Approved by Sebastian: [x]   Date: 2026-11-19`,
+with `sources.names` ["Sebastian"], gives `docs/PARADIGM.md:3: unquoted_attribution` (rc 1). The check accepts
+only `Approved by <name>, <date>[, <what>]` as a whole line (`tools/eegharness/sources.py:53-54`, the form
+set on 2026-11-15); the template boxes in `template/agent_runs/_templates/onboarding/PARADIGM.md:6` and
+`template/agent_runs/_templates/02_plan.md:6` predate it.
+
+The two forms also diverge from the gates: `/assignment` (`SKILL.md:15`, `:61`), `/apply-pipeline`, `/onboard` and
+the pipeline-engineer look for the literal "Approved by Sebastian: [x]", which the reworded project line no
+longer contains.
+
+Proposal: one approval form, used by the template boxes, the check and every gate that reads them (e.g. the
+template box becomes `Approved by Sebastian, <date>, [ ] <what>`, or the check accepts the ticked box with a
+date). Known-answer test: a committed file with the ticked template line (date filled) passes
+`sources check`, the same line unticked or undated does not count as an approval at the gates, and the gate
+strings match the template form.
