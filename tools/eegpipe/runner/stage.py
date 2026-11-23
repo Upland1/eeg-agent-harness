@@ -27,6 +27,10 @@ C4/C4b), unchanged in behaviour:
   * frozen retry rule: a failed or timed-out part is retried at once, at most
     ``retry.max_attempts`` attempts in total (across invocations), then it is terminal;
   * a timed-out part (``stage.job_timeout_hours``) is killed with its whole process group;
+  * every attempt is recorded before its job starts (status ``running``, attempt number, stage pid);
+    a part found ``running`` with no live stage process (the stage was killed from outside, e.g. for
+    low memory) is recorded as ``interrupted`` before anything else runs; interrupted attempts count
+    in ``n_attempts`` and toward ``retry.max_attempts``, and the index lists them (0.6.0, L49);
   * single machine only: roots are never merged.
 """
 
@@ -46,6 +50,8 @@ from pathlib import Path
 STATUS_DONE, STATUS_FAILED, STATUS_TIMEOUT = "done", "failed", "timeout"
 STATUS_MISMATCH, STATUS_TREE = "provenance_mismatch", "tree_changed_during_job"
 PROVENANCE_STATUSES = (STATUS_MISMATCH, STATUS_TREE)
+STATUS_RUNNING, STATUS_INTERRUPTED = "running", "interrupted"
+RETRY_STATUSES = (STATUS_FAILED, STATUS_TIMEOUT, STATUS_INTERRUPTED)
 
 
 def canonical(obj):
@@ -163,8 +169,37 @@ def is_terminal(st, commit, part_sha, max_attempts):
     return False, False
   done = bool(st.get("status") == STATUS_DONE and st.get("outdir") and (Path(st["outdir"]) / "summary.txt").is_file())
   counted = int(st.get("n_counted_attempts", st.get("n_attempts", 0)))
-  exhausted = st.get("status") in (STATUS_FAILED, STATUS_TIMEOUT) and counted >= max_attempts
+  exhausted = st.get("status") in RETRY_STATUSES and counted >= max_attempts
   return done or exhausted, done
+
+
+def stage_alive(pid):
+  """True if ``pid`` is a live stage runner process (a reused pid of another program is not)."""
+  try:
+    os.kill(int(pid), 0)
+  except (OSError, TypeError, ValueError):
+    return False
+  try:
+    cmd = Path(f"/proc/{int(pid)}/cmdline").read_bytes().replace(b"\0", b" ")
+  except OSError:
+    return True  # no /proc: trust the live pid
+  return b"eegpipe.runner.stage" in cmd
+
+
+def mark_interrupted(root, pdir):
+  """A part left ``running`` by a stage process that no longer exists becomes ``interrupted`` (L49)."""
+  st = read_json(pdir / "part_status.json")
+  if not st or st.get("status") != STATUS_RUNNING:
+    return st
+  if stage_alive(st.get("stage_pid")):
+    raise RuntimeError(f"{pdir}: attempt {st.get('n_attempts')} is running in stage process {st.get('stage_pid')}; "
+                       "one stage per root")
+  st = {**st, "status": STATUS_INTERRUPTED, "n_interrupted": int(st.get("n_interrupted", 0)) + 1,
+        "interrupted_found_utc": dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")}
+  (pdir / "part_status.json").write_text(json.dumps(st, indent=1))
+  with open(root / "attempts.jsonl", "a") as f:
+    f.write(json.dumps({"event": "interrupted", **st}) + "\n")
+  return st
 
 
 def verify_child(outdir, commit, part_sha):
@@ -219,7 +254,8 @@ def write_index(root, plan):
     st = read_json(root / "parts" / slug(s["part"]) / part / "part_status.json") or {}
     rows.append({"participant": s["participant"], "data_part": s["part"], "role": s["role"], "part": part,
                  "gpu": is_gpu(part), "status": st.get("status", "pending"), "outdir": st.get("outdir", ""),
-                 "commit": st.get("commit", ""), "n_attempts": st.get("n_attempts", 0), "seconds": st.get("seconds", ""),
+                 "commit": st.get("commit", ""), "n_attempts": st.get("n_attempts", 0),
+                 "n_interrupted": st.get("n_interrupted", 0), "seconds": st.get("seconds", ""),
                  "log": st.get("log", "")})
   if rows:
     with open(root / "index.csv", "w", newline="") as f:
@@ -282,6 +318,10 @@ def main(argv=None, git=None, command=child_command):
     (root / "root.json").write_text(json.dumps(meta, indent=1))
   elif read_json(root / "root.json") != meta:
     raise RuntimeError(f"{root} holds a different commit, settings or selection")
+  for s, part in plan_all:  # attempts left running by a killed stage (L49), before anything else runs
+    pdir0 = root / "parts" / slug(s["part"]) / part
+    if (pdir0 / "part_status.json").is_file():
+      mark_interrupted(root, pdir0)
   sanctioned = set(a.rerun_after_provenance)
   blocked = []
   for s, part in plan_all:
@@ -319,7 +359,18 @@ def main(argv=None, git=None, command=child_command):
       prev = read_json(pdir / "part_status.json") or {}
       before = {d.name for d in pdir.iterdir() if d.is_dir()}
       stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-      log = pdir / f"attempt_{stamp}_{int(prev.get('n_attempts', 0)) + 1}.log"
+      n_att = int(prev.get("n_attempts", 0)) + 1
+      counted_prev = int(prev.get("n_counted_attempts", prev.get("n_attempts", 0))
+                         if prev.get("status") not in PROVENANCE_STATUSES else prev.get("n_counted_attempts", 0))
+      log = pdir / f"attempt_{stamp}_{n_att}.log"
+      running = {"status": STATUS_RUNNING, "commit": commit, "tracked_files_dirty": False, "part_config_sha256": psha,
+                 "log": str(log), "utc_start": stamp, "n_attempts": n_att, "n_counted_attempts": counted_prev + 1,
+                 "n_interrupted": int(prev.get("n_interrupted", 0)), "max_attempts": max_att,
+                 "stage_pid": os.getpid(), "data_part": s["part"], "participant": s["participant"],
+                 "role": s["role"], "part": part}
+      (pdir / "part_status.json").write_text(json.dumps(running, indent=1))  # before the job (L49)
+      with open(root / "attempts.jsonl", "a") as f:
+        f.write(json.dumps({"event": "started", **running}) + "\n")
       print(f"run: {s['part']} {part} -> {log.name}", flush=True)
       status, rc, secs = run_job(command(cpath, pdir, proj), log, timeout_s, proj)
       tree_after = git()
@@ -333,13 +384,11 @@ def main(argv=None, git=None, command=child_command):
         probs = [f"HEAD/tree after the job {tree_after} != ({commit!r}, False)"] + probs
       else:
         final = STATUS_MISMATCH if probs else status
-      counted = int(prev.get("n_counted_attempts", prev.get("n_attempts", 0))
-                    if prev.get("status") not in PROVENANCE_STATUSES else prev.get("n_counted_attempts", 0))
-      counted += final not in PROVENANCE_STATUSES
+      counted = counted_prev + (final not in PROVENANCE_STATUSES)
       st = {"status": final, "returncode": rc, "seconds": secs, "commit": commit, "tracked_files_dirty": False,
             "part_config_sha256": psha, "outdir": str(outdir) if outdir else "", "log": str(log),
-            "new_folders": [str(d) for d in new], "utc_start": stamp, "n_attempts": int(prev.get("n_attempts", 0)) + 1,
-            "n_counted_attempts": counted, "max_attempts": max_att, "timeout_seconds": timeout_s,
+            "new_folders": [str(d) for d in new], "utc_start": stamp, "n_attempts": n_att,
+            "n_counted_attempts": counted, "n_interrupted": int(prev.get("n_interrupted", 0)), "max_attempts": max_att, "timeout_seconds": timeout_s,
             "provenance_problems": probs, "epochs_sha256": ep_sha, "folds_sha256": fo_sha,
             "data_part": s["part"], "participant": s["participant"], "role": s["role"], "part": part}
       (pdir / "part_status.json").write_text(json.dumps(st, indent=1))

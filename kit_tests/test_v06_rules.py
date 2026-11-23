@@ -485,3 +485,109 @@ def test_l44_data_profile_json_and_md_carry_the_storage(tmp_path):
   prof = profile_dataset(tmp_path / "rec", use_mne=False)
   assert set(prof["storage"]) == {"path", "resolved", "mount_point", "fs_type", "source", "removable", "under_media"}
   assert "Storage: `" in to_markdown(prof) and "filesystem `" in to_markdown(prof)
+
+
+# L49: an attempt killed from outside (the stage process stopped mid-job) is recorded and counted.
+
+DRIVER = '''
+import json, sys, pathlib
+sys.path.insert(0, {tools!r}); sys.path.insert(0, {kit_tests!r})
+import eegpipe.runner.stage as stg
+from test_eegpipe_runner import STG_COMMIT
+
+def command(cpath, pdir, root):
+  code = """
+import json, os, sys, time, pathlib
+pdir = pathlib.Path(%r)
+(pdir / "child.pid").write_text(str(os.getpid()))
+if pathlib.Path(%r).exists():
+  time.sleep(60)
+cfg = json.loads(pathlib.Path(%r).read_text())
+n = len([d for d in pdir.iterdir() if d.is_dir()])
+out = pdir / f"run{{n}}"; out.mkdir()
+(out / "config_used.json").write_text(json.dumps(cfg))
+(out / "results.json").write_text(json.dumps({{"commit": %r, "tracked_files_dirty": False, "epochs_sha256": "e", "folds_sha256": "f"}}))
+(out / "pooled.csv").write_text("method,seed,status,ba\\\\nbaseline,,ok,0.6\\\\n")
+(out / "summary.txt").write_text("ok\\\\n")
+""" % (str(pdir), {flag!r}, str(cpath), STG_COMMIT)
+  return [sys.executable, "-c", code]
+
+try:
+  stg.main({argv!r}, git=lambda: (STG_COMMIT, False), command=command)
+except SystemExit as e:
+  sys.exit(e.code)
+'''
+
+
+def _stage_driver(tmp_path, max_attempts=2):
+  sys.path.insert(0, str(KIT / "kit_tests"))
+  from test_eegpipe_runner import _stage_world
+  argv, _ = _stage_world(tmp_path, "ok")
+  cp = Path(argv[1])
+  cfg = json.loads(cp.read_text())
+  cfg["stage"]["retry"]["max_attempts"] = max_attempts
+  cp.write_text(json.dumps(cfg))
+  flag = tmp_path / "sleep.flag"
+  code = DRIVER.format(tools=str(KIT / "tools"), kit_tests=str(KIT / "kit_tests"), flag=str(flag), argv=argv)
+  return code, flag
+
+
+def _kill_during_job(tmp_path, code):
+  import os
+  import signal
+  import time
+  before = set((tmp_path / "out").rglob("attempt_*.log")) if (tmp_path / "out").exists() else set()
+  proc = subprocess.Popen([sys.executable, "-c", code], start_new_session=True)
+  for _ in range(300):
+    logs = set((tmp_path / "out").rglob("attempt_*.log")) - before if (tmp_path / "out").exists() else set()
+    pids = list((tmp_path / "out").rglob("child.pid")) if (tmp_path / "out").exists() else []
+    if logs and pids and pids[0].read_text().strip():
+      child_pid = int(pids[0].read_text())
+      if pids[0].stat().st_mtime >= max([l.stat().st_mtime for l in logs]) - 1:
+        break
+    time.sleep(0.1)
+  else:
+    proc.kill()
+    raise AssertionError("the job did not start")
+  os.killpg(proc.pid, signal.SIGKILL)  # the stage shell is stopped from outside (as for low memory)
+  proc.wait()
+  try:
+    os.killpg(child_pid, signal.SIGKILL)  # and its job
+  except ProcessLookupError:
+    pass
+  pids[0].unlink()
+
+
+def _status(tmp_path):
+  return json.loads(next((tmp_path / "out").rglob("part_status.json")).read_text())
+
+
+def test_l49_killed_attempt_is_recorded_and_counted(tmp_path):
+  code, flag = _stage_driver(tmp_path)
+  flag.write_text("sleep")
+  _kill_during_job(tmp_path, code)
+  assert _status(tmp_path)["status"] == "running" and _status(tmp_path)["n_attempts"] == 1
+  flag.unlink()
+  r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+  assert r.returncode == 0, r.stdout + r.stderr
+  st = _status(tmp_path)
+  assert (st["status"], st["n_attempts"], st["n_interrupted"]) == ("done", 2, 1)
+  pdir = next((tmp_path / "out").rglob("part_status.json")).parent
+  assert sorted(l.name.rsplit("_", 1)[1] for l in pdir.glob("attempt_*.log")) == ["1.log", "2.log"]
+  events = [json.loads(l)["event"] if "event" in json.loads(l) else json.loads(l)["status"]
+            for l in (pdir.parents[2] / "attempts.jsonl").read_text().splitlines()]
+  assert events == ["started", "interrupted", "started", "done"]
+  index = (pdir.parents[2] / "index.csv").read_text().splitlines()
+  assert "n_interrupted" in index[0] and index[1].split(",")[index[0].split(",").index("n_interrupted")] == "1"
+
+
+def test_l49_two_kills_with_max_attempts_2_make_the_part_terminal(tmp_path):
+  code, flag = _stage_driver(tmp_path, max_attempts=2)
+  flag.write_text("sleep")
+  _kill_during_job(tmp_path, code)
+  _kill_during_job(tmp_path, code)
+  flag.unlink()
+  r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+  assert r.returncode == 1 and "skip (failed after 2 attempts)" in r.stdout
+  st = _status(tmp_path)
+  assert (st["status"], st["n_attempts"], st["n_interrupted"]) == ("interrupted", 2, 2)
