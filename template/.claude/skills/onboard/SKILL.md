@@ -10,6 +10,19 @@ profiler measures and the paradigm-analyst interprets.
 
 **Agents.** Run each agent in the foreground and wait for its handoff before the next step or the end of the turn; a subagent still running when the turn ends is stopped.
 
+**Audit rounds (L45, L47).** The auditor labels each required fix *code/test* or *wording*. A
+failure whose fixes are all wording gets one fix round, limited to the named lines and checked by
+diff. That round does not count toward the two-round limit. The run log records each round's tokens
+and wall time as differences of running totals. Cost figures come only from `cost_report.py`,
+`run_cost.py` or the `log_cost.py` summary, never from adding up rows. A suggested wording in a
+required fix is held to G7/G26: any number in it is quoted from printed output with its line, or it
+gives none. A failure on text the auditor proposed is recorded as an auditor error and is not
+counted as a round against the agent. An auditor error is not counted against the agent, but every
+round counts toward a hard limit of 4 rounds per step, whoever caused the failure; at the limit,
+stop and ask Sebastian. Per-round figures: `python .claude/hooks/log_cost.py --rounds
+agent_runs/<run>` (differences of the running totals); the kit's `cost_report.py` and `run_cost.py`
+give the reported totals after the run.
+
 **Contacts with Sebastian.** Before any question, apply G16 (CLAUDE.md, "When
 you don't know"): inputs in full, documents in the data folder,
 documentation the inputs point to, measurement. Log every contact (question,
@@ -37,8 +50,8 @@ in step 7.
    `01_profile.md` (extensions, counts, error messages), then ask the
    pipeline-engineer for a reader plugin (naming the onboarding run), the
    synthetic-tester for its round-trip test, then the methods-auditor for an
-   audit of the plugin. Rerun step 2 with the plugin. After two failed rounds,
-   stop and report.
+   audit of the plugin. Rerun step 2 with the plugin. After two failed rounds
+   ("Audit rounds" above: a wording-only round and auditor errors aside, at most 4), stop and report.
 4. **Paradigm.** Ask the paradigm-analyst for `docs/PARADIGM.md`, naming
    the onboarding run.
 5. **Freeze, measure, check labels.** If `docs/PARADIGM.md` has measurement

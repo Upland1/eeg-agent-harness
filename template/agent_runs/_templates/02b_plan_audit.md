@@ -38,7 +38,8 @@ Verdict: PASS / FAIL
 
 ### Required changes to the plan
 
-<!-- Only if FAIL. Each names the rule and the plan section. The orchestrator revises
+<!-- Only if FAIL. Each names the rule, the plan section and its kind (code/test, wording, auditor error); a
+suggested wording quotes every number from printed output with its line, or gives none. The orchestrator revises
 02_plan.md (a "## Revision N" note at its end) and asks for Round 2. -->
 
 1.

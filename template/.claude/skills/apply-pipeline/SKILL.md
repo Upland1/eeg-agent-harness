@@ -10,6 +10,19 @@ the orchestrator. Update `log.md` after every agent call; log every contact with
 
 **Agents.** Run each agent in the foreground and wait for its handoff before the next step or the end of the turn; a subagent still running when the turn ends is stopped.
 
+**Audit rounds (L45, L47).** The auditor labels each required fix *code/test* or *wording*. A
+failure whose fixes are all wording gets one fix round, limited to the named lines and checked by
+diff. That round does not count toward the two-round limit. The run log records each round's tokens
+and wall time as differences of running totals. Cost figures come only from `cost_report.py`,
+`run_cost.py` or the `log_cost.py` summary, never from adding up rows. A suggested wording in a
+required fix is held to G7/G26: any number in it is quoted from printed output with its line, or it
+gives none. A failure on text the auditor proposed is recorded as an auditor error and is not
+counted as a round against the agent. An auditor error is not counted against the agent, but every
+round counts toward a hard limit of 4 rounds per step, whoever caused the failure; at the limit,
+stop and ask Sebastian. Per-round figures: `python .claude/hooks/log_cost.py --rounds
+agent_runs/<run>` (differences of the running totals); the kit's `cost_report.py` and `run_cost.py`
+give the reported totals after the run.
+
 **What is fixed and what is decided here.** The methods are Sebastian's, vendored in
 `eegpipe/` (G24): never edited, never re-implemented. What this run decides, and justifies, is
 how they meet THIS study: the adapter (recording -> events -> labels and units), every
@@ -46,7 +59,7 @@ C. **Plan** (pipeline-engineer, `02_plan.md` + the section of
 D. **Plan audit** (methods-auditor, `02b_plan_audit.md` with the rows of
    `_templates/apply_pipeline/02b_audit_rows.md`): G1-G27; every profile default confirmed;
    unit and strata argued (G13); development and confirmatory data disjoint (G19); label
-   scheme matches PARADIGM. FAIL -> back to C. **STOP: Sebastian approves the plan and the
+   scheme matches PARADIGM. FAIL -> back to C ("Audit rounds" above). **STOP: Sebastian approves the plan and the
    settings.**
 
 E. **Gates and smoke** (orchestrator): the part runner on the development data part

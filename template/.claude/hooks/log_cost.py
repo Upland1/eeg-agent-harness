@@ -19,6 +19,9 @@ transcripts after the run (the same method for both evaluation arms).
 
 Summary for log.md (G11: the numbers come from this script):
   python .claude/hooks/log_cost.py --summary agent_runs/<run>
+Per agent call and orchestrator turn, the increment over the previous line of the same agent id or
+session (0.6.0, L45: the lines are running totals, so adding them up counts the same tokens again):
+  python .claude/hooks/log_cost.py --rounds agent_runs/<run>
 """
 
 import json
@@ -135,9 +138,35 @@ def summary(run: Path) -> str:
   return "\n".join(out)
 
 
+def rounds(run: Path) -> tuple:
+  """(rows, total): each line's increment over the previous line of the same agent id or session.
+  The increments add up to the summary's total; the lines themselves do not (they are running totals)."""
+  prev, out = {}, []
+  for i, l in enumerate((run / "cost.jsonl").read_text().splitlines()):
+    if not l.strip():
+      continue
+    r = json.loads(l)
+    key = (r["kind"], r.get("agent_id") or r.get("session_id") or f"row{i}")
+    p = prev.get(key, {"total_tokens": 0, "wall_s": 0.0})
+    out.append({"kind": r["kind"], "agent_type": r.get("agent_type"), "logged_at": r.get("logged_at"),
+                "tokens": r["total_tokens"] - p["total_tokens"], "wall_s": round(r["wall_s"] - p["wall_s"], 1)})
+    prev[key] = r
+  return out, sum(r["tokens"] for r in out)
+
+
+def rounds_table(run: Path) -> str:
+  rows, total = rounds(run)
+  out = ["| # | Logged at | Agent | Tokens (this round) | Wall time (s, this round) |", "|---|---|---|---|---|"]
+  out += [f"| {i} | {r['logged_at']} | {r['agent_type']} | {r['tokens']} | {r['wall_s']} |" for i, r in enumerate(rows, 1)]
+  return "\n".join(out + ["", f"Total tokens: {total} (the increments; never the sum of the lines)."])
+
+
 def main(argv) -> int:
   if len(argv) == 2 and argv[0] == "--summary":
     print(summary(Path(argv[1])))
+    return 0
+  if len(argv) == 2 and argv[0] == "--rounds":
+    print(rounds_table(Path(argv[1])))
     return 0
   try:
     event = json.load(sys.stdin)

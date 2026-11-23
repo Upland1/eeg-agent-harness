@@ -11,6 +11,19 @@ outcome, audit round, sources cited, tokens and wall time from
 
 **Agents.** Run each agent in the foreground and wait for its handoff before the next step or the end of the turn; a subagent still running when the turn ends is stopped.
 
+**Audit rounds (L45, L47).** The auditor labels each required fix *code/test* or *wording*. A
+failure whose fixes are all wording gets one fix round, limited to the named lines and checked by
+diff. That round does not count toward the two-round limit. The run log records each round's tokens
+and wall time as differences of running totals. Cost figures come only from `cost_report.py`,
+`run_cost.py` or the `log_cost.py` summary, never from adding up rows. A suggested wording in a
+required fix is held to G7/G26: any number in it is quoted from printed output with its line, or it
+gives none. A failure on text the auditor proposed is recorded as an auditor error and is not
+counted as a round against the agent. An auditor error is not counted against the agent, but every
+round counts toward a hard limit of 4 rounds per step, whoever caused the failure; at the limit,
+stop and ask Sebastian. Per-round figures: `python .claude/hooks/log_cost.py --rounds
+agent_runs/<run>` (differences of the running totals); the kit's `cost_report.py` and `run_cost.py`
+give the reported totals after the run.
+
 **Precondition.** `docs/PARADIGM.md` exists and has
 "Approved by Sebastian: [x]". Otherwise stop and say to run `/onboard`.
 
@@ -54,7 +67,7 @@ Batch: one message per STOP, everything he must decide in it.
    `compute-jobs`).
 4. **Plan audit.** Ask the methods-auditor for `02b_plan_audit.md`, naming
    the run folder. On FAIL, revise the plan (`## Revision N` at its end) and
-   ask for the next round. After two failed rounds, stop and show Sebastian
+   ask for the next round. After two failed rounds ("Audit rounds" above), stop and show Sebastian
    both files.
 5. **STOP for approval (one message).** Show the plan, the plan-audit
    verdict and its non-blocking notes, and every decision Sebastian must
@@ -64,7 +77,7 @@ Batch: one message per STOP, everything he must decide in it.
 7. **Test.** Ask the synthetic-tester, naming the run folder.
 8. **Audit.** Ask the methods-auditor, naming the run folder.
    - FAIL: send the engineer back with `05_audit.md` (fix round), then tester
-     and auditor again. After two failed rounds set the run BLOCKED and stop.
+     and auditor again. After two failed rounds ("Audit rounds" above) set the run BLOCKED and stop.
    - A mistake that fits no G rule: write the incident in `log.md` and
      propose a new rule (G17, …) to Sebastian. Do not add it yourself.
 9. **Real runs** (G22, `.claude/skills/compute-jobs/SKILL.md`). After the

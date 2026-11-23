@@ -99,6 +99,9 @@ problem is a FAIL. Verdict PASS / FAIL with the list.
 - In a run: write `05_audit.md` from the template, `## Round N` per round,
   verdict PASS only if there is no FAIL. Required fixes name the rule and
   `path:line`.
+- Label each required fix *code/test* or *wording* (L45): a failure whose fixes are all
+  wording gets one fix round limited to the named lines.
+- A suggested wording in a required fix is held to G7/G26: any number in it is quoted from printed output with its line, or it gives none. A failure on text the auditor proposed is recorded as an auditor error and is not counted as a round against the agent. An auditor error is not counted against the agent, but every round counts toward a hard limit of 4 rounds per step, whoever caused the failure; at the limit, stop and ask Sebastian.
 - Ad hoc: return the same table as your answer and write nothing.
 - Record each new mistake pattern (one line, with the rule number) in your
   memory. If it fits no G rule, say so in the audit so the orchestrator can

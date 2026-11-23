@@ -164,3 +164,58 @@ def test_l50_every_check_named_for_the_auditor_passes_its_hook(proj):
   for cmd in named:
     assert auditor(proj, cmd + " x") == 0, cmd
   assert auditor(proj, "python -m pytest tests/ -q -p no:cacheprovider") == 0
+
+
+# L45 + L47: audit rounds (wording-only round, auditor errors, hard limit of 4) and cost per round.
+
+L45 = ("The auditor labels each required fix *code/test* or *wording*. A failure whose fixes are all wording gets one "
+       "fix round, limited to the named lines and checked by diff. That round does not count toward the two-round "
+       "limit. The run log records each round's tokens and wall time as differences of running totals. Cost figures "
+       "come only from `cost_report.py`, `run_cost.py` or the `log_cost.py` summary, never from adding up rows.")
+L47 = ("A suggested wording in a required fix is held to G7/G26: any number in it is quoted from printed output with "
+       "its line, or it gives none. A failure on text the auditor proposed is recorded as an auditor error and is not "
+       "counted as a round against the agent. An auditor error is not counted against the agent, but every round "
+       "counts toward a hard limit of 4 rounds per step, whoever caused the failure; at the limit, stop and ask "
+       "Sebastian.")
+
+
+@pytest.mark.parametrize("skill", ["onboard", "assignment", "apply-pipeline"])
+def test_l45_l47_audit_rounds_in_every_workflow_skill(skill):
+  text = read(f".claude/skills/{skill}/SKILL.md")
+  assert f"**Audit rounds (L45, L47).** {L45} {L47}" in text
+  assert "log_cost.py --rounds agent_runs/<run>" in text
+
+
+def test_l45_l47_auditor_labels_fixes_and_holds_its_own_wording_to_g7_g26():
+  auditor = read(".claude/agents/methods-auditor.md")
+  assert "Label each required fix *code/test* or *wording* (L45)" in auditor and L47 in auditor
+  audit = read("agent_runs/_templates/05_audit.md")
+  assert "| Kind (code/test, wording, auditor error) |" in audit and "hard limit of 4 per step (L45, L47)" in audit
+  assert "its kind (code/test, wording, auditor error)" in read("agent_runs/_templates/02b_plan_audit.md")
+
+
+def _log_cost():
+  import importlib.util
+  spec = importlib.util.spec_from_file_location("log_cost_v06", T / ".claude" / "hooks" / "log_cost.py")
+  m = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(m)
+  return m
+
+
+def test_l45_cost_per_round_from_running_totals_on_the_real_onboarding_log(tmp_path):
+  # imagined-speech-eeg onboarding, the first 20 lines of cost.jsonl (to 2026-11-17T18:51:45): the orchestrator
+  # reported 31.0 M by adding rows; the lines are running totals and the true total is 11,590,942.
+  run = tmp_path / "run"
+  run.mkdir()
+  (run / "cost.jsonl").write_text((KIT / "kit_tests" / "golden" / "l45_onboarding_cost.jsonl").read_text())
+  lines = [json.loads(l) for l in (run / "cost.jsonl").read_text().splitlines()]
+  assert len(lines) == 20 and sum(l["total_tokens"] for l in lines) == 35_234_426  # the wrong method
+  m = _log_cost()
+  rows, total = m.rounds(run)
+  assert total == 11_590_942
+  assert "Total tokens: 11590942." in m.summary(run)
+  assert rows[0]["tokens"] == 1_040_191 and rows[2]["tokens"] == 1_258_285 - 1_040_191  # orchestrator turn 2
+  assert all(r["tokens"] >= 0 for r in rows)
+  out = subprocess.run([sys.executable, str(T / ".claude" / "hooks" / "log_cost.py"), "--rounds", str(run)],
+                       capture_output=True, text=True, check=True).stdout
+  assert "Total tokens: 11590942 (the increments" in out

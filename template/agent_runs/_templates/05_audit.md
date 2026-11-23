@@ -52,9 +52,13 @@ output. "Verified" means a command here, not another agent's claim. -->
 
 ### Required fixes
 
-<!-- Only if FAIL. Each fix names its rule and exact location. -->
+<!-- Only if FAIL. Each fix names its rule and exact location, and its kind: code/test, wording, or auditor error
+(a failure on wording this audit proposed in an earlier round). A suggested wording quotes every number from
+printed output with its line, or gives none (G7/G26). -->
 
-1.
+| # | Rule | Location | Kind (code/test, wording, auditor error) | Fix |
+|---|---|---|---|---|
+| 1 | | | | |
 
 ### Sources spot-check
 
@@ -64,8 +68,9 @@ checked. -->
 
 ### Non-blocking notes
 
-<!-- On a fix round, append "## Round 2" with the same structure.
-After two failed rounds, set Status: BLOCKED and hand to Sebastian. -->
+<!-- On a fix round, append "## Round 2" with the same structure. After two failed rounds, set Status: BLOCKED
+and hand to Sebastian; a wording-only round and an auditor error do not count toward the two, but every round
+counts toward the hard limit of 4 per step (L45, L47). -->
 
 ## Results check (after 06_results.md, G23)
 
