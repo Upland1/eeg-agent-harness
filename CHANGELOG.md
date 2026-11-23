@@ -45,6 +45,11 @@ the other 7 are L50's refusal cases, which pass on both (they guard the widening
   specs are unchanged.
 - Template `tests/conftest.py` (L55): a `slow` marker, left out of `pytest tests/`, run with `-m ""`. New
   projects only (`--update` keeps an existing conftest).
+- Evaluator tool, not a template rule (commit 61005fc, made from the evaluation session on 2026-11-23): `run_cost.py`
+  reports the waits between jobs per phase (gaps of at least `--min-wait-h` hours, default 1, in the union of
+  the job intervals, with their suspended part; not compute time), for runs stopped and restarted across
+  days (imagined-speech-eeg B_loro batch 01, stopped twice for low memory). Known-answer test
+  `kit_tests/test_run_cost.py::test_waits_between_jobs_known_answer`, failing on b361f81.
 - Checks on the 0.6.0 tree (2026-11-23/24): kit suite 555 passed, 1 skipped, 1 xfailed (56 min, kit venv with
   torch CPU); `check_install.py` ready in the kit venv (smoke subset 200 passed) and in a fresh venv from
   `requirements.txt` without torch (195 passed, 5 skipped; torch WARN); the worked example matches its pinned
