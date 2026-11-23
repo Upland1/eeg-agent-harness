@@ -56,13 +56,19 @@ def settings(eval_dir) -> dict:
   return s
 
 
+def make_data_and_inputs(dest: Path):
+  """data/ (recordings go in data/raw/, a folder or a symlink) and inputs/ exist in every project (L41)."""
+  for d in ("data", "inputs"):
+    (dest / d).mkdir(exist_ok=True)
+
+
 def copy_inputs(case, dest: Path):
+  make_data_and_inputs(dest)
   if not case:
     return
   src = Path(case) / "inputs"
   if not src.is_dir():
     sys.exit(f"{src} not found")
-  (dest / "inputs").mkdir(exist_ok=True)
   for f in src.iterdir():
     if f.is_file():
       shutil.copy2(f, dest / "inputs" / f.name)
