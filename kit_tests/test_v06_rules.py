@@ -113,3 +113,54 @@ def test_l40_g27_is_a_kit_rule_checked_by_the_auditor():
   assert "| G27 " in (T / "agent_runs" / "_templates" / "05_audit.md").read_text()
   assert "(G27)" in read(".claude/skills/connectivity/SKILL.md")
   assert L40 in norm((KIT / "BACKLOG.md").read_text())
+
+
+# L50: the auditor's hook lets it run the checks G15 and G22 tell it to run, and nothing else of those modules.
+
+@pytest.fixture()
+def proj(tmp_path):
+  h = tmp_path / "proj"
+  new_project.main([str(h), "--name", "proj", "--allow-dirty"])
+  return h
+
+
+def guard(project, tool, inp, agent):
+  ev = {"tool_name": tool, "tool_input": inp, "cwd": str(project), "agent_type": agent}
+  r = subprocess.run([sys.executable, str(project / ".claude" / "hooks" / "guard.py")], input=json.dumps(ev),
+                     capture_output=True, text=True, env={"CLAUDE_PROJECT_DIR": str(project), "PATH": "/usr/bin:/bin"})
+  return r.returncode
+
+
+def auditor(project, cmd):
+  return guard(project, "Bash", {"command": cmd}, "methods-auditor")
+
+
+@pytest.mark.parametrize("py", ["python", ".venv/bin/python", "python3"])
+def test_l50_auditor_runs_outputs_and_sources_check(proj, py):
+  assert auditor(proj, f"{py} -m eegharness.outputs check outputs/confirm/20261123T100355Z_ec60d9b") == 0
+  assert auditor(proj, f"{py} -m eegharness.sources check") == 0
+  assert auditor(proj, f"{py} -m eegharness.sources check docs/DECISIONS.md --min-quote-words 3") == 0
+
+
+@pytest.mark.parametrize("cmd", [
+  "python -m eegharness.outputs new outputs/x",
+  "python -m eegharness.outputs",
+  "python -m eegharness.sources",
+  "python -m eegharness.outputs check outputs/x --record outputs/outputs_check",
+  "python -m eegharness.outputs check outputs/x > agent_runs/r/check.txt",
+  "python -m eegharness.sources check > docs/sources.txt",
+  "python -m eegharness.folds check outputs/x",
+])
+def test_l50_auditor_refused_other_subcommands_records_and_redirects(proj, cmd):
+  assert auditor(proj, cmd) == 2
+
+
+def test_l50_every_check_named_for_the_auditor_passes_its_hook(proj):
+  named = set()
+  for rel in (".claude/agents/methods-auditor.md", "CLAUDE.md"):
+    named |= set(re.findall(r"`(python -m [\w.]+ check)[^`]*`", (T / rel).read_text()))
+  assert {"python -m eegharness.outputs check", "python -m eegharness.sources check",
+          "python -m eegharness.numbers check"} <= named
+  for cmd in named:
+    assert auditor(proj, cmd + " x") == 0, cmd
+  assert auditor(proj, "python -m pytest tests/ -q -p no:cacheprovider") == 0

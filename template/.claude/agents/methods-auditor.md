@@ -71,7 +71,8 @@ FAIL if a design error would reach code. Append `## Round N` on re-audit.
    before their real-data run (compare commit times with output folder
    names); derived numbers come from committed scripts; every test
    statistic has a false-positive-rate test; quality claims are per
-   participant/session; no committed file cites `agent_runs/`.
+   participant/session; no committed file cites `agent_runs/`; run
+   `python -m eegharness.sources check` (G15; any finding is a FAIL).
    G17–G22: the checklists' audit items, with evidence.
 9. G26: Evidence for a design decision is a check that would have come out differently if the decision were wrong; a decision that cites a test states exactly what the test asserts (the alternatives it rules out and the limits it checks) and nothing beyond; the auditor compares the entry with the test's assertions. For each
    decision entry that cites a test, list what the test asserts and FAIL any claim beyond it.

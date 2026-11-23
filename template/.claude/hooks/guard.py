@@ -558,9 +558,17 @@ def check_auditor_bash(cmd: str, root: Path, cwd: str = ".") -> None:
       if args[2:3] != ["check"]:
         block(deny + "eegharness.numbers only as `check` (it reads; `derive` writes and is the analyst's).")
       continue
+    if re.fullmatch(r"python(3(\.\d+)?)?", name) and args[:2] in (["-m", "eegharness.outputs"], ["-m", "eegharness.sources"]):
+      # the checks G22 and G15 tell the auditor to run (0.6.0, L50); both only read
+      if args[2:3] != ["check"]:
+        block(deny + f"{args[1]} only as `check` (it reads).")
+      if any(a == "--record" or a.startswith("--record=") for a in args):
+        block(deny + "eegharness.outputs check without --record (recording writes an output; the orchestrator's).")
+      continue
     block(deny + f"`{name}` is not on the auditor's list (read-only file tools, read-only git, "
           "python -m pytest -p no:cacheprovider, python -m eegharness.compare_runs, "
-          "python -m eegharness.numbers check).")
+          "python -m eegharness.numbers check, python -m eegharness.outputs check, "
+          "python -m eegharness.sources check).")
 
 
 def check_analyst_bash(cmd: str, root: Path, cwd: str) -> None:
