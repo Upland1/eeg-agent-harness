@@ -379,3 +379,158 @@ template box becomes `Approved by Sebastian, <date>, [ ] <what>`, or the check a
 date). Known-answer test: a committed file with the ticked template line (date filled) passes
 `sources check`, the same line unticked or undated does not count as an approval at the gates, and the gate
 strings match the template form.
+
+## L49 — a part's attempt counter missed two runs killed from outside (2026-11-23)
+
+**Proposed for the next version, not approved** (Sebastian, 2026-11-23: "Add L49–L55 to BACKLOG in the L39–L48
+format"). Template not changed.
+
+Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/` (git-ignored): `log.md` rows "Stage H
+CPU B_loro (interrupted)" (2026-11-20) and "(interrupted again)" (2026-11-21); `05_audit.md` note C5. Outputs:
+`outputs/stage2/B_loro_cbd61c9b07c3_ec60d9b/parts/S2_HI/classical/`.
+
+Claude Code stopped the batch shell twice for critically low system memory while S2_HI classical (B_loro) was
+running; the third start completed. The part folder holds three logs, all numbered as the first attempt
+(`attempt_20261120T172833Z_1.log`, `attempt_20261121T050033Z_1.log`, `attempt_20261121T185634Z_1.log`), and
+`part_status.json` says `"n_attempts": 1`. Cause: `eegpipe.runner.stage` writes `part_status.json` and
+`attempts.jsonl` only after the job returns (`tools/eegpipe/runner/stage.py:318-347`), so a stage process killed
+during a job leaves no record and the next start counts from the old status. `retry.max_attempts` never saw the
+two kills. The auditor caught it (C5); no number came from the partial folders (no `results.json`).
+
+Proposed wording (eegpipe, G25): "Before a job starts, the stage runner records the attempt (status `running`,
+attempt number, start time) in `part_status.json` and `attempts.jsonl`. A part found `running` with no live
+stage process is recorded as `interrupted` before anything else runs; interrupted attempts count in
+`n_attempts` and toward `retry.max_attempts`, and the index lists them."
+
+Known-answer test: start a stage on a synthetic part whose job sleeps, kill the stage process group (SIGKILL)
+during the job, start the stage again: `n_attempts` is 2, the first attempt is `interrupted`, the log names end
+in `_1` and `_2`; with `max_attempts` 2 and two kills the part is terminal. Fails on b361f81 (`n_attempts` 1,
+both logs `_1`).
+
+## L50 — the auditor's hook blocks the checks the template tells it to run (2026-11-23)
+
+**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+
+Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/05_audit.md:280-283` (results check r1:
+"BLOCKED for me by the hook: `.venv/bin/python -m eegharness.outputs check ...`") and `:100` (`eegharness.sources
+check` blocked); `log.md` row "Results check r1" (the auditor did not route around it and raised it with
+Sebastian; the orchestrator ran the check under contact #10). Also onboarding `2026-11-17_onboarding/05_audit.md:67`
+(`sources check` blocked).
+
+G22 (`template/CLAUDE.md:252`) and `template/.claude/agents/methods-auditor.md:92-93` say the auditor runs
+`python -m eegharness.outputs check` on the outputs a result cites; G15 needs `eegharness.sources check`. The
+auditor's allowlist in `template/.claude/hooks/guard.py:547-563` permits only pytest, `compare_runs` and `numbers
+check` among Python commands, so both checks are refused ("`python` is not on the auditor's list").
+
+Proposed change: the auditor's allowlist adds `python -m eegharness.outputs check <paths>` and `python -m
+eegharness.sources check [paths]` (both read only); no other subcommand of those modules.
+
+Known-answer test (`check_auditor_bash`): both commands, with `.venv/bin/python` and `python`, pass; `python -m
+eegharness.outputs` with any other first argument, and either command with a redirect to a file, are refused; a
+test also asserts that every `python -m ...` command named in `methods-auditor.md` passes the hook. Fails on
+b361f81 (both blocked).
+
+## L51 — the orchestrator counted by hand (2026-11-23)
+
+**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+
+Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/log.md` row "Correction (orchestrator)":
+the orchestrator recounted temperature batches from `outputs/stage2_logs/batches.tsv` by hand ("Pinned total
+20 of 41, not 21 as told to Sebastian on 2026-11-23"); both the first count (21, sent to Sebastian) and the
+correction were hand counts. The results-analyst caught the first miscount (A2); `05_audit.md` note C4 (G23): "a
+count sent to Sebastian should come from a tool or be marked as a hand count". The count could not go through
+`eegharness.numbers`, which reads only comma-separated files (L53, item 2).
+
+Proposed wording (extends G11/G23 to the orchestrator): "A number the orchestrator writes in `log.md` or sends
+to Sebastian that is derived from outputs (a count, sum, maximum, difference) comes from `eegharness.numbers`
+or a committed, tested tool, cited by key or command; when no tool can derive it yet, it is sent marked `(hand
+count, not derived)` with the tool gap named, and never corrected by another hand count."
+
+Known-answer test: the template's G23 contains the wording; with L53, a spec counting the rows with
+`temp_max >= 95` in a synthetic tab-separated batches file gives the planted count. The text assertion fails on
+b361f81.
+
+## L52 — a project wrapper for the outputs check split paths on whitespace (2026-11-23)
+
+**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+
+Source: imagined-speech-eeg commit 46f18c9 (`outputs_check.py`, a project wrapper that runs `eegharness.outputs
+check` on a list of folders and records the result in a versioned output) reads the list with
+`read_text().split()` (`outputs_check.py:35` at 46f18c9), so a folder name with a space becomes two paths. The
+methods-auditor noted it as non-blocking (results check r3, `05_audit.md:534-536`): no listed path had a space
+(grep count 0). The risk is real in this project: the data folder is "Habla imaginada con 5 palabras". The
+wrapper existed because the kit's `outputs check` takes paths only as arguments (369 folders here) and does not
+record its own result (`tools/eegharness/outputs.py:214-218`); the first run fed a stdin script, whose provenance
+command was `.venv/bin/python -` (`05_audit.md:485-487`, N3).
+
+Proposed change: `python -m eegharness.outputs check --paths-file <file>` (one path per line, spaces kept, blank
+lines ignored) and `--record <out>` (writes the output, the path list and the exit code into a new versioned
+folder with provenance and compute time, G9/G22), so no project writes its own wrapper.
+
+Known-answer test: a paths file listing a folder named `run with spaces/20261123T000000Z_abc1234` (with
+provenance and compute time) gives "1 output folder(s), 0 problem(s)", and a whitespace-splitting variant fails
+the same test; `--record` writes `check_output.txt`, `paths.txt` and a provenance whose command is the real
+command. Fails on b361f81 (no `--paths-file`).
+
+## L53 — six report numbers left blocked by eegharness.numbers (2026-11-23)
+
+**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+
+Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/06_results.md` section "Derived numbers
+needed" (6 items, READY with them blocked by the auditor's ruling). Five are blocked by missing operations:
+item 1 counts failing rows across many `gates.csv` files ("no multi-file aggregate; needed: a `csv_glob`
+operand"); item 2 counts in `outputs/stage2_logs/batches.tsv` ("reads comma-separated files only; needed: a tab
+delimiter option"; also L51); item 3 compares CPU seconds with the plan's hours ("without a seconds-to-hours and
+ratio operation"); item 5 counts network parts at the maximum epoch over many files; item 6 checks that
+`n_epochs`/`n_units` agree across `results.json` files of four roots. Item 4 is not a tool gap (the value is
+empty in the output). Correction to the item 3 text: `ratio` exists (`tools/eegharness/numbers.py:52-53`); the
+missing piece is unit scaling (seconds to hours) of an operand.
+
+Proposed change (`eegharness.numbers`): (a) `"delimiter": "\t"` on a csv operand (or `.tsv` by extension);
+(b) `"glob"` operand: the rows of every matching file, each row tagged with its file, for `count`, `sum`,
+`min`, `max`, `mean` and a new `all_equal`; zero matching files refuse; (c) op `scale` (a × factor, e.g.
+1/3600, with the unit `h`); (d) a `json` operand (a dotted key in one or many JSON files). Each recorded with
+the SHA-256 of every file read.
+
+Known-answer tests: a TSV with planted values gives the planted count; three CSVs matched by a glob give the
+planted row count and sum, and a variant reading only the first file fails; 7200 s scaled by 1/3600 gives
+"2.0 h"; `all_equal` over three JSON files is 1 when equal and 0 when one differs. All fail on b361f81.
+
+## L54 — no memory limit in COMPUTE.md (2026-11-23)
+
+**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+
+Source run: imagined-speech-eeg `docs/COMPUTE.md` (from the skeleton, 5b6e7d2) sets `cpu_max_minutes`,
+`gpu_max_minutes` and `gpu_device`, and no memory figure; the template (`template/docs/COMPUTE.md`) has none
+either. B_loro batches of 2 parts were stopped twice by Claude Code for critically low memory (L49; `log.md` rows
+of 2026-11-20 and 2026-11-21) on a 23 GB machine with desktop applications open; a B_loro classical part peaked
+at 5.50-5.71 GB max RSS in development (`log.md` row "F Dev classical (collected)", from `/usr/bin/time -v`).
+The third start ran after Sebastian closed the applications ("I closed the apps, continue").
+
+Proposed wording (G22, COMPUTE.md, `compute-jobs` skill): "`docs/COMPUTE.md` sets `memory_max_gb`, the memory
+the orchestrator's jobs may use together (set by Sebastian). The plan states each part's peak memory, measured
+in the development run (maximum RSS); a batch runs b parts at once only if b × peak fits `memory_max_gb`, and
+before each batch the driver checks that available memory is at least that sum, and waits or stops if not."
+
+Known-answer test: the template COMPUTE.md has `memory_max_gb`; a batch-size helper (`eegharness.compute`, or in
+the skill's driver) returns b = 3 for peak 5.7 GB and 18 GB, refuses b = 4, and refuses to start when available
+memory is planted below b × peak. Fails on b361f81.
+
+## L55 — test suites take longer than G2's minute (2026-11-23)
+
+**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+
+Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/log.md`: 142 passed in 107 s and in
+112.6 s (plan audit rounds), later 194-200 passed in 73-85 s (4 torch tests skipped). G2 says `pytest tests/`
+"runs on CPU in about a minute with no real data" (`template/CLAUDE.md`, G2). The suite is run in every audit
+round and before every commit, so its time multiplies.
+
+To decide:
+(a) a `slow` marker registered by the template's `tests/conftest.py`, deselected by default; the default run
+stays under a minute, the full suite (`-m ""`) runs before every freeze and commit and in the auditor's check;
+G2 names both; or
+(b) revise G2: "the suite runs on CPU with no real data; its time is reported in each handoff; over 2 minutes,
+the slowest tests are moved behind a `slow` marker".
+
+Known-answer test (for a): in a synthetic project, a test marked `slow` is deselected by `pytest tests/` and run
+by `pytest tests/ -m ""`; the template conftest registers the marker (no unknown-marker warning). Fails on b361f81.
