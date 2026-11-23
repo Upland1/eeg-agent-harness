@@ -219,3 +219,57 @@ def test_l45_cost_per_round_from_running_totals_on_the_real_onboarding_log(tmp_p
   out = subprocess.run([sys.executable, str(T / ".claude" / "hooks" / "log_cost.py"), "--rounds", str(run)],
                        capture_output=True, text=True, check=True).stdout
   assert "Total tokens: 11590942 (the increments" in out
+
+
+# L42 + L46: /onboard does not start while inputs/ holds a template placeholder or an unquoted report of a
+# person's words. Fixtures: imagined-speech-eeg inputs/request.md at e147a9a (whole file, template text only),
+# b71401a and 4c72438 (header lines only; the professor's notes are not copied into the kit).
+
+INPUTS = KIT / "kit_tests" / "golden" / "l42_l46_inputs"
+
+
+def _inputs_project(tmp_path, fixture, names=("Sebastian",)):
+  p = tmp_path / "proj"
+  new_project.main([str(p), "--name", "p"])
+  (p / "inputs" / "request.md").write_text((INPUTS / fixture).read_text())
+  hj = json.loads((p / ".claude" / "harness.json").read_text())
+  hj["sources"] = {"names": list(names)}
+  (p / ".claude" / "harness.json").write_text(json.dumps(hj))
+  return p
+
+
+def _check_inputs(p):
+  r = subprocess.run([sys.executable, str(p / ".harness" / "tools" / "check_inputs.py"), "--root", str(p)],
+                     capture_output=True, text=True)
+  return r.returncode, r.stdout
+
+
+def test_l42_template_request_with_placeholders_is_refused(tmp_path):
+  rc, out = _check_inputs(_inputs_project(tmp_path, "e147a9a_request.md"))
+  assert rc == 1
+  assert "inputs/request.md:2: placeholder: <what the professor wants: e.g. decode which of the 5 words" in out
+  assert "inputs/request.md:3: placeholder: <anything known about how it was recorded" in out
+
+
+def test_l46_paraphrase_refused_verbatim_quote_passes(tmp_path):
+  rc, out = _check_inputs(_inputs_project(tmp_path / "a", "b71401a_request_header.md"))
+  assert rc == 1 and "inputs/request.md:3: unquoted_attribution:" in out
+  rc, out = _check_inputs(_inputs_project(tmp_path / "b", "4c72438_request_header.md"))
+  assert rc == 0 and out.strip().endswith("PASS")
+
+
+def test_l42_not_placeholders():
+  import importlib.util
+  spec = importlib.util.spec_from_file_location("check_inputs_v06", KIT / "tools" / "check_inputs.py")
+  m = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(m)
+  text = ("See <https://doi.org/10.1/x> or write to <lab@uni.edu>.<br> H<sub>2</sub>\n"
+          "<!-- a comment --> p < 0.05 and q > 1\n<img src=\"a.png\">\n")
+  assert m.placeholders(text) == []
+  assert m.placeholders("Goal: <the goal>\n") == [(1, "<the goal>")]
+
+
+def test_l42_l46_onboard_runs_the_check_before_set_up():
+  onboard = read(".claude/skills/onboard/SKILL.md")
+  assert "0. **Inputs are the human's own words (L42, L46).** Run `python .harness/tools/check_inputs.py`. Do not start while it reports a finding" in onboard
+  assert onboard.index("0. **Inputs are the human's own words") < onboard.index("1. **Set up.**")

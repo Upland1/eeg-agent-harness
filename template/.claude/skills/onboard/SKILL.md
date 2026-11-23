@@ -30,6 +30,12 @@ approval, request) in `human_contacts.md` before sending it, with a proposed
 category; Sebastian confirms the category. Aim for one contact: the approval
 in step 7.
 
+0. **Inputs are the human's own words (L42, L46).** Run `python .harness/tools/check_inputs.py`. Do not
+   start while it reports a finding: a template placeholder `<...>` left in `inputs/` (a template filled
+   in only partly is not the request, and its examples are nobody's words), or a person's words reported
+   without a verbatim quote and its date. Tell Sebastian the file and line, and wait for the corrected,
+   committed inputs; never fill or reword them yourself. If it notes that `sources.names` is empty, ask
+   Sebastian for the names to put in `.claude/harness.json` (local) before going on.
 1. **Set up.** Create `agent_runs/<YYYY-MM-DD>_onboarding/` and copy the files
    of `agent_runs/_templates/onboarding/` except `PARADIGM.md`, plus
    `agent_runs/_templates/log.md` and `agent_runs/_templates/human_contacts.md`.
