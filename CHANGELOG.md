@@ -1,6 +1,58 @@
 # Changelog
 
-## Unreleased (after 0.5.0)
+## 0.6.0 — 2026-11-23 (not tagged; Sebastian tags after 2026-11-26)
+
+BACKLOG L39-L55, approved by Sebastian on 2026-11-23 ("Approved for v0.6: every item marked Rec, as worded,
+with these edits and choices"), one commit per item or approved pair. Known-answer tests in
+`kit_tests/test_v06_rules.py`: 42 of its 49 tests fail or error on b361f81 (the v0.6-dev commit before them);
+the other 7 are L50's refusal cases, which pass on both (they guard the widening). Not done (waits): the
+`--venv` option of L43.
+
+- Setup: `new_project.py` creates `data/` and `inputs/` in every project (L41); the per-project `.venv` is the
+  documented interpreter, printed with its pip command (L43, reduced form); it says that `cpu_working_threads`
+  and `memory_max_gb` in `docs/COMPUTE.md` have no default and must be set (L39, L54).
+- Rules: new kit rule **G27** (a group statistic takes only estimates that exist at that sample size; L40,
+  the cold-pressor project's approved wording); project rules now start at G28. G2 names a default run and the
+  full suite (L55). G15 accepts the template's approval box ticked and dated (L48). G22 names
+  `cpu_working_threads`, `memory_max_gb` and the pre-batch check (L39, L54, L44). G23: the orchestrator's
+  derived numbers come from `eegharness.numbers` or are marked `(hand count, not derived)` (L51).
+- Audit rounds (L45, L47) in `/onboard`, `/assignment` and `/apply-pipeline`: fixes labelled code/test or
+  wording; a wording-only failure gets one round limited to the named lines, outside the two-round limit; an
+  auditor's suggested wording is held to G7/G26 and a failure on it is an auditor error; every round counts
+  toward a hard limit of 4 per step, then stop and ask Sebastian; cost per round from running totals
+  (`log_cost.py --rounds`), cost figures never from adding up rows. The 05_audit fix table has a Kind column.
+- `/onboard` step 0 runs the new `tools/check_inputs.py` (shipped in `.harness/tools/`): no start while
+  `inputs/` holds a template placeholder `<...>` or a person's words reported without a verbatim quote (L42,
+  L46).
+- `eegharness.sources`: the box `Approved by <name>: [x]   Date: YYYY-MM-DD` is a record; ticked without a
+  date it is reported as `undated_approval` (L48).
+- The methods-auditor's hook allows `python -m eegharness.outputs check` and `python -m eegharness.sources
+  check` (read only; no `--record`, no redirect) (L50).
+- New `eegharness.compute`: limits of `docs/COMPUTE.md`; the thread check used by
+  `eegpipe.settings.validate` (n_jobs or torch threads above `cpu_working_threads`, -1, or the value unset
+  are refused; L39); `temps` and `templog` (CPU package and GPU temperature once a minute next to a job
+  table; L39); `precheck --parts B --peak-gb G` before each batch: memory_max_gb set, B x peak within it,
+  enough available memory, `data/raw` resolves with every profiled file (L54, L44).
+- Profiler: `DATA_PROFILE` records where `data/raw` is stored (resolved path, mount point, filesystem,
+  device, removable, under /media) (L44; `eegprofile/storage.py`).
+- `eegpipe.runner.stage` (L49): every attempt is recorded before its job starts; a part left `running` by a
+  killed stage becomes `interrupted`, counts in `n_attempts` and toward `retry.max_attempts`; `n_interrupted`
+  in `part_status.json` and `index.csv`. Projects get it when they re-vendor `eegpipe/`.
+- `eegharness.outputs check --paths-file F` (one folder per line, spaces kept) and `--record OUT` (the
+  result in a versioned folder with provenance and compute time) (L52).
+- `eegharness.numbers` (L53): tab-separated files, `glob` selections over many files, `json` fields, `scale`
+  (factor or divisor: seconds to hours) and `all_equal`; every file read recorded with its SHA-256. Existing
+  specs are unchanged.
+- Template `tests/conftest.py` (L55): a `slow` marker, left out of `pytest tests/`, run with `-m ""`. New
+  projects only (`--update` keeps an existing conftest).
+- Checks on the 0.6.0 tree (2026-11-23/24): kit suite 555 passed, 1 skipped, 1 xfailed (56 min, kit venv with
+  torch CPU); `check_install.py` ready in the kit venv (smoke subset 200 passed) and in a fresh venv from
+  `requirements.txt` without torch (195 passed, 5 skipped; torch WARN); the worked example matches its pinned
+  outputs (`kit_tests/golden/worked_example_ssvep.json` unchanged).
+- Changed earlier tests to the approved behaviour: `test_eegharness_v05_lessons.py` (the ticked, dated box
+  is no longer reported, L48), `test_kit.py` and `test_v05_rules.py` (G1-G27, project rules from G28, L40).
+
+## Unreleased before 0.6.0 (after 0.5.0)
 
 - New `run_cost.py` (evaluator-side, like `cost_report.py`): the cost of a finished run in a versioned
   folder with provenance: agent cost in USD from the headless invocations' cumulative `total_cost_usd`,

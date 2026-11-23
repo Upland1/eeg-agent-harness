@@ -16,4 +16,4 @@ scikit-learn; torch is needed only by ``networks``, ``network_windows``, ``graph
 ``ssvep.fusion``.
 """
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"

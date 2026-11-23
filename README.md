@@ -181,7 +181,7 @@ python -m pytest kit_tests -q -p no:cacheprovider
 The full suite needs numpy, scipy, scikit-learn, mne and pytest (`requirements.txt`),
 `pdftotext`, and torch (CPU build) for the network tests; with them only the CUDA test is skipped
 on a machine without a GPU (v0.2.0: 190 passed; v0.3.0: 211; v0.3.1: 249; v0.4.0: 392 passed, 1
-skipped without CUDA; v0.4.1: 464 passed, 1 skipped, 1 xfailed; v0.5.0: 497 passed, 1 skipped, 1 xfailed). Keep the virtual environment
+skipped without CUDA; v0.4.1: 464 passed, 1 skipped, 1 xfailed; v0.5.0: 497 passed, 1 skipped, 1 xfailed; v0.6.0: 555 passed, 1 skipped, 1 xfailed). Keep the virtual environment
 outside the repository (e.g. `~/.venvs/eeg-harness-kit`).
 
 ## Release and privacy
