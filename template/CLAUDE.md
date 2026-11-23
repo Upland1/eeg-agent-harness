@@ -265,7 +265,10 @@ A handoff that cites a path outside the repository cannot be READY. The tool is
 `eegharness.numbers`: each number is declared under a stable key in a committed spec
 (`configs/numbers/<run>.json`), derived into a versioned folder, and cited in the report as
 `<text> [num:key]`; `python -m eegharness.numbers check` verifies every citation. The auditor
-checks both in a results check. Extends G11. *Incident: the results-analyst computed write-up
+checks both in a results check. A number the orchestrator derives from outputs for `log.md` or
+for Sebastian comes from `eegharness.numbers` or a committed tool. Otherwise it is sent marked
+`(hand count, not derived)` with the tool gap named, and it is never corrected by another hand count
+(L51). Extends G11. *Incident: the results-analyst computed write-up
 numbers with scratch scripts in a temporary folder although G11 existed (L27).*
 
 **G24. The pipeline library is configured, never edited.** `eegpipe/` (Sebastian's pipeline:

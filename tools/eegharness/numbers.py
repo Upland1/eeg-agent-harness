@@ -28,10 +28,16 @@ hyphens are matched as written) or {op: value} with op in <, <=, >, >=, ==, != (
 {"in": [strings]}. An empty or non-numeric cell refuses; NaN refuses unless the number sets
 ``"nan": "drop"`` (aggregates only; the count dropped is recorded).
 Ops: value, pp (100 a), difference (a - b), pp_difference (100 (a - b)), ratio (a / b),
-percent (100 a / b), count, sum, mean, sd (ddof 1), median, min, max.
-Text: ``decimals`` (default 3; count 0), then the unit (``%`` without a space).
-Rules: keys are unique and match [A-Za-z0-9_.-]+; the spec and every CSV lie inside ``--root``;
-the spec is tracked by git and unmodified (committed); numbers.json records each CSV's SHA-256.
+percent (100 a / b), count, sum, mean, sd (ddof 1), median, min, max; scale (a x ``factor``, or a /
+``divisor``: seconds to hours is ``"divisor": 3600, "unit": "h"``); all_equal (1 if every selected value of
+``column`` is the same, else 0; the distinct values are recorded).
+Sources (0.6.0, L53): ``"delimiter": "\t"`` on a csv operand or selection (``.tsv`` files are tab-separated by
+default); ``{"glob": "outputs/stage2/*/parts/*/classical/*/gates.csv", "where", "column"}`` selects the rows of
+every matching file (sorted; each row gets a ``_file`` column; zero files refuse); ``{"json": <path or glob>,
+"field": "a.b"}`` reads one dotted field per JSON file as one row (a single operand needs exactly one file).
+Text: ``decimals`` (default 3; count and all_equal 0), then the unit (``%`` without a space).
+Rules: keys are unique and match [A-Za-z0-9_.-]+; the spec and every file read lie inside ``--root``;
+the spec is tracked by git and unmodified (committed); numbers.json records each file's SHA-256.
 """
 
 import argparse
@@ -103,17 +109,82 @@ def _matches(row, where, path):
   return True
 
 
+GLOB_CHARS = re.compile(r"[*?\[]")
+
+
+def _dotted(obj, field, where):
+  for k in str(field).split("."):
+    if isinstance(obj, list) and k.isdigit() and int(k) < len(obj):
+      obj = obj[int(k)]
+    elif isinstance(obj, dict) and k in obj:
+      obj = obj[k]
+    else:
+      raise SpecError(f"{where}: no field {field!r}")
+  return obj
+
+
 class _Tables:
   def __init__(self, root):
     self.root, self.cache, self.used = root, {}, {}
 
-  def rows(self, rel, where):
-    if rel not in self.cache:
-      p = _inside(self.root, rel, "table")
-      with open(p, newline="") as f:
-        self.cache[rel] = list(csv.DictReader(f))
-      self.used[rel] = _sha256(p)
-    return [r for r in self.cache[rel] if _matches(r, where or {}, rel)]
+  def files(self, pattern, what):
+    """The files a path or glob names, sorted, all inside the root; zero refuse."""
+    if not GLOB_CHARS.search(pattern):
+      return [(pattern, _inside(self.root, pattern, what))]
+    base = Path(self.root).resolve()
+    out = []
+    for p in sorted(Path(self.root).glob(pattern)):
+      if p.is_file():
+        rp = p.resolve()
+        if not rp.is_relative_to(base):
+          raise SpecError(f"{what} {pattern!r} matches {p}, outside the project root (G23)")
+        out.append((str(p.relative_to(self.root)), rp))
+    if not out:
+      raise SpecError(f"{what} {pattern!r} matches no file")
+    return out
+
+  def _table(self, rel, path, delimiter):
+    ck = (rel, delimiter)
+    if ck not in self.cache:
+      with open(path, newline="") as f:
+        self.cache[ck] = list(csv.DictReader(f, delimiter=delimiter))
+      self.used[rel] = _sha256(path)
+    return self.cache[ck]
+
+  def select(self, sel, ctx):
+    """Rows of a selection: {"csv"} or {"glob"} (tables) or {"json", "field"} (one row per file)."""
+    if not isinstance(sel, dict):
+      raise SpecError(f"{ctx}: a selection must be an object")
+    where = sel.get("where") or {}
+    if "json" in sel:
+      field = sel.get("field") or sel.get("column")
+      if not field:
+        raise SpecError(f"{ctx}: a json source needs \"field\"")
+      rows = []
+      for rel, p in self.files(sel["json"], "json file"):
+        if rel not in self.used:
+          self.used[rel] = _sha256(p)
+        try:
+          v = _dotted(json.loads(p.read_text()), field, f"{ctx}: {rel}")
+        except ValueError as e:
+          raise SpecError(f"{ctx}: {rel} is not JSON ({e})") from None
+        rows.append({field: v if isinstance(v, str) else json.dumps(v) if isinstance(v, (dict, list)) else
+                     ("" if v is None else repr(v) if isinstance(v, float) else str(v)), "_file": rel})
+      return [r for r in rows if _matches(r, where, sel["json"])]
+    pattern = sel.get("glob") or sel.get("csv")
+    if not pattern:
+      raise SpecError(f"{ctx}: a selection needs \"csv\", \"glob\" or \"json\"")
+    if "csv" in sel and GLOB_CHARS.search(sel["csv"]):
+      raise SpecError(f"{ctx}: {sel['csv']!r} is a pattern; use \"glob\" for several files")
+    out = []
+    for rel, p in self.files(pattern, "table"):
+      delim = sel.get("delimiter", "\t" if rel.lower().endswith(".tsv") else ",")
+      rows = self._table(rel, p, delim)
+      out += [{**r, "_file": rel} if "glob" in sel else r for r in rows if _matches(r, where, rel)]
+    return out
+
+  def rows(self, rel, where):  # earlier API, one CSV
+    return self.select({"csv": rel, "where": where}, rel)
 
 
 def _operand(op, tables, done, ctx):
@@ -123,13 +194,17 @@ def _operand(op, tables, done, ctx):
     if op["key"] not in done:
       raise SpecError(f"{ctx}: key {op['key']!r} is not defined earlier in the spec")
     return done[op["key"]]["value"], {"key": op["key"]}
-  rows = tables.rows(op["csv"], op.get("where"))
+  if "glob" in op:
+    raise SpecError(f"{ctx}: a single operand reads one file; use rows with an aggregate for a glob")
+  rows = tables.select(op, ctx)
+  src = op.get("csv") or op.get("json")
+  col = op.get("column") or op.get("field")
   if len(rows) != 1:
-    raise SpecError(f"{ctx}: {op['csv']} where {op.get('where')} matches {len(rows)} rows; exactly 1 needed")
-  x = _number(rows[0].get(op["column"]), f"{ctx}: {op['csv']} column {op['column']!r}")
+    raise SpecError(f"{ctx}: {src} where {op.get('where')} matches {len(rows)} rows; exactly 1 needed")
+  x = _number(rows[0].get(col), f"{ctx}: {src} column {col!r}")
   if math.isnan(x):
-    raise SpecError(f"{ctx}: {op['csv']} column {op['column']!r} is NaN")
-  return x, {"csv": op["csv"], "where": op.get("where"), "column": op["column"]}
+    raise SpecError(f"{ctx}: {src} column {col!r} is NaN")
+  return x, {k: op[k] for k in ("csv", "json", "where", "column", "field", "delimiter") if k in op}
 
 
 def text_of(value, decimals, unit):
@@ -160,15 +235,33 @@ def derive(spec, root="."):
       if op in ("ratio", "percent") and b == 0:
         raise SpecError(f"{ctx}: division by zero")
       value, rec["sources"] = BINARY[op](a, b), [sa, sb]
-    elif op == "count" or op in AGG:
+    elif op == "scale":
+      a, sa = _operand(n.get("a"), tables, done, ctx)
+      if ("factor" in n) == ("divisor" in n):
+        raise SpecError(f"{ctx}: scale needs exactly one of \"factor\" and \"divisor\"")
+      f = n.get("factor", n.get("divisor"))
+      if isinstance(f, bool) or not isinstance(f, (int, float)) or f == 0:
+        raise SpecError(f"{ctx}: the scale must be a non-zero number")
+      value = a * f if "factor" in n else a / f
+      rec["sources"], rec["factor" if "factor" in n else "divisor"] = [sa], f
+    elif op == "count" or op in AGG or op == "all_equal":
       sel = n.get("rows") or {}
-      rows = tables.rows(sel["csv"], sel.get("where"))
-      rec["sources"] = [{"csv": sel["csv"], "where": sel.get("where"), "column": sel.get("column"),
-                         "n_rows": len(rows)}]
+      rows = tables.select(sel, ctx)
+      rec["sources"] = [{**{k: sel[k] for k in ("csv", "glob", "json", "field", "delimiter") if k in sel},
+                         "where": sel.get("where"), "column": sel.get("column"), "n_rows": len(rows),
+                         **({"n_files": len({r.get("_file") for r in rows})} if ("glob" in sel or "json" in sel) else {})}]
+      col = sel.get("column") or sel.get("field")
       if op == "count":
         value = len(rows)
+      elif op == "all_equal":
+        if not rows:
+          raise SpecError(f"{ctx}: all_equal over 0 rows")
+        if any(col not in r for r in rows):
+          raise SpecError(f"{ctx}: no column {col!r}")
+        distinct = sorted({r[col] for r in rows})
+        value, rec["distinct_values"] = (1 if len(distinct) == 1 else 0), distinct[:10]
       else:
-        xs = [_number(r.get(sel["column"]), f"{ctx}: {sel['csv']} column {sel.get('column')!r}") for r in rows]
+        xs = [_number(r.get(col), f"{ctx}: {r.get('_file') or sel.get('csv')} column {col!r}") for r in rows]
         nan = [x for x in xs if math.isnan(x)]
         if nan and n.get("nan") != "drop":
           raise SpecError(f"{ctx}: {len(nan)} NaN value(s); set \"nan\": \"drop\" to drop them (recorded)")
@@ -178,9 +271,9 @@ def derive(spec, root="."):
           raise SpecError(f"{ctx}: {len(xs)} value(s) for {op}")
         value = float(AGG[op](xs))
     else:
-      raise SpecError(f"{ctx}: unknown op {op!r} (known: {sorted([*UNARY, *BINARY, *AGG, 'count'])})")
+      raise SpecError(f"{ctx}: unknown op {op!r} (known: {sorted([*UNARY, *BINARY, *AGG, 'count', 'scale', 'all_equal'])})")
     rec["value"] = value
-    rec["decimals"] = int(n.get("decimals", 0 if op == "count" else 3))
+    rec["decimals"] = int(n.get("decimals", 0 if op in ("count", "all_equal") else 3))
     rec["text"] = text_of(value, rec["decimals"], rec["unit"])
     done[key] = rec
     out.append(rec)

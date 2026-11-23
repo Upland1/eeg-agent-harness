@@ -634,3 +634,88 @@ def test_l52_record_writes_output_list_exit_code_and_real_command(tmp_path, caps
   assert (folder / "paths.txt").read_text() == lst.read_text()
   prov = json.loads((folder / "provenance.json").read_text())
   assert "eegharness.outputs check --paths-file" in json.dumps(prov["command"]) and prov["compute_time"]["wall_s"] >= 0
+
+
+# L53 + L51: eegharness.numbers reads TSV, many files (glob), JSON fields, scales and compares across files;
+# the orchestrator's derived numbers come from it, or are marked as hand counts.
+
+def _derive(tmp_path, files, numbers):
+  from eegharness import numbers as en
+  for rel, text in files.items():
+    (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / rel).write_text(text)
+  recs, used = en.derive({"numbers": numbers}, tmp_path)
+  return {r["key"]: r for r in recs}, used
+
+
+def test_l53_tsv_rows(tmp_path):
+  batches = "batch\tscope\ttemp_max\n" + "".join(f"{i:02d}\tB_loro\t{t}\n" for i, t in
+                                                  enumerate([96, 93, 95, 94, 97, 92, 95], 1))
+  r, used = _derive(tmp_path, {"outputs/stage2_logs/batches.tsv": batches}, [
+    {"key": "n_hot", "op": "count", "rows": {"csv": "outputs/stage2_logs/batches.tsv", "where": {"temp_max": {">=": 95}}}},
+    {"key": "t_max", "op": "max", "decimals": 0, "unit": "°C",
+     "rows": {"csv": "outputs/stage2_logs/batches.tsv", "column": "temp_max"}}])
+  assert r["n_hot"]["text"] == "4" and r["t_max"]["text"] == "97 °C"
+  assert list(used) == ["outputs/stage2_logs/batches.tsv"]
+  r, _ = _derive(tmp_path / "x", {"b.txt": batches}, [  # explicit delimiter on another extension
+    {"key": "n", "op": "count", "rows": {"csv": "b.txt", "delimiter": "\t", "where": {"scope": "B_loro"}}}])
+  assert r["n"]["value"] == 7
+
+
+def test_l53_glob_over_many_files_and_a_first_file_only_variant_fails(tmp_path):
+  files = {f"outputs/stage2/B/parts/S{i}_HI/classical/2026/gates.csv":
+           "gate,passes\nspan,True\nwindow," + ("False" if i == 2 else "True") + "\n" for i in (1, 2, 3)}
+  spec = [{"key": "n_rows", "op": "count", "rows": {"glob": "outputs/stage2/*/parts/*/classical/*/gates.csv"}},
+          {"key": "n_fail", "op": "count",
+           "rows": {"glob": "outputs/stage2/*/parts/*/classical/*/gates.csv", "where": {"passes": "False"}}}]
+  r, used = _derive(tmp_path, files, spec)
+  assert (r["n_rows"]["value"], r["n_fail"]["value"]) == (6, 1) and len(used) == 3
+  assert r["n_rows"]["sources"][0]["n_files"] == 3
+  first_only = sorted(files)[0]  # a variant that reads only the first file finds no failing gate
+  r1, _ = _derive(tmp_path, {}, [{"key": "n_fail", "op": "count", "rows": {"csv": first_only, "where": {"passes": "False"}}}])
+  assert r1["n_fail"]["value"] != r["n_fail"]["value"]
+  from eegharness import numbers as en
+  with pytest.raises(en.SpecError, match="matches no file"):
+    en.derive({"numbers": [{"key": "n", "op": "count", "rows": {"glob": "outputs/none/*.csv"}}]}, tmp_path)
+
+
+def test_l53_scale_seconds_to_hours_and_ratio(tmp_path):
+  r, _ = _derive(tmp_path, {"t.csv": "scope,cpu_s\nB_loro,7200\n"}, [
+    {"key": "cpu_s", "op": "value", "a": {"csv": "t.csv", "where": {"scope": "B_loro"}, "column": "cpu_s"}, "decimals": 0},
+    {"key": "cpu_h", "op": "scale", "a": {"key": "cpu_s"}, "divisor": 3600, "decimals": 1, "unit": "h"},
+    {"key": "vs_plan", "op": "ratio", "a": {"key": "cpu_h"}, "b": {"key": "cpu_s"}, "decimals": 6}])
+  assert r["cpu_h"]["text"] == "2.0 h" and r["cpu_h"]["divisor"] == 3600
+  r, _ = _derive(tmp_path / "f", {"t.csv": "scope,cpu_s\nB_loro,7200\n"}, [
+    {"key": "h", "op": "scale", "a": {"csv": "t.csv", "where": {"scope": "B_loro"}, "column": "cpu_s"},
+     "factor": 0.5, "decimals": 0}])
+  assert r["h"]["value"] == 3600
+
+
+def test_l53_all_equal_over_json_files(tmp_path):
+  files = {f"outputs/{root}/parts/S1_HI/classical/2026/results.json": json.dumps({"n_epochs": 200, "n": {"units": 200}})
+           for root in ("B_loro", "cue_loro", "emg_loro")}
+  spec = [{"key": "same_epochs", "op": "all_equal", "rows": {"json": "outputs/*/parts/*/classical/*/results.json",
+                                                             "field": "n_epochs"}},
+          {"key": "units", "op": "value", "a": {"json": "outputs/B_loro/parts/S1_HI/classical/2026/results.json",
+                                                "field": "n.units"}, "decimals": 0}]
+  r, used = _derive(tmp_path, files, spec)
+  assert r["same_epochs"]["value"] == 1 and r["same_epochs"]["text"] == "1" and r["units"]["text"] == "200"
+  assert len(used) == 3
+  files["outputs/cue_loro/parts/S1_HI/classical/2026/results.json"] = json.dumps({"n_epochs": 199})
+  r, _ = _derive(tmp_path / "d", files, spec[:1])
+  assert r["same_epochs"]["value"] == 0 and r["same_epochs"]["distinct_values"] == ["199", "200"]
+
+
+def test_l51_orchestrator_numbers_from_the_tool_or_marked_as_hand_counts(tmp_path):
+  assert ("A number the orchestrator derives from outputs for `log.md` or for Sebastian comes from "
+          "`eegharness.numbers` or a committed tool. Otherwise it is sent marked `(hand count, not derived)` with "
+          "the tool gap named, and it is never corrected by another hand count (L51).") in read("CLAUDE.md")
+  # the count the orchestrator made by hand (imagined-speech-eeg: pinned batches >= 95 °C), now derivable
+  rows = [("B_loro", "01", "no", 96)] + [("B_loro", f"{i:02d}", "yes", t) for i, t in
+          zip(range(2, 15), [93, 94, 92, 95, 93, 94, 96, 95, 94, 97, 93, 95, 94])]
+  tsv = "scope\tbatch\tpinned\ttemp_max\n" + "".join("\t".join(map(str, r)) + "\n" for r in rows)
+  r, _ = _derive(tmp_path, {"outputs/stage2_logs/batches.tsv": tsv}, [
+    {"key": "n_pinned_hot", "op": "count",
+     "rows": {"csv": "outputs/stage2_logs/batches.tsv", "where": {"pinned": "yes", "temp_max": {">=": 95}}}},
+    {"key": "n_pinned", "op": "count", "rows": {"csv": "outputs/stage2_logs/batches.tsv", "where": {"pinned": "yes"}}}])
+  assert (r["n_pinned_hot"]["value"], r["n_pinned"]["value"]) == (5, 13)
