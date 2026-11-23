@@ -10,6 +10,7 @@ import numpy as np
 
 from . import __version__
 from .registry import Registry
+from .storage import storage
 
 SKIP_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
 from .formats import DOCUMENT_EXTS  # noqa: F401  (re-exported)
@@ -175,7 +176,7 @@ def profile_dataset(root, plugins=(), max_files=None, use_mne=True) -> dict:
   return {
     "profiler_version": __version__,
     "created": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-    "root": str(root), "plugins": [str(p) for p in plugins], "max_files": max_files,
+    "root": str(root), "storage": storage(root), "plugins": [str(p) for p in plugins], "max_files": max_files,
     "runtime_s": round(time.time() - t0, 2),
     "structure": structure(root, files),
     "summary": summarize(per_file),

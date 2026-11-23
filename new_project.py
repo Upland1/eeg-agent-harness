@@ -211,7 +211,8 @@ def main(argv=None):
   print(f"next: create the project's own interpreter (L43; the test hook runs .venv/bin/python):\n"
         f"  python3 -m venv {dest / '.venv'} && {dest / '.venv' / 'bin' / 'pip'} install -r {KIT / 'requirements.txt'}")
   if not a.control:
-    print(f"next: set cpu_working_threads in {dest / 'docs' / 'COMPUTE.md'} (no default; L39)")
+    print(f"next: set cpu_working_threads and memory_max_gb in {dest / 'docs' / 'COMPUTE.md'} "
+          f"(no defaults; you must set them: L39, L54)")
   print(f"next: open Claude Code in {dest}" + ("" if a.control else " and run /onboard"))
 
 

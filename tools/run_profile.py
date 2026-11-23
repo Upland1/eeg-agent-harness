@@ -28,6 +28,7 @@ def main(argv=None) -> int:
   if out == data or data in out.parents:
     ap.error("--out must not be inside --data")
   prof = profile_dataset(data, plugins=a.plugin, max_files=a.max_files, use_mne=not a.no_mne)
+  prof["storage"]["path"] = a.data  # as given (e.g. the data/raw symlink); "resolved" is where the files are
   out.parent.mkdir(parents=True, exist_ok=True)
   out.with_suffix(".json").write_text(json.dumps(prof, indent=1, ensure_ascii=False))
   out.with_suffix(".md").write_text(to_markdown(prof))

@@ -5,6 +5,16 @@ def _f(x, nd=1):
   return "—" if x is None else (f"{x:.{nd}f}" if isinstance(x, float) else str(x))
 
 
+def _storage_line(st):
+  if not st:
+    return "Storage: not recorded."
+  rem = {True: "removable", False: "not removable", None: "removable: unknown"}[st.get("removable")]
+  warn = (" A long run depends on this drive staying mounted at this path (L44)."
+          if st.get("removable") or st.get("under_media") else "")
+  return (f"Storage: `{st.get('path')}` -> `{st.get('resolved')}`, mount `{st.get('mount_point')}`, "
+          f"filesystem `{st.get('fs_type')}`, device `{st.get('source')}`, {rem}.{warn}")
+
+
 def to_markdown(p: dict) -> str:
   s, st = p["summary"], p["structure"]
   out = [
@@ -15,6 +25,8 @@ def to_markdown(p: dict) -> str:
     f"{', '.join(f'`{x}`' for x in p['plugins']) or 'none'}. "
     f"Every number below is computed from the files; nothing is interpreted. "
     f"Full detail: `DATA_PROFILE.json`.",
+    "",
+    _storage_line(p.get("storage")),
     "",
     "## Overview",
     "",

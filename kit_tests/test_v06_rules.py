@@ -356,7 +356,7 @@ def test_l39_template_skill_and_new_project(tmp_path, capsys, compute):
   assert "| `cpu_working_threads` |" in skill and "python -m eegharness.compute templog" in skill
   assert "`OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS`" in skill
   new_project.main([str(tmp_path / "p"), "--name", "p"])
-  assert "set cpu_working_threads in" in capsys.readouterr().out
+  assert "set cpu_working_threads and memory_max_gb in" in capsys.readouterr().out
 
 
 def _sys_tree(root, zones=(), hwmon=()):
@@ -397,3 +397,91 @@ def test_l39_templog_writes_rows_until_the_driver_exits(tmp_path, compute):
   p = subprocess.Popen([sys.executable, "-c", "pass"])
   p.wait()
   assert compute.templog(tmp_path / "t2.tsv", interval=0, pid=p.pid, sys_root=s, nvidia_smi_output="") == 1
+
+
+# L54 + L44: memory limit and data present before each batch; where the recordings are stored.
+
+def _batch_project(tmp_path, memory, n_files=3, link=True):
+  p = tmp_path / "proj"
+  rec = tmp_path / "drive" / "Habla imaginada con 5 palabras"
+  for i in range(n_files):
+    (rec / f"S{i + 1}").mkdir(parents=True, exist_ok=True)
+    (rec / f"S{i + 1}" / "1_HI.ebr").write_bytes(b"\0" * 8)
+  (p / "docs").mkdir(parents=True)
+  (p / "data").mkdir()
+  (p / "data" / "raw").symlink_to(rec) if link else None
+  text = (T / "docs" / "COMPUTE.md").read_text().replace("cpu_working_threads:\n", "cpu_working_threads: 8\n")
+  if memory is not None:
+    text = text.replace("memory_max_gb:\n", f"memory_max_gb: {memory}\n")
+  (p / "docs" / "COMPUTE.md").write_text(text)
+  (p / "docs" / "DATA_PROFILE.json").write_text(json.dumps({"files": [{"path": f"S{i + 1}/1_HI.ebr"} for i in range(3)]}))
+  return p, rec
+
+
+MEMINFO = "MemTotal:       23000000 kB\nMemAvailable:   {} kB\n"
+
+
+def test_l54_batch_size_and_memory_limit(tmp_path, compute):
+  assert compute.batch_size(5.7, 18) == 3
+  p, _ = _batch_project(tmp_path, 18)
+  ok = MEMINFO.format(30_000_000)  # 30.7 GB available: only the limit refuses 4 parts
+  assert compute.precheck(p, 3, 5.7, meminfo=ok) == []
+  assert compute.precheck(p, 4, 5.7, meminfo=ok) == ["4 parts x 5.7 GB = 22.80 GB > memory_max_gb = 18 (at most 3 parts, L54)"]
+  low = compute.precheck(p, 3, 5.7, meminfo=MEMINFO.format(6_000_000))
+  assert low == ["available memory 6.14 GB < 17.10 GB needed; wait or stop (L54)"]
+
+
+def test_l54_unset_memory_limit_refuses_and_template_has_no_default(tmp_path, compute):
+  assert compute.parse_limits((T / "docs" / "COMPUTE.md").read_text())["memory_max_gb"] is None
+  p, _ = _batch_project(tmp_path, None)
+  assert compute.precheck(p, 1, 5.7, meminfo=MEMINFO.format(20_000_000)) == [
+    "docs/COMPUTE.md: memory_max_gb is not set (Sebastian sets it, L54)"]
+  r = subprocess.run([sys.executable, "-m", "eegharness.compute", "precheck", "--parts", "1", "--peak-gb", "5.7",
+                      "--root", str(p)], capture_output=True, text=True, cwd=KIT / "tools")
+  assert r.returncode == 1 and "STOP: docs/COMPUTE.md: memory_max_gb is not set" in r.stdout
+  skill = read(".claude/skills/compute-jobs/SKILL.md")
+  assert "| `memory_max_gb` |" in skill and "python -m eegharness.compute precheck --parts <b> --peak-gb <peak>" in skill
+  assert "`memory_max_gb` (memory the jobs may use together)" in read("CLAUDE.md")
+
+
+def test_l44_data_raw_must_resolve_with_every_profiled_file(tmp_path, compute):
+  p, rec = _batch_project(tmp_path, 18)
+  ok = MEMINFO.format(20_000_000)
+  rec.rename(rec.with_name("unmounted"))  # the drive is gone: the symlink dangles
+  probs = compute.precheck(p, 1, 5.7, meminfo=ok)
+  assert len(probs) == 1 and probs[0].startswith("data/raw -> ") and "does not resolve" in probs[0]
+  p2, rec2 = _batch_project(tmp_path / "b", 18, n_files=2)  # one profiled file absent
+  assert compute.precheck(p2, 1, 5.7, meminfo=ok) == [
+    "1 of 3 profiled files missing under data/raw (first: S3/1_HI.ebr); stop (L44)"]
+
+
+MOUNTINFO = ("22 1 259:4 / / rw,relatime shared:1 - ext4 /dev/nvme1n1p4 rw\n"
+             "481 22 8:1 / /media/user/USBDRIVE rw,nosuid,nodev,relatime shared:250 - exfat /dev/sda1 rw,uid=1000\n"
+             "482 22 8:17 / /media/user/My\\040Disk rw - vfat /dev/sdb1 rw\n")
+
+
+def test_l44_profile_records_the_mount_of_the_resolved_data_folder(tmp_path):
+  from eegprofile.storage import storage
+  sysfs = tmp_path / "sys"
+  (sysfs / "class" / "block" / "sda").mkdir(parents=True)
+  (sysfs / "class" / "block" / "sda" / "removable").write_text("1\n")
+  st = storage("/media/user/USBDRIVE/Habla imaginada con 5 palabras", mountinfo=MOUNTINFO, sys_root=sysfs)
+  assert (st["mount_point"], st["fs_type"], st["source"], st["removable"], st["under_media"]) == (
+    "/media/user/USBDRIVE", "exfat", "/dev/sda1", True, True)
+  assert storage("/media/user/My Disk/x", mountinfo=MOUNTINFO, sys_root=sysfs)["mount_point"] == "/media/user/My Disk"
+  home = storage("/home/u/proj", mountinfo=MOUNTINFO, sys_root=sysfs)
+  assert (home["mount_point"], home["fs_type"], home["removable"], home["under_media"]) == ("/", "ext4", None, False)
+  target = tmp_path / "rec"
+  target.mkdir()
+  (tmp_path / "raw").symlink_to(target)
+  assert storage(tmp_path / "raw", mountinfo=MOUNTINFO)["resolved"] == str(target.resolve())
+
+
+def test_l44_data_profile_json_and_md_carry_the_storage(tmp_path):
+  from eegprofile.profile import profile_dataset
+  from eegprofile.report import to_markdown
+  (tmp_path / "rec").mkdir()
+  (tmp_path / "rec" / "notes.txt").write_text("x")
+  prof = profile_dataset(tmp_path / "rec", use_mne=False)
+  assert set(prof["storage"]) == {"path", "resolved", "mount_point", "fs_type", "source", "removable", "under_media"}
+  assert "Storage: `" in to_markdown(prof) and "filesystem `" in to_markdown(prof)

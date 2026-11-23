@@ -251,6 +251,11 @@ remote hardware, goes to Sebastian as exact commands with expected runtime and t
 outputs to return. Long jobs
 save each fold with its configuration (`eegharness.folds`); a rerun with a different
 configuration on the same folder is refused. Runtime and device are reported per job.
+`docs/COMPUTE.md` also sets `cpu_working_threads` (threads per job of a long run, enforced by
+`eegpipe.settings.validate`; L39) and `memory_max_gb` (memory the jobs may use together): the plan
+states each part's peak memory from the development run, a batch of b parts runs only if b × peak
+fits, and before each batch `python -m eegharness.compute precheck` confirms available memory and
+that `data/raw` resolves with every profiled file (L54, L44).
 Every measurement and reporting output records its compute time (`record_compute_time`; no computation: null with a reason); the auditor runs `python -m eegharness.outputs check` on the outputs a result cites. *Incident: an audit found the runtimes of the measurement outputs unmeasured (L37).*
 
 **G23. Derivations go through committed, tested tools.** Any number derived for a handoff

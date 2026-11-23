@@ -15,6 +15,7 @@ description: How long and GPU jobs are planned, smoke-tested, run (by the orches
 | `gpu_max_minutes` | longest local GPU job the orchestrator may run itself (0 = none) |
 | `gpu_device` | which local GPU, if any |
 | `cpu_working_threads` | threads every job of a long run uses (n_jobs, OMP/MKL/OpenBLAS, torch); below the core limit, for the machine's cooling (L39) |
+| `memory_max_gb` | memory the orchestrator's jobs may use together; no default, nothing runs in batches while unset (L54) |
 
 Agents never edit `docs/COMPUTE.md`. Missing file or key = 0 (nothing runs locally
 beyond smoke tests).
@@ -47,6 +48,13 @@ otherwise Sebastian does.
 - If the job exceeds its stated runtime by more than 50 %, stop it, record it in
   `log.md`, and hand it to Sebastian with the resumable command.
 - Record device, runtime and exit status in `log.md`; provenance (G9) records the device.
+- **Memory and data before each batch (L54, L44).** `docs/COMPUTE.md` sets `memory_max_gb`, the
+  memory the orchestrator's jobs may use together (set by Sebastian). The plan states each part's
+  peak memory, measured in the development run (maximum RSS, e.g. `/usr/bin/time -v`); a batch runs
+  b parts at once only if b × peak fits `memory_max_gb`, and before each batch the driver checks
+  that available memory is at least that sum, and waits or stops if not. The same check confirms
+  `data/raw` resolves and that every profiled file is present, and stops otherwise:
+  `python -m eegharness.compute precheck --parts <b> --peak-gb <peak>` (exit 1 = do not start).
 - **Threads and temperature (L39).** A core limit is not a thermal limit. Every job of a long run
   uses `cpu_working_threads` threads: settings `n_jobs` at most that (`eegpipe.settings.validate`
   refuses more, and refuses while it is unset), and the driver exports `OMP_NUM_THREADS`,

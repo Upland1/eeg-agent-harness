@@ -9,6 +9,13 @@ temperature next to its job table (``templog``).
     python -m eegharness.compute temps                                   # one sample: utc, cpu_c, gpu_c
     python -m eegharness.compute templog --out <file.tsv> [--interval 60] [--pid PID]
         # appends one row per interval (utc, cpu_c, gpu_c) until PID exits (or until stopped)
+    python -m eegharness.compute precheck --parts B --peak-gb G [--root .]   # before each batch; exit 1 = stop
+
+0.6.0, L54 and L44: ``memory_max_gb`` (no default; Sebastian sets it) is the memory the orchestrator's jobs may
+use together. ``precheck`` runs before each batch of B parts whose measured peak memory (maximum RSS in the
+development run) is G GB each: it refuses while memory_max_gb is unset, when B x G exceeds it, when the
+available memory (MemAvailable) is below B x G, when ``data/raw`` does not resolve, and when a file the
+profile (``docs/DATA_PROFILE.json``) lists is missing (a removable drive unmounted or remounted elsewhere).
 
 Temperatures are read from ``/sys/class/thermal`` and ``/sys/class/hwmon`` (CPU: the package sensor if there is
 one, else the maximum) and ``nvidia-smi`` (GPU); an absent source is written as ``not available``, never
@@ -95,6 +102,64 @@ def thread_problems(cfg, limits):
     elif n > w:
       probs.append(f"{path} = {n} > cpu_working_threads = {w} (docs/COMPUTE.md, L39)")
   return probs
+
+
+# Memory and data before each batch (L54, L44) -------------------------------------------------------------
+
+def batch_size(peak_gb, memory_max_gb):
+  """The largest number of parts of ``peak_gb`` each that fit in ``memory_max_gb`` together."""
+  if not peak_gb or peak_gb <= 0:
+    raise ValueError("peak_gb must be > 0 (measured in the development run)")
+  return int(float(memory_max_gb) // float(peak_gb) + 1e-9)
+
+
+def mem_available_gb(meminfo=None):
+  """MemAvailable in GB (10^9 bytes) from /proc/meminfo text; None if it cannot be read."""
+  if meminfo is None:
+    try:
+      meminfo = Path("/proc/meminfo").read_text()
+    except OSError:
+      return None
+  m = re.search(r"^MemAvailable:\s+(\d+)\s*kB", meminfo, re.M)
+  return int(m.group(1)) * 1024 / 1e9 if m else None
+
+
+def data_problems(root="."):
+  """data/raw resolves and holds every file the profile lists (L44)."""
+  root = Path(root)
+  raw = root / "data" / "raw"
+  if raw.is_symlink() and not raw.exists():
+    return [f"data/raw -> {os.readlink(raw)} does not resolve (drive unmounted or moved?); stop (L44)"]
+  if not raw.is_dir():
+    return ["data/raw does not exist or is not a folder; stop (L44)"]
+  prof = root / "docs" / "DATA_PROFILE.json"
+  if not prof.is_file():
+    return ["docs/DATA_PROFILE.json not found: the files the run needs cannot be checked (L44)"]
+  import json
+  listed = [f["path"] for f in json.loads(prof.read_text()).get("files", [])]
+  missing = [p for p in listed if not (raw / p).is_file()]
+  if missing:
+    return [f"{len(missing)} of {len(listed)} profiled files missing under data/raw (first: {missing[0]}); stop (L44)"]
+  return []
+
+
+def precheck(root=".", parts=1, peak_gb=None, meminfo=None):
+  """Problems that stop a batch of ``parts`` parts of ``peak_gb`` GB each (L54, L44); [] = go."""
+  limits = read_limits(root) or {}
+  probs = []
+  mx = limits.get("memory_max_gb")
+  need = None if peak_gb is None else int(parts) * float(peak_gb)
+  if not isinstance(mx, (int, float)) or isinstance(mx, bool) or mx <= 0:
+    probs.append("docs/COMPUTE.md: memory_max_gb is not set (Sebastian sets it, L54)")
+  elif need is None:
+    probs.append("the parts' peak memory is not given (measure it in the development run, L54)")
+  elif need > mx + 1e-9:
+    probs.append(f"{parts} parts x {peak_gb} GB = {need:.2f} GB > memory_max_gb = {mx} "
+                 f"(at most {batch_size(peak_gb, mx)} parts, L54)")
+  avail = mem_available_gb(meminfo)
+  if need is not None and avail is not None and avail + 1e-9 < need:
+    probs.append(f"available memory {avail:.2f} GB < {need:.2f} GB needed; wait or stop (L54)")
+  return probs + data_problems(root)
 
 
 # Temperatures --------------------------------------------------------------------------------------------
@@ -185,7 +250,18 @@ def main(argv=None) -> int:
   tl.add_argument("--interval", type=float, default=60.0)
   tl.add_argument("--pid", type=int)
   tl.add_argument("--n", type=int)
+  pc = sub.add_parser("precheck")
+  pc.add_argument("--root", default=".")
+  pc.add_argument("--parts", type=int, required=True)
+  pc.add_argument("--peak-gb", type=float, required=True)
   a = ap.parse_args(argv)
+  if a.cmd == "precheck":
+    probs = precheck(a.root, a.parts, a.peak_gb)
+    for p in probs:
+      print(f"STOP: {p}")
+    if not probs:
+      print(f"PASS: {a.parts} parts x {a.peak_gb} GB, data/raw present")
+    return 1 if probs else 0
   if a.cmd == "limits":
     lim = read_limits(a.root)
     if lim is None:
