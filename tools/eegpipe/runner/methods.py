@@ -193,7 +193,7 @@ def seed_mean(rows, keys):
 
 def run(cfg, out, root="."):
   from eegpipe import settings as st
-  st.validate(cfg, require_sources=False)
+  st.validate(cfg, require_sources=False, root=root)
   part = cfg["stage"]["part"]
   names = list(cfg["classes"])
   adapter = load_adapter(cfg, root)

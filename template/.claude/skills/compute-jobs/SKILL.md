@@ -14,6 +14,7 @@ description: How long and GPU jobs are planned, smoke-tested, run (by the orches
 | `cpu_max_minutes` | longest CPU job the orchestrator may run itself |
 | `gpu_max_minutes` | longest local GPU job the orchestrator may run itself (0 = none) |
 | `gpu_device` | which local GPU, if any |
+| `cpu_working_threads` | threads every job of a long run uses (n_jobs, OMP/MKL/OpenBLAS, torch); below the core limit, for the machine's cooling (L39) |
 
 Agents never edit `docs/COMPUTE.md`. Missing file or key = 0 (nothing runs locally
 beyond smoke tests).
@@ -46,6 +47,14 @@ otherwise Sebastian does.
 - If the job exceeds its stated runtime by more than 50 %, stop it, record it in
   `log.md`, and hand it to Sebastian with the resumable command.
 - Record device, runtime and exit status in `log.md`; provenance (G9) records the device.
+- **Threads and temperature (L39).** A core limit is not a thermal limit. Every job of a long run
+  uses `cpu_working_threads` threads: settings `n_jobs` at most that (`eegpipe.settings.validate`
+  refuses more, and refuses while it is unset), and the driver exports `OMP_NUM_THREADS`,
+  `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS` and sets torch's threads to it. Every long-run driver
+  logs CPU and GPU temperature once a minute next to its job table:
+  `python -m eegharness.compute templog --out <run log folder>/temperature.tsv --interval 60 --pid <driver pid>`
+  (in the background, collected with the job). Report the maximum per part; a reading within 5 °C
+  of the critical limit goes to Sebastian.
 
 ## Handing a job to Sebastian
 

@@ -296,3 +296,104 @@ def test_l55_g2_names_both_runs():
   assert "`pytest tests/` (the default run, which leaves out tests marked `slow`) runs on CPU in about a minute" in g2
   assert "the full suite, `pytest tests/ -m \"\"`, runs before every freeze and commit and in the auditor's check (L55)" in g2
   assert "-p no:cacheprovider -m \"\"` (the full suite" in read(".claude/agents/methods-auditor.md")
+
+
+# L39: working threads below the core limit, enforced on the settings; a temperature log next to the job table.
+
+from eegpipe import settings as eeg_settings  # noqa: E402
+
+
+def _cfg(n_jobs=1):
+  from test_eegpipe_runner import settings_for  # a complete settings dict that validates
+  cfg = settings_for()
+  cfg["permutation"]["n_jobs"] = n_jobs
+  return cfg
+
+
+@pytest.fixture()
+def compute():
+  from eegharness import compute as c
+  return c
+
+
+def _compute_md(root, threads):
+  (root / "docs").mkdir(parents=True, exist_ok=True)
+  text = (T / "docs" / "COMPUTE.md").read_text()
+  if threads is not None:
+    text = text.replace("cpu_working_threads:\n", f"cpu_working_threads: {threads}\n")
+  (root / "docs" / "COMPUTE.md").write_text(text)
+
+
+def _thread_refusals(cfg, root):
+  try:
+    assert eeg_settings.validate(cfg, require_sources=False, root=root) == []
+    return []
+  except eeg_settings.SettingsError as e:
+    return [p for p in str(e).split("; ") if "cpu_working_threads" in p]
+
+
+def test_l39_validate_refuses_n_jobs_above_working_threads(tmp_path):
+  _compute_md(tmp_path, 8)
+  assert _thread_refusals(_cfg(12), tmp_path) == ["permutation.n_jobs = 12 > cpu_working_threads = 8 (docs/COMPUTE.md, L39)"]
+  assert _thread_refusals(_cfg(-1), tmp_path) == ["permutation.n_jobs = -1: all cores, at most cpu_working_threads = 8 (docs/COMPUTE.md, L39)"]
+  assert _thread_refusals(_cfg(8), tmp_path) == [] and _thread_refusals(_cfg(None), tmp_path) == []
+  cfg = _cfg(4)
+  cfg.setdefault("networks", {})["torch_threads"] = 16
+  assert _thread_refusals(cfg, tmp_path) == ["networks.torch_threads = 16 > cpu_working_threads = 8 (docs/COMPUTE.md, L39)"]
+
+
+def test_l39_unset_working_threads_is_refused_and_no_compute_md_checks_nothing(tmp_path, compute):
+  _compute_md(tmp_path / "p", None)
+  assert compute.read_limits(tmp_path / "p")["cpu_working_threads"] is None
+  assert _thread_refusals(_cfg(1), tmp_path / "p") == ["docs/COMPUTE.md: cpu_working_threads is not set (Sebastian sets it, L39)"]
+  assert _thread_refusals(_cfg(12), tmp_path / "none") == []  # not a project: no COMPUTE.md
+
+
+def test_l39_template_skill_and_new_project(tmp_path, capsys, compute):
+  lim = compute.parse_limits((T / "docs" / "COMPUTE.md").read_text())
+  assert "cpu_working_threads" in lim and lim["cpu_working_threads"] is None
+  skill = read(".claude/skills/compute-jobs/SKILL.md")
+  assert "| `cpu_working_threads` |" in skill and "python -m eegharness.compute templog" in skill
+  assert "`OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS`" in skill
+  new_project.main([str(tmp_path / "p"), "--name", "p"])
+  assert "set cpu_working_threads in" in capsys.readouterr().out
+
+
+def _sys_tree(root, zones=(), hwmon=()):
+  for i, (kind, milli) in enumerate(zones):
+    z = root / "class" / "thermal" / f"thermal_zone{i}"
+    z.mkdir(parents=True)
+    (z / "type").write_text(kind + "\n")
+    (z / "temp").write_text(f"{milli}\n")
+  for i, (name, sensors) in enumerate(hwmon):
+    h = root / "class" / "hwmon" / f"hwmon{i}"
+    h.mkdir(parents=True)
+    (h / "name").write_text(name + "\n")
+    for j, (label, milli) in enumerate(sensors, 1):
+      (h / f"temp{j}_label").write_text(label + "\n")
+      (h / f"temp{j}_input").write_text(f"{milli}\n")
+  return root
+
+
+def test_l39_temperatures_from_planted_sysfs_and_nvidia_smi(tmp_path, compute):
+  s = _sys_tree(tmp_path / "a", zones=[("acpitz", 51000), ("x86_pkg_temp", 95000)])
+  assert compute.cpu_temperature(s) == 95.0  # the package sensor, not the hotter-or-colder other zone
+  s = _sys_tree(tmp_path / "b", zones=[("acpitz", 40000)],
+                hwmon=[("coretemp", [("Package id 0", 98000), ("Core 0", 99000)])])
+  assert compute.cpu_temperature(s) == 98.0
+  s = _sys_tree(tmp_path / "c", zones=[("acpitz", 40000), ("pch", 61000)])
+  assert compute.cpu_temperature(s) == 61.0  # no package sensor: the maximum
+  assert compute.gpu_temperature("87\n") == 87.0 and compute.gpu_temperature("54\n71\n") == 71.0
+  row = compute.sample(tmp_path / "empty", nvidia_smi_output="")
+  assert row["cpu_c"] == "not available" and row["gpu_c"] == "not available"
+
+
+def test_l39_templog_writes_rows_until_the_driver_exits(tmp_path, compute):
+  s = _sys_tree(tmp_path / "s", zones=[("x86_pkg_temp", 66000)])
+  out = tmp_path / "logs" / "temperature.tsv"
+  assert compute.templog(out, interval=0, n=3, sys_root=s, nvidia_smi_output="70") == 3
+  lines = out.read_text().splitlines()
+  assert lines[0] == "utc\tcpu_c\tgpu_c" and len(lines) == 4 and all(l.endswith("\t66.0\t70.0") for l in lines[1:])
+  p = subprocess.Popen([sys.executable, "-c", "pass"])
+  p.wait()
+  assert compute.templog(tmp_path / "t2.tsv", interval=0, pid=p.pid, sys_root=s, nvidia_smi_output="") == 1

@@ -9,7 +9,8 @@ SOURCE in ``sources`` (dotted key -> where it came from):
                              confirmed; the plan must confirm it (then "profile:<name>, confirmed in
                              plan") or change it, with a reason (G17 i). ``unconfirmed`` lists them;
                              the plan audit fails while any is left.
-``validate`` refuses: a missing required key, an unknown top-level key, a family section that is
+``validate`` refuses: worker or thread counts above ``cpu_working_threads`` of the project's
+``docs/COMPUTE.md`` (or that value unset; L39), a missing required key, an unknown top-level key, a family section that is
 enabled but incomplete, inconsistent class/contrast/seed settings, fs-derived sample counts that
 do not match fs, and (with ``require_sources``) a required key without a source. It never fills
 anything in silently.
@@ -69,17 +70,21 @@ def unconfirmed(cfg):
                 if str(v).startswith("profile:") and "confirmed in plan" not in str(v))
 
 
-def validate(cfg, require_sources=True):
-  """Raise SettingsError listing every problem; return the list of unconfirmed profile defaults."""
-  probs = []
+def validate(cfg, require_sources=True, root="."):
+  """Raise SettingsError listing every problem; return the list of unconfirmed profile defaults.
+
+  With a ``docs/COMPUTE.md`` under ``root`` (a project), every worker or thread count in the settings (``n_jobs``,
+  torch thread keys) must be at most its ``cpu_working_threads``, which must be set (0.6.0, L39)."""
+  from eegharness.compute import read_limits, thread_problems
+  probs = list(thread_problems(cfg, read_limits(root))) if root is not None else []
   unknown = sorted(set(cfg) - TOP_KEYS)
   if unknown:
     probs.append(f"unknown top-level keys {unknown}")
   for k in REQUIRED:
     if k not in cfg:
       probs.append(f"missing required key {k!r}")
-  if probs:
-    raise SettingsError("; ".join(probs))
+  if any(p.startswith(("unknown top-level", "missing required")) for p in probs):
+    raise SettingsError("; ".join(p for p in probs if p.startswith(("unknown top-level", "missing required"))))
   k = len(cfg["classes"])
   if k < 2 or len(set(cfg["classes"])) != k:
     probs.append("classes must be >= 2 distinct names")
