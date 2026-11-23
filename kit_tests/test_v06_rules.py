@@ -92,3 +92,24 @@ def test_l48_gates_read_the_template_box():
               "agents/pipeline-engineer.md"):
     assert gate in (T / ".claude" / rel).read_text()
   assert "the template's box ticked and dated" in read("CLAUDE.md")
+
+
+# L40: kit rule G27, the wording the cold-pressor project approved (BACKLOG L40).
+
+L40 = ("A group statistic takes only estimates that exist at that sample size. Extends G20 (a). A per-participant "
+       "(or per-unit) estimate enters a group statistic only if its estimator is defined and non-degenerate at that "
+       "unit's sample size; the minimum is derived from the estimator and tested (a test at the minimum and one "
+       "below it), and inclusion is decided by the estimator's own criterion, never by another method's validity "
+       "flag. Every unit left out is listed with its reason in that runner's output.")
+
+
+def test_l40_g27_is_a_kit_rule_checked_by_the_auditor():
+  claude = read("CLAUDE.md")
+  g27 = claude.split("**G27. ", 1)[1].split("**Rules grow from experience.**", 1)[0]
+  assert norm("**G27. " + g27).startswith("**G27. A group statistic takes only estimates that exist at that sample size.** ")
+  assert L40.split(". ", 1)[1] in g27 and "(L40)" in g27
+  assert "proposes a new rule (G28, G29, …)" in claude
+  assert f"10. G27: {L40}" in read(".claude/agents/methods-auditor.md")
+  assert "| G27 " in (T / "agent_runs" / "_templates" / "05_audit.md").read_text()
+  assert "(G27)" in read(".claude/skills/connectivity/SKILL.md")
+  assert L40 in norm((KIT / "BACKLOG.md").read_text())

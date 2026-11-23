@@ -3,7 +3,7 @@ name: connectivity
 description: Checklist for any plan, code, test, audit or result that estimates functional connectivity (coherence, PLV, wPLI, imaginary coherency, Granger/PDC, correlation) or tests it statistically (permutation tests, FDR, network-based statistic, graph measures). Read it when a plan uses connectivity; each agent applies its part.
 ---
 
-# Connectivity checklist (CLAUDE.md G20, G13, G12, G21)
+# Connectivity checklist (CLAUDE.md G20, G27, G13, G12, G21)
 
 Every item is answered with evidence (`path:line`, plan section or output file). The kit
 gives unit-level permutation (`eegharness.permutation`) and grouped splits; estimators,
@@ -13,7 +13,9 @@ FDR and NBS are project code, built and tested as below.
 
 - [ ] **Estimator and its bias.** Which estimator, on which segments, at what sample
   size. Conditions compared at matched sample sizes, or estimated once per condition over
-  concatenated data. Never average per-segment estimates of a biased estimator (G20 a).
+  concatenated data. Never average per-segment estimates of a biased estimator (G20 a). A unit
+  enters a group statistic only if the estimator is defined at its sample size; the minimum is
+  tested, and every unit left out is listed with its reason (G27).
 - [ ] **Phase.** Taken by a method valid for the segment length (e.g. from the
   cross-spectral density); filtering on continuous data before cutting (G20 b, G21).
 - [ ] **Baseline.** Same band, same estimator, same channels as the stimulus condition.

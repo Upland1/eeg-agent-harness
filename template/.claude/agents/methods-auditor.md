@@ -45,7 +45,7 @@ FAIL if a design error would reach code. Append `## Round N` on re-audit.
 0. Run `git log --oneline <base>..<branch>`, `git diff <base>..<branch>
    --stat` and `python -m pytest tests/ -q -p no:cacheprovider` yourself
    and record them under "Commands run".
-1. For each rule G1–G26 in CLAUDE.md (and any G27+), find the code that could
+1. For each rule G1–G27 in CLAUDE.md (and any G28+), find the code that could
    break it and give PASS / FAIL / CONCERN / N/A with `path:line` evidence.
    Open every line you cite; never cite from memory.
 2. FAIL = the rule is broken or a result could be wrong without an error.
@@ -75,8 +75,9 @@ FAIL if a design error would reach code. Append `## Round N` on re-audit.
    G17–G22: the checklists' audit items, with evidence.
 9. G26: Evidence for a design decision is a check that would have come out differently if the decision were wrong; a decision that cites a test states exactly what the test asserts (the alternatives it rules out and the limits it checks) and nothing beyond; the auditor compares the entry with the test's assertions. For each
    decision entry that cites a test, list what the test asserts and FAIL any claim beyond it.
-10. Data handling: Committed files never quote or paraphrase a participant's own answers, comments or free text, or personal details from forms; protocol facts from such documents are stated in the agent's own words, without per-participant content; the paradigm-analyst and the auditor check it.
-11. Check the diff for data files, `CLAUDE.md`, `.claude/`, `.harness/`,
+10. G27: A group statistic takes only estimates that exist at that sample size. Extends G20 (a). A per-participant (or per-unit) estimate enters a group statistic only if its estimator is defined and non-degenerate at that unit's sample size; the minimum is derived from the estimator and tested (a test at the minimum and one below it), and inclusion is decided by the estimator's own criterion, never by another method's validity flag. Every unit left out is listed with its reason in that runner's output. For every group statistic, find the minimum sample size its tests derive and check that inclusion uses that criterion and that the runner lists each unit left out.
+11. Data handling: Committed files never quote or paraphrase a participant's own answers, comments or free text, or personal details from forms; protocol facts from such documents are stated in the agent's own words, without per-participant content; the paradigm-analyst and the auditor check it.
+12. Check the diff for data files, `CLAUDE.md`, `.claude/`, `.harness/`,
    `agent_runs/`, or mentions of Claude.
 
 ## Results check (after 06_results.md, G23)

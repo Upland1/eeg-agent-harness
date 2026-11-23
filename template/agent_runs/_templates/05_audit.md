@@ -39,7 +39,8 @@ Verdict: PASS / FAIL
 | G24 `eegpipe/` untouched; gaps are new project modules with tests | | |
 | G25 Confirmatory outputs from the frozen commit only; selection label-free; refusals logged | | |
 | G26 Each decision claims only what its test asserts; evidence could have failed | | |
-| G27+ Rules added from later incidents | | |
+| G27 Group statistics take only estimates defined at the unit's sample size; units left out listed | | |
+| G28+ Rules added from later incidents | | |
 | 02b_plan_audit.md required changes were made | | |
 | Tests cover every change in 03 | | |
 | Changes match 02_plan.md | | |

@@ -286,8 +286,11 @@ part was nearly rerun at a different commit (L28; methods-port audit C4).*
 **G26. Evidence must be able to fail.** Evidence for a design decision is a check that would have come out differently if the decision were wrong; a decision that cites a test states exactly what the test asserts (the alternatives it rules out and the limits it checks) and nothing beyond; the auditor compares the entry with the test's assertions. *Incident: a decision claimed filter limits and
 alternatives its test did not check; three audit rounds to make the entry and the test agree (L34).*
 
+**G27. A group statistic takes only estimates that exist at that sample size.** Extends G20 (a). A per-participant (or per-unit) estimate enters a group statistic only if its estimator is defined and non-degenerate at that unit's sample size; the minimum is derived from the estimator and tested (a test at the minimum and one below it), and inclusion is decided by the estimator's own criterion, never by another method's validity flag. Every unit left out is listed with its reason in that runner's output. *Incident: a connectivity group step selected participants by a classifier's
+validity flag and left out one whose estimate was a structural zero at one trial, with no reason row (L40).*
+
 **Rules grow from experience.** When a test or the auditor catches a new kind of mistake,
-the orchestrator writes up the incident and proposes a new rule (G27, G28, …). Sebastian
+the orchestrator writes up the incident and proposes a new rule (G28, G29, …). Sebastian
 approves it before it is added here, with a one-line reference to the incident. Rules
 that apply to any EEG study are also proposed to the harness (next version, never the
 running one).

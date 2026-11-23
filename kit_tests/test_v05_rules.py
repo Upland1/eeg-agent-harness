@@ -86,7 +86,7 @@ def test_l34_g26_is_a_kit_rule_checked_by_the_auditor_and_the_audit_template():
   assert g26.startswith("**G26. Evidence must be able to fail.** ") and WORDING["L34"] in g26
   assert f"9. G26: {WORDING['L34']}" in read(".claude/agents/methods-auditor.md")
   assert "| G26 " in (T / "agent_runs" / "_templates" / "05_audit.md").read_text()
-  assert "proposes a new rule (G27, G28, …)" in norm((T / "CLAUDE.md").read_text())
+  assert "proposes a new rule (G28, G29, …)" in norm((T / "CLAUDE.md").read_text())  # G27 is a kit rule from 0.6.0 (L40)
 
 
 def test_l35_only_explicit_answers_are_logged_in_g16():

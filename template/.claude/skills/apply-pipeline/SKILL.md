@@ -44,7 +44,7 @@ C. **Plan** (pipeline-engineer, `02_plan.md` + the section of
    within `docs/COMPUTE.md`, longer ones as exact commands); what is exploratory.
 
 D. **Plan audit** (methods-auditor, `02b_plan_audit.md` with the rows of
-   `_templates/apply_pipeline/02b_audit_rows.md`): G1-G26; every profile default confirmed;
+   `_templates/apply_pipeline/02b_audit_rows.md`): G1-G27; every profile default confirmed;
    unit and strata argued (G13); development and confirmatory data disjoint (G19); label
    scheme matches PARADIGM. FAIL -> back to C. **STOP: Sebastian approves the plan and the
    settings.**
