@@ -28,6 +28,10 @@ then one row per job with ``job``, ``start_utc``, ``end_utc`` (``YYYYMMDDTHHMMSS
 reads the kernel's ``PM: suspend entry`` / ``PM: suspend exit`` lines (``journalctl -o short-iso``) and
 subtracts their overlap with each job, giving active time. CPU time here is the wall time of CPU jobs,
 not CPU seconds summed over cores. Failed jobs (rc != 0) are counted: they used the machine.
+
+Waits. Per phase, the time between jobs (a gap in the union of its job intervals) of at least
+``--min-wait-h`` hours (default 1) is listed with its start, end, length and the suspended part of it: the
+time a run stood still between jobs, e.g. overnight or until a human restarted it. Waits are not compute time.
 """
 
 import argparse
@@ -149,7 +153,23 @@ def agent_cost(stream_files):
   return {"sessions": sessions, "total_usd": sum(s["usd"] or 0.0 for s in sessions.values())}
 
 
-def compute(run_logs, suspends):
+def waits(jobs, suspends, min_s=3600.0):
+  """Gaps of at least ``min_s`` seconds between the merged job intervals: [{from, to, wait_s, suspended_s}]."""
+  merged = []
+  for s, e in sorted((j["start"], j["end"]) for j in jobs):
+    if merged and s <= merged[-1][1]:
+      merged[-1][1] = max(merged[-1][1], e)
+    else:
+      merged.append([s, e])
+  out = []
+  for (_, a1), (b0, _) in zip(merged, merged[1:]):
+    g = (b0 - a1).total_seconds()
+    if g >= min_s:
+      out.append({"from": a1.isoformat(), "to": b0.isoformat(), "wait_s": g, "suspended_s": overlap_s(a1, b0, suspends)})
+  return out
+
+
+def compute(run_logs, suspends, min_wait_s=3600.0):
   phases, totals = [], {}
   for label, path in run_logs:
     jobs = parse_run_log(path)
@@ -167,7 +187,8 @@ def compute(run_logs, suspends):
       for k in t:
         t[k] += d[k]
     phases.append({"label": label, "log": str(path), "first_start": min(j["start"] for j in jobs).isoformat() if jobs else None,
-                   "last_end": max(j["end"] for j in jobs).isoformat() if jobs else None, "by_device": by})
+                   "last_end": max(j["end"] for j in jobs).isoformat() if jobs else None, "by_device": by,
+                   "waits": waits(jobs, suspends, min_wait_s)})
   return {"phases": phases, "totals": totals}
 
 
@@ -218,6 +239,12 @@ def markdown(rep):
                  f"{hours(d['active_s'])} |")
   lines += ["", "CPU time = wall time of CPU jobs (not core-seconds). Device by job name (run_cost.device_of). "
             f"Suspend intervals subtracted: {len(rep['suspend_intervals'])}."]
+  ws = [(p["label"], w) for p in c["phases"] for w in p.get("waits", [])]
+  if ws:
+    lines += ["", f"## Waits between jobs (at least {rep['min_wait_h']:g} h; not compute time)", "",
+              "| Phase | From (UTC) | To (UTC) | Wait | Suspended |", "|---|---|---|---|---|"]
+    for label, w in ws:
+      lines.append(f"| {label} | {w['from']} | {w['to']} | {hours(w['wait_s'])} | {hours(w['suspended_s'])} |")
   return "\n".join(lines) + "\n"
 
 
@@ -228,6 +255,7 @@ def main(argv=None):
   ap.add_argument("--run-log", action="append", default=[], metavar="LABEL=PATH")
   ap.add_argument("--suspends", help="journalctl -o short-iso excerpt with 'PM: suspend entry/exit' lines")
   ap.add_argument("--transcripts", help="transcript folder (default: derived from the project path)")
+  ap.add_argument("--min-wait-h", type=float, default=1.0, help="list waits between jobs of at least this many hours")
   ap.add_argument("--out", required=True)
   a = ap.parse_args(argv)
   import cost_report
@@ -244,7 +272,7 @@ def main(argv=None):
   cr = cost_report.report(tdir)
   rep = {"project": str(project), "agent": agent_cost(streams) if streams else None, "tokens": cr["totals"],
          "tokens_by_agent": by_agent(cr["rows"]), "transcripts": str(tdir),
-         "compute": compute(logs, suspends),
+         "compute": compute(logs, suspends, a.min_wait_h * 3600), "min_wait_h": a.min_wait_h,
          "suspend_intervals": [[s.isoformat(), e.isoformat()] for s, e in suspends],
          "device_rule": "cuda if the job name matches " + NETWORK.pattern + ", else cpu"}
   inputs = [*streams, *(p for _, p in logs), *([a.suspends] if a.suspends else [])]

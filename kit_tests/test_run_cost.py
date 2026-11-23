@@ -192,3 +192,35 @@ def test_without_streams_no_usd_and_tokens_per_agent(tmp_path):
   assert "USD: not available" in md and "| methods-auditor | 2 | 4 | 64 | 60 | 1.00 h |" in md
   assert "| step H | cuda | 1 (0) | 0.04 h |" in md
   assert len(json.loads((out / "provenance.json").read_text())["inputs"]) == 1
+
+
+WAITS = ("job\tstart_utc\tend_utc\twall_s\texit\n"
+         "B_loro__batch_01 attempt killed 20261120T1759Z\t20261120T164933Z\t20261120T175909Z\t4176\t-1\n"
+         "B_loro__batch_01 attempt killed 20261121T0530Z\t20261121T050032Z\t20261121T053004Z\t1772\t-1\n"
+         "B_loro__batch_01\t20261121T185633Z\t20261121T192451Z\t1698\t0\n"
+         "B_loro__batch_02\t20261121T192522Z\t20261121T201341Z\t2899\t0\n"
+         "B_loro__gpu\t20261123T030610Z\t20261123T063103Z\t12293\t0\n")
+
+
+def test_waits_between_jobs_known_answer(tmp_path):
+  """The imagined-speech B_loro shape: two batch attempts stopped for low memory, each followed by a wait
+  until the restart; a 31 s gap between batches is not a wait; a suspend inside a wait is reported in it."""
+  t = tmp_path / "B_loro.tsv"
+  t.write_text(WAITS)
+  sus = [(datetime(2026, 11, 20, 18, 34, 46, tzinfo=timezone.utc), datetime(2026, 11, 20, 21, 47, 34, tzinfo=timezone.utc))]
+  ph = rc.compute([("B_loro", t)], sus)["phases"][0]
+  assert ph["by_device"]["cpu"]["failed"] == 2 and ph["by_device"]["cpu"]["wall_s"] == 4176 + 1772 + 1698 + 2899
+  assert [(w["from"], w["to"], w["wait_s"], w["suspended_s"]) for w in ph["waits"]] == [
+    ("2026-11-20T17:59:09+00:00", "2026-11-21T05:00:32+00:00", 39683.0, 11568.0),
+    ("2026-11-21T05:30:04+00:00", "2026-11-21T18:56:33+00:00", 48389.0, 0.0),
+    ("2026-11-21T20:13:41+00:00", "2026-11-23T03:06:10+00:00", 111149.0, 0.0)]
+  assert rc.compute([("B_loro", t)], sus, min_wait_s=50000)["phases"][0]["waits"][0]["wait_s"] == 111149.0
+  # overlapping jobs are merged before gaps are taken
+  assert rc.waits([{"start": datetime(2026, 1, 1, 0, tzinfo=timezone.utc), "end": datetime(2026, 1, 1, 5, tzinfo=timezone.utc)},
+                   {"start": datetime(2026, 1, 1, 1, tzinfo=timezone.utc), "end": datetime(2026, 1, 1, 2, tzinfo=timezone.utc)},
+                   {"start": datetime(2026, 1, 1, 6, tzinfo=timezone.utc), "end": datetime(2026, 1, 1, 7, tzinfo=timezone.utc)}],
+                  []) == [{"from": "2026-01-01T05:00:00+00:00", "to": "2026-01-01T06:00:00+00:00", "wait_s": 3600.0,
+                           "suspended_s": 0.0}]
+  md_rep = {"project": "p", "agent": None, "tokens": {"total_tokens": 0, "api_responses": 0}, "tokens_by_agent": {},
+            "compute": rc.compute([("B_loro", t)], sus), "suspend_intervals": sus, "min_wait_h": 1.0}
+  assert "| B_loro | 2026-11-20T17:59:09+00:00 | 2026-11-21T05:00:32+00:00 | 11.02 h | 3.21 h |" in rc.markdown(md_rep)
