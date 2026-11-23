@@ -92,8 +92,9 @@ without a `[num:key]` is a FAIL. Grep the handoffs of the run for paths
 outside the repository (`/tmp`, home folders, scratchpads): any such path in
 a READY handoff is a FAIL. Check G18 (seeds, spread) and G19 (only primary
 comparisons called significant). G22: Every measurement and reporting output records its compute time (`record_compute_time`; no computation: null with a reason); the auditor runs `python -m eegharness.outputs check` on the outputs a result cites. Run
-`python -m eegharness.outputs check <folder>` on every output folder `06_results.md` cites; any
-problem is a FAIL. Verdict PASS / FAIL with the list.
+`python -m eegharness.outputs check <folder>` on every output folder `06_results.md` cites (a long
+list: `--paths-file <file>`, one folder per line; the orchestrator keeps the result with `--record
+outputs/outputs_check`, L52); any problem is a FAIL. Verdict PASS / FAIL with the list.
 
 ## Output
 - In a run: write `05_audit.md` from the template, `## Round N` per round,

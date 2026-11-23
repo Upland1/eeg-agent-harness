@@ -591,3 +591,46 @@ def test_l49_two_kills_with_max_attempts_2_make_the_part_terminal(tmp_path):
   assert r.returncode == 1 and "skip (failed after 2 attempts)" in r.stdout
   st = _status(tmp_path)
   assert (st["status"], st["n_attempts"], st["n_interrupted"]) == ("interrupted", 2, 2)
+
+
+# L52: outputs check reads a paths file (one folder per line, spaces kept) and records its own result.
+
+def _output_with_time(parent, name):
+  from eegharness import outputs as eo
+  t = eo.ComputeTimer()
+  d = parent / name
+  d.mkdir(parents=True)
+  (d / "provenance.json").write_text(json.dumps({"command": "x"}))
+  eo.record_compute_time(d, t)
+  return d
+
+
+def test_l52_paths_file_keeps_spaces_and_a_whitespace_split_fails(tmp_path, capsys):
+  from eegharness import outputs as eo
+  good = _output_with_time(tmp_path / "run with spaces", "20261123T000000Z_abc1234")
+  lst = tmp_path / "paths.txt"
+  lst.write_text(f"{good}\n\n")
+  assert eo.main(["check", "--paths-file", str(lst)]) == 0
+  assert capsys.readouterr().out.splitlines()[-1] == "1 output folder(s), 0 problem(s)"
+  assert eo.read_paths_file(lst) == [str(good)]
+  # the project wrapper's reading (46f18c9: read_text().split()) gives two paths that do not exist
+  assert eo.main(["check", *lst.read_text().split()]) == 1
+  assert capsys.readouterr().out.splitlines()[-1] == "0 output folder(s), 0 problem(s)"
+
+
+def test_l52_record_writes_output_list_exit_code_and_real_command(tmp_path, capsys):
+  from eegharness import outputs as eo
+  good = _output_with_time(tmp_path / "outs a", "20261123T000000Z_abc1234")
+  bad = tmp_path / "outs b" / "20261123T000001Z_abc1234"
+  bad.mkdir(parents=True)
+  (bad / "provenance.json").write_text("{}")
+  lst = tmp_path / "paths.txt"
+  lst.write_text(f"{good}\n{bad}\n")
+  rec = tmp_path / "outputs" / "outputs_check"
+  assert eo.main(["check", "--paths-file", str(lst), "--record", str(rec), "--root", str(tmp_path)]) == 1
+  folder = next(rec.iterdir())
+  out = (folder / "check_output.txt").read_text().splitlines()
+  assert out[-2:] == ["2 output folder(s), 1 problem(s)", "exit 1"] and out[0].startswith(f"{bad}: compute_time not recorded")
+  assert (folder / "paths.txt").read_text() == lst.read_text()
+  prov = json.loads((folder / "provenance.json").read_text())
+  assert "eegharness.outputs check --paths-file" in json.dumps(prov["command"]) and prov["compute_time"]["wall_s"] >= 0

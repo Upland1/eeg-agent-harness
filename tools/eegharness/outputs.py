@@ -20,6 +20,11 @@ records ``compute_time: null`` with a reason (``record_no_compute``). Nothing is
 output that never recorded it fails the check:
 
     python -m eegharness.outputs check outputs/            # every provenance.json below; exit 1 on a problem
+    python -m eegharness.outputs check --paths-file list.txt [--record outputs/outputs_check]
+
+``--paths-file``: one folder per line (spaces kept, blank lines ignored), for long lists; ``--record``: the
+check's printed lines, its exit code and the list are written into a new versioned folder with provenance and
+compute time (G9, G22), so no project needs its own wrapper (0.6.0, L52).
 """
 
 import hashlib
@@ -211,21 +216,46 @@ def check_compute_time(folder) -> list:
   return [f"{folder}: {p}" for p in _compute_problems(prov[COMPUTE_KEY], prov)]
 
 
+def read_paths_file(path) -> list:
+  """One path per line; spaces inside a line are part of the path; blank lines are ignored (L52)."""
+  return [l.rstrip("\r") for l in Path(path).read_text().splitlines() if l.strip()]
+
+
+def _check(paths) -> tuple:
+  folders = []
+  for p in map(Path, paths):
+    folders += sorted({f.parent for f in ([p / "provenance.json"] if (p / "provenance.json").is_file()
+                                          else p.rglob("provenance.json"))})
+  problems = [x for f in folders for x in check_compute_time(f)]
+  lines = problems + [f"{len(folders)} output folder(s), {len(problems)} problem(s)"]
+  return lines, (1 if problems or not folders else 0)
+
+
 def main(argv=None) -> int:
   ap = argparse.ArgumentParser(description="Check that output folders record their compute time.")
   sub = ap.add_subparsers(dest="cmd", required=True)
   c = sub.add_parser("check", help="every provenance.json under the given folders")
-  c.add_argument("paths", nargs="+")
-  a = ap.parse_args(argv)
-  folders = []
-  for p in map(Path, a.paths):
-    folders += sorted({f.parent for f in ([p / "provenance.json"] if (p / "provenance.json").is_file()
-                                          else p.rglob("provenance.json"))})
-  problems = [x for f in folders for x in check_compute_time(f)]
-  for x in problems:
+  c.add_argument("paths", nargs="*")
+  c.add_argument("--paths-file", help="a text file with one folder per line (spaces kept)")
+  c.add_argument("--record", metavar="OUT", help="also write the result into a new versioned folder under OUT")
+  c.add_argument("--root", default=".", help="project root for --record's provenance (commit)")
+  a = ap.parse_args(argv if argv is not None else sys.argv[1:])
+  paths = list(a.paths) + (read_paths_file(a.paths_file) if a.paths_file else [])
+  if not paths:
+    ap.error("give folders, --paths-file, or both")
+  timer = ComputeTimer() if a.record else None
+  lines, code = _check(paths)
+  for x in lines:
     print(x)
-  print(f"{len(folders)} output folder(s), {len(problems)} problem(s)")
-  return 1 if problems or not folders else 0
+  if a.record:
+    full = ["python", "-m", "eegharness.outputs"] + list(argv if argv is not None else sys.argv[1:])
+    out = new_output_dir(a.record, inputs=[a.paths_file] if a.paths_file else (), root=a.root, argv=full,
+                         params={"paths_file": a.paths_file, "n_paths": len(paths)})
+    (out / "paths.txt").write_text("".join(p + "\n" for p in paths))
+    (out / "check_output.txt").write_text("".join(x + "\n" for x in lines) + f"exit {code}\n")
+    record_compute_time(out, timer)
+    print(f"recorded: {out}")
+  return code
 
 
 if __name__ == "__main__":
