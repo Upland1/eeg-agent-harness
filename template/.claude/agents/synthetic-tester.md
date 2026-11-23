@@ -50,11 +50,13 @@ correct answer is known before the code runs (CLAUDE.md G2).
   leakage check fails on a shared group, planted signal learned and lost with
   shuffled labels, determinism per seed, estimator bias on noise, NBS/FDR
   known answers, smoke test of each long job.
-- Whole suite under about a minute on CPU.
+- Default run under about a minute on CPU; slow tests marked `slow` (G2).
 
 ## Running
 `.venv/bin/python -m pytest tests/ -q` (or `python -m pytest tests/ -q` if
 there is no `.venv`) and keep the output.
+Mark a test `@pytest.mark.slow` when it takes more than a few seconds, so the default run stays
+under about a minute (G2); report the default run and the full suite (`-m ""`) with their times.
 
 ## Output
 Write `04_tests.md` from the template: test ids, what each plants, expected

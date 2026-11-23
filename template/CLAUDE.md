@@ -66,8 +66,9 @@ without that argument.
 **G2. Known-answer tests.** Every new reader, estimator, feature, model or preprocessing
 step ships with a synthetic test in `tests/` whose correct answer is known in advance
 (a planted signal is recovered where it was planted; a file written and read back gives
-the same values; a known filter response is preserved). `pytest tests/` runs on CPU in
-about a minute with no real data. A test for a fix or for an index layout (reshape,
+the same values; a known filter response is preserved). `pytest tests/` (the default run,
+which leaves out tests marked `slow`) runs on CPU in about a minute with no real data; the full
+suite, `pytest tests/ -m ""`, runs before every freeze and commit and in the auditor's check (L55). A test for a fix or for an index layout (reshape,
 flatten, coefficient slicing, adjacency, channel order) must fail on the plausible buggy
 variant (wrong axis, contiguous instead of strided, crossing a trial, a fit that sees
 the test data, a no-op), and the test file shows that it does.

@@ -273,3 +273,26 @@ def test_l42_l46_onboard_runs_the_check_before_set_up():
   onboard = read(".claude/skills/onboard/SKILL.md")
   assert "0. **Inputs are the human's own words (L42, L46).** Run `python .harness/tools/check_inputs.py`. Do not start while it reports a finding" in onboard
   assert onboard.index("0. **Inputs are the human's own words") < onboard.index("1. **Set up.**")
+
+
+# L55 (option a): a `slow` marker, left out of the default run; the full suite with -m "".
+
+def test_l55_slow_tests_left_out_by_default_and_run_in_the_full_suite(tmp_path):
+  p = tmp_path / "proj"
+  new_project.main([str(p), "--name", "p"])
+  (p / "tests" / "test_speed.py").write_text(
+    "import pytest\n\ndef test_fast():\n  assert True\n\n@pytest.mark.slow\ndef test_slow():\n  assert True\n")
+  run = lambda *a: subprocess.run([sys.executable, "-m", "pytest", "tests/", "-q", "-p", "no:cacheprovider",
+                                   "-W", "error::pytest.PytestUnknownMarkWarning", *a],
+                                  cwd=p, capture_output=True, text=True)
+  default, full = run(), run("-m", "")
+  assert default.returncode == 0 and "1 passed, 1 deselected" in default.stdout
+  assert full.returncode == 0 and "2 passed" in full.stdout and "deselected" not in full.stdout
+  assert "PytestUnknownMarkWarning" not in default.stdout + default.stderr
+
+
+def test_l55_g2_names_both_runs():
+  g2 = read("CLAUDE.md").split("**G2. ", 1)[1].split("**G3. ", 1)[0]
+  assert "`pytest tests/` (the default run, which leaves out tests marked `slow`) runs on CPU in about a minute" in g2
+  assert "the full suite, `pytest tests/ -m \"\"`, runs before every freeze and commit and in the auditor's check (L55)" in g2
+  assert "-p no:cacheprovider -m \"\"` (the full suite" in read(".claude/agents/methods-auditor.md")

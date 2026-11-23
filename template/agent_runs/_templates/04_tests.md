@@ -17,7 +17,8 @@ one-line derivation (G6). -->
 ## Command
 
 ```bash
-pytest tests/ -q
+pytest tests/ -q            # default run (slow tests left out), with its time
+pytest tests/ -q -m ""      # full suite, with its time (G2)
 ```
 
 ## Output summary

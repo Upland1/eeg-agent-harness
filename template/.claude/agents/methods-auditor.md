@@ -43,7 +43,7 @@ FAIL if a design error would reach code. Append `## Round N` on re-audit.
 
 ## Method
 0. Run `git log --oneline <base>..<branch>`, `git diff <base>..<branch>
-   --stat` and `python -m pytest tests/ -q -p no:cacheprovider` yourself
+   --stat` and `python -m pytest tests/ -q -p no:cacheprovider -m ""` (the full suite, slow tests included, G2) yourself
    and record them under "Commands run".
 1. For each rule G1–G27 in CLAUDE.md (and any G28+), find the code that could
    break it and give PASS / FAIL / CONCERN / N/A with `path:line` evidence.
