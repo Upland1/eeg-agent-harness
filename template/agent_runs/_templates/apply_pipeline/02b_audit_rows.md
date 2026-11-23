@@ -9,6 +9,7 @@
 | Unit (G13): the label unit of the permutation scheme argued from event timing |  |  |
 | Folds: grouped by unit, balanced by stratum (and by label for per-unit labels); `check_no_leak` on every split |  |  |
 | Gates: span and window gates reported for every file; any failure stopped the run |  |  |
+| L56: every quantity a gate, runtime bound or decision rule uses names its code path and output field; `check_plan_fields.py` PASS (`--final` after the code) |  |  |
 | Development vs confirmation (G19, G25): disjoint; selection label-free and seeded; freeze commit approved |  |  |
 | Stage: every part terminal or listed as pending; no provenance stop left unresolved; outputs from one commit |  |  |
 | Statistics: Holm family = the planned primaries; INTERIM stamp present if the root was incomplete |  |  |

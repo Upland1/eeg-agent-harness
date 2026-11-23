@@ -31,6 +31,9 @@ who runs what under `docs/COMPUTE.md`), G10, G12, G14, G9/G11, G5, G6 and
 the paradigm's typical mistakes. If the plan uses a neural network,
 connectivity or long jobs, check every item of the matching checklist
 (`.claude/skills/deep-learning/SKILL.md`, `connectivity/`, `compute-jobs/`).
+L56: Every quantity a plan's gate or decision rule uses must be named with the code path and output field that records it; the plan auditor checks that the field exists. Run `python .harness/tools/check_plan_fields.py agent_runs/<run>/02_plan.md`:
+MISSING or INCOMPLETE is a FAIL; NEW rows (code the plan adds) are checked again in the change audit
+with `--final` (and `--output <smoke output>` once the smoke has run).
 FAIL if a design error would reach code. Append `## Round N` on re-audit.
 
 ## Inputs (change audit)

@@ -719,3 +719,93 @@ def test_l51_orchestrator_numbers_from_the_tool_or_marked_as_hand_counts(tmp_pat
      "rows": {"csv": "outputs/stage2_logs/batches.tsv", "where": {"pinned": "yes", "temp_max": {">=": 95}}}},
     {"key": "n_pinned", "op": "count", "rows": {"csv": "outputs/stage2_logs/batches.tsv", "where": {"pinned": "yes"}}}])
   assert (r["n_pinned_hot"]["value"], r["n_pinned"]["value"]) == (5, 13)
+
+
+# L56: every quantity a plan's gate or decision rule uses names the code path and output field that records it.
+
+L56 = ("Every quantity a plan's gate or decision rule uses must be named with the code path and output field that "
+       "records it; the plan auditor checks that the field exists.")
+
+METHODS_PY = '''def main(argv=None):
+  out = new_output_dir(a.out)
+  run(cfg, out, a.root)
+  record_compute_time(out, timer)  # writes "compute_time": {"wall_s": ..., "cpu_s": ...}
+
+
+def per_epoch(rows):
+  return [{"epoch": e, "val_ba": b} for e, b in rows]
+'''
+
+PLAN = """# Plan
+
+## Gate and rule inputs (L56)
+
+| Quantity | Used by | Code path | Output field |
+|---|---|---|---|
+{rows}
+
+## Runs (G22)
+"""
+
+
+def _plan_project(tmp_path, rows):
+  p = tmp_path / "proj"
+  (p / "loro").mkdir(parents=True)
+  (p / "loro" / "methods.py").write_text(METHODS_PY)
+  (p / "plan.md").write_text(PLAN.format(rows="\n".join(rows)))
+  return p
+
+
+def _check_plan(p, *extra):
+  r = subprocess.run([sys.executable, str(KIT / "tools" / "check_plan_fields.py"), str(p / "plan.md"),
+                      "--root", str(p), *extra], capture_output=True, text=True)
+  return r.returncode, r.stdout
+
+
+def test_l56_rule_on_a_field_no_output_writes_fails(tmp_path):
+  # the imagined-speech-eeg shape: the GPU runtime rule uses t_e, the code writes only the total compute time
+  p = _plan_project(tmp_path, ["| t_e per-epoch time | GPU runtime bound T_s | `loro/methods.py:1-4` | `t_e` |",
+                               "| total wall time | report | `loro/methods.py:1-4` | `wall_s` |"])
+  rc, out = _check_plan(p)
+  assert rc == 1 and out.strip().endswith("FAIL")
+  assert "MISSING: t_e per-epoch time: `t_e` is not written in loro/methods.py:1-4" in out
+  assert "OK: total wall time: `wall_s` written in loro/methods.py:1-4" in out
+
+
+def test_l56_line_range_new_code_and_missing_section(tmp_path):
+  # val_ba is written, but not in the lines the plan names
+  p = _plan_project(tmp_path, ["| val BA | early stop | `loro/methods.py:1-4` | `val_ba` |"])
+  assert _check_plan(p)[0] == 1
+  p = _plan_project(tmp_path / "b", ["| val BA | early stop | `loro/methods.py` | `val_ba` |",
+                                     "| t_e | T_s | `loro/timing.py` | `t_e` |"])
+  rc, out = _check_plan(p)
+  assert rc == 0 and "NEW: t_e: loro/timing.py does not exist yet" in out  # code the plan adds: plan audit passes
+  assert _check_plan(p, "--final")[0] == 1                                   # change audit: it must exist
+  p = _plan_project(tmp_path / "c", ["| t_e | T_s | | `t_e` |"])
+  assert "INCOMPLETE" in _check_plan(p)[1]
+  (p / "plan.md").write_text("# Plan\n\n## Runs (G22)\n")
+  rc, out = _check_plan(p)
+  assert rc == 1 and "no '## Gate and rule inputs' section" in out
+
+
+def test_l56_output_must_hold_the_field(tmp_path):
+  p = _plan_project(tmp_path, ["| total wall time | report | `loro/methods.py:1-4` | `wall_s` |"])
+  smoke = tmp_path / "smoke"
+  smoke.mkdir()
+  (smoke / "provenance.json").write_text(json.dumps({"compute_time": {"wall_s": 186.0}}))
+  assert _check_plan(p, "--output", str(smoke))[0] == 0
+  (smoke / "provenance.json").write_text(json.dumps({"command": "x"}))
+  assert _check_plan(p, "--output", str(smoke))[0] == 1
+
+
+def test_l56_wording_templates_and_auditor_hook(proj):
+  assert L56 in read(".claude/agents/methods-auditor.md")
+  plan = read("agent_runs/_templates/02_plan.md")
+  assert "## Gate and rule inputs (L56)" in plan and "| Quantity | Used by | Code path | Output field |" in plan
+  assert "| L56 " in read("agent_runs/_templates/02b_plan_audit.md")
+  assert "| L56 " in read("agent_runs/_templates/05_audit.md")
+  assert "L56:" in read("agent_runs/_templates/apply_pipeline/02b_audit_rows.md")
+  assert (proj / ".harness" / "tools" / "check_plan_fields.py").is_file()
+  assert auditor(proj, "python .harness/tools/check_plan_fields.py agent_runs/r/02_plan.md --final") == 0
+  assert auditor(proj, "python .harness/tools/check_plan_fields.py agent_runs/r/02_plan.md > agent_runs/r/x.txt") == 2
+  assert auditor(proj, "python .harness/tools/run_profile.py --data data/raw --out x") == 2

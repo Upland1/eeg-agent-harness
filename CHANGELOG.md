@@ -2,9 +2,9 @@
 
 ## 0.6.0 — 2026-11-23 (not tagged; Sebastian tags after 2026-11-26)
 
-BACKLOG L39-L55, approved by Sebastian on 2026-11-23 ("Approved for v0.6: every item marked Rec, as worded,
-with these edits and choices"), one commit per item or approved pair. Known-answer tests in
-`kit_tests/test_v06_rules.py`: 42 of its 49 tests fail or error on b361f81 (the v0.6-dev commit before them);
+BACKLOG L39-L56, approved by Sebastian on 2026-11-23 ("Approved for v0.6: every item marked Rec, as worded,
+with these edits and choices"), one commit per item or approved pair, and L56 (below). Known-answer tests in
+`kit_tests/test_v06_rules.py`: of the 49 tests for L39-L55, 42 fail or error on b361f81 (the v0.6-dev commit before them);
 the other 7 are L50's refusal cases, which pass on both (they guard the widening). Not done (waits): the
 `--venv` option of L43.
 
@@ -45,6 +45,13 @@ the other 7 are L50's refusal cases, which pass on both (they guard the widening
   specs are unchanged.
 - Template `tests/conftest.py` (L55): a `slow` marker, left out of `pytest tests/`, run with `-m ""`. New
   projects only (`--update` keeps an existing conftest).
+- Plan audit (L56, approved by Sebastian on 2026-11-23, added to 0.6.0 on 2026-11-24): "Every quantity a plan's
+  gate or decision rule uses must be named with the code path and output field that records it; the plan
+  auditor checks that the field exists." New plan-template section "Gate and rule inputs"; new
+  `tools/check_plan_fields.py` (shipped in `.harness/tools/`; MISSING when the named code does not write the
+  field, NEW for code the plan adds, a failure with `--final` in the change audit; `--output` checks a real
+  output); the methods-auditor runs it (its hook allows it); rows in the plan-audit, apply-pipeline and change
+  audit templates. Known-answer tests `test_v06_rules.py::test_l56_*` (4), failing on 7ad1c35.
 - Evaluator tool, not a template rule (commit 61005fc, made from the evaluation session on 2026-11-23): `run_cost.py`
   reports the waits between jobs per phase (gaps of at least `--min-wait-h` hours, default 1, in the union of
   the job intervals, with their suspended part; not compute time), for runs stopped and restarted across

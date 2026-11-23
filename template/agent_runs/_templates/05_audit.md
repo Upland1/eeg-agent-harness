@@ -39,6 +39,7 @@ Verdict: PASS / FAIL
 | G24 `eegpipe/` untouched; gaps are new project modules with tests | | |
 | G25 Confirmatory outputs from the frozen commit only; selection label-free; refusals logged | | |
 | G26 Each decision claims only what its test asserts; evidence could have failed | | |
+| L56 `check_plan_fields.py --final` on 02_plan.md: every gate/rule input written by the code (and in the smoke output) | | |
 | G27 Group statistics take only estimates defined at the unit's sample size; units left out listed | | |
 | G28+ Rules added from later incidents | | |
 | 02b_plan_audit.md required changes were made | | |

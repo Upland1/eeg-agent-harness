@@ -19,6 +19,7 @@ Verdict: PASS / FAIL
 | G4 Statistics: assumptions hold for this data; resampling unit stated | | |
 | G13 Exchangeability unit named and argued from event timing vs epoch length; nulls can draw the observed labelling | | |
 | G10 Every check, gate, threshold and selection rule is fixed in the plan before it touches real data | | |
+| L56 Every quantity a gate or decision rule uses is named with the code path and output field that records it; `check_plan_fields.py` shows the field exists (MISSING/INCOMPLETE = FAIL) | | |
 | G12 Every new measurement or statistic has a known-answer test, and a false-positive-rate test if it is a test statistic, planned before its real-data run | | |
 | G14 Quality, rejection and label-sanity claims planned per participant/session, with comparison set and absolute measures | | |
 | G17 Training inside the training fold: validation, normalization, augmentation; test transforms label-free; inherited defaults listed and set | | |

@@ -534,3 +534,34 @@ the slowest tests are moved behind a `slow` marker".
 
 Known-answer test (for a): in a synthetic project, a test marked `slow` is deselected by `pytest tests/` and run
 by `pytest tests/ -m ""`; the template conftest registers the marker (no unknown-marker warning). Fails on b361f81.
+
+## L56 — a plan's runtime rule relied on timings the code does not record (2026-11-23)
+
+**Approved for 0.6.0** (Sebastian, 2026-11-24: "L56 is missing. Add it to BACKLOG and implement it in 0.6.0 (I
+approved it on 2026-11-23)"), with the wording below; done in 0.6.0. Known-answer tests
+`kit_tests/test_v06_rules.py::test_l56_*`, failing on 7ad1c35.
+
+Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/` (git-ignored): `log.md` section
+"Incident: GPU runtime rule relied on timings the code does not record (2026-11-23, harness lesson L56)" and
+row "GPU smoke" (2026-11-20); `human_contacts.md` contact #8 and its answer ("(a): run the 30-epoch smoke"),
+with Sebastian's confirmed note: "the plan's T_s rule relied on timings the code does not record, missed by
+both plan audits".
+
+The approved plan's GPU runtime rule (`02_plan.md:776-808`) bounds each network part as T_s = t_in + 3 x F_s x
+150 x t_e x N_s/100 and states that the GPU smoke records the per-epoch time t_e and the network-input time
+t_in. The code written in step E records neither: `loro/methods.py:297-308` writes only the part's total
+compute time (`record_compute_time`). At the first GPU smoke the bound could not be computed; contact #8
+offered a longer smoke, a timeout-based run, or new code; Sebastian chose a 30-epoch smoke and t_e from the
+slope. Plan audit round 2 (`02b_plan_audit.md:347`) accepted "measured t_in, t_e from the GPU smoke", round 3
+(`:480`) checked the formula and its arithmetic, and the step-E code audit passed G22: none checked that the
+code produces the rule's inputs.
+
+Approved wording (plan audit): "Every quantity a plan's gate or decision rule uses must be named with the code
+path and output field that records it; the plan auditor checks that the field exists."
+
+Done: the plan template's section "Gate and rule inputs" (Quantity | Used by | Code path | Output field);
+`tools/check_plan_fields.py` (shipped in `.harness/tools/`): MISSING when the named code does not write the
+field (in the named line range), INCOMPLETE without a path or field, NEW for code the plan adds (a failure
+with `--final` in the change audit), and `--output` to require the field in a real output; the
+methods-auditor runs it in the plan audit and, with `--final`, in the change audit (its hook allows it); rows
+in `02b_plan_audit.md`, the apply-pipeline audit rows and `05_audit.md`.

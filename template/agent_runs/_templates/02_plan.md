@@ -54,6 +54,18 @@ reported per participant/session with a comparison set. -->
 |---|---|---|---|---|
 | | | | | |
 
+## Gate and rule inputs (L56)
+
+<!-- Every quantity a plan's gate or decision rule uses must be named with the code path and output field that records it; the plan auditor checks that the field exists. One row per quantity that any gate,
+runtime bound, selection or decision rule above or below uses (a timing, a count, a statistic, a flag):
+the code that writes it (`file.py` or `file.py:first-last`; code this plan adds is named too) and the
+field of its output (JSON key or CSV column). Checked by
+`python .harness/tools/check_plan_fields.py agent_runs/<run>/02_plan.md`. -->
+
+| Quantity | Used by | Code path | Output field |
+|---|---|---|---|
+| | | | |
+
 ## Training, seeds and inherited defaults (G17, G18)
 
 <!-- Only if a model is trained (otherwise N/A). Checklist: .claude/skills/deep-learning/SKILL.md.
