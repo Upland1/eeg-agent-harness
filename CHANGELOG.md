@@ -2,8 +2,9 @@
 
 ## 0.6.0 — 2026-11-23 (not tagged; Sebastian tags after 2026-11-26)
 
-BACKLOG L39-L56, approved by Sebastian on 2026-11-23 ("Approved for v0.6: every item marked Rec, as worded,
-with these edits and choices"), one commit per item or approved pair, and L56 (below). Known-answer tests in
+BACKLOG L39-L55, approved by Sebastian on 2026-11-23 ("Approved for v0.6: every item marked Rec, as worded,
+with these edits and choices"), one commit per item or approved pair, and L56 (below; approved 2026-11-23, added
+on 2026-11-24). Known-answer tests in
 `kit_tests/test_v06_rules.py`: of the 49 tests for L39-L55, 42 fail or error on b361f81 (the v0.6-dev commit before them);
 the other 7 are L50's refusal cases, which pass on both (they guard the widening). Not done (waits): the
 `--venv` option of L43.
@@ -57,10 +58,11 @@ the other 7 are L50's refusal cases, which pass on both (they guard the widening
   the job intervals, with their suspended part; not compute time), for runs stopped and restarted across
   days (imagined-speech-eeg B_loro batch 01, stopped twice for low memory). Known-answer test
   `kit_tests/test_run_cost.py::test_waits_between_jobs_known_answer`, failing on b361f81.
-- Checks on the 0.6.0 tree (2026-11-23/24): kit suite 555 passed, 1 skipped, 1 xfailed (56 min, kit venv with
-  torch CPU); `check_install.py` ready in the kit venv (smoke subset 200 passed) and in a fresh venv from
-  `requirements.txt` without torch (195 passed, 5 skipped; torch WARN); the worked example matches its pinned
-  outputs (`kit_tests/golden/worked_example_ssvep.json` unchanged).
+- Checks on the final 0.6.0 code, commit 25e942c, with no other session using the tree (2026-11-23, 22:32-22:37
+  UTC): kit suite 559 passed, 1 skipped, 1 xfailed in 4 min 49 s (kit venv, torch CPU; tree clean before and
+  after); `check_install.py` ready in the kit venv (smoke subset 200 passed; it includes the worked example,
+  which matches its pinned outputs) and in a fresh venv from `requirements.txt` without torch (195 passed,
+  5 skipped; torch WARN). This commit changes only this file and README.md.
 - Changed earlier tests to the approved behaviour: `test_eegharness_v05_lessons.py` (the ticked, dated box
   is no longer reported, L48), `test_kit.py` and `test_v05_rules.py` (G1-G27, project rules from G28, L40).
 
