@@ -35,3 +35,15 @@ def test_l41_data_and_inputs_exist_without_case(tmp_path, arm):
   assert (p / "data").is_dir() and (p / "inputs").is_dir()
   (p / "data" / "raw").symlink_to(tmp_path)  # the documented `ln -s <recordings> <dir>/data/raw` now works
   assert (p / "data" / "raw").resolve() == tmp_path.resolve()
+
+
+# L43 (reduced form): the per-project .venv is the documented interpreter.
+
+def test_l43_per_project_venv_is_documented_and_printed(tmp_path, capsys):
+  p = tmp_path / "proj"
+  new_project.main([str(p), "--name", "p"])
+  out = capsys.readouterr().out
+  assert f"python3 -m venv {p / '.venv'}" in out and str(KIT / "requirements.txt") in out
+  step1 = norm((KIT / "README.md").read_text()).split("## How a project runs", 1)[1].split("2. Open Claude Code", 1)[0]
+  assert "<dir>/.venv" in step1 and "the test hook runs `.venv/bin/python`" in step1
+  assert '".venv" / "bin" / "python"' in (T / ".claude" / "hooks" / "run_tests.py").read_text()

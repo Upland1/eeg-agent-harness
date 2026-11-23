@@ -65,7 +65,12 @@ checks that.
 ## How a project runs
 
 1. `python new_project.py <dir> --name <name>` and put the recordings in
-   `<dir>/data/raw/`, the professor's material in `<dir>/inputs/`.
+   `<dir>/data/raw/` (a folder or a symlink; `data/` and `inputs/` are created), the
+   professor's material in `<dir>/inputs/`. Each project has its own interpreter in
+   `<dir>/.venv` (git-ignored; the test hook runs `.venv/bin/python`):
+   `python3 -m venv <dir>/.venv && <dir>/.venv/bin/pip install -r requirements.txt`
+   (add torch for the networks). The kit's own venv (`~/.venvs/eeg-harness-kit`) is for
+   the kit's tests and `new_project.py`, not for projects.
 2. Open Claude Code in `<dir>` and run `/onboard`:
    - the **profiler** (a script) measures formats, sampling rates, channels, event
      codes, counts, intervals, transitions and the folder and file-name structure;

@@ -207,8 +207,10 @@ def main(argv=None):
   info = kit_version(a.allow_dirty, strict=bool(a.eval_dir))
   (make_control if a.control else make_harness)(dest, a, info)
   print(f"{'control' if a.control else 'harness'} project ready: {dest} (harness {info})")
-  print(f"next: put the recordings in {dest / 'data' / 'raw'}/ ; then open Claude Code in {dest}"
-        + ("" if a.control else " and run /onboard"))
+  print(f"next: put the recordings in {dest / 'data' / 'raw'}/ (a folder, or a symlink to it)")
+  print(f"next: create the project's own interpreter (L43; the test hook runs .venv/bin/python):\n"
+        f"  python3 -m venv {dest / '.venv'} && {dest / '.venv' / 'bin' / 'pip'} install -r {KIT / 'requirements.txt'}")
+  print(f"next: open Claude Code in {dest}" + ("" if a.control else " and run /onboard"))
 
 
 if __name__ == "__main__":
