@@ -17,7 +17,10 @@ committed (git-tracked) text files of a project and reports:
                      them, as above. Only with names configured; a paragraph already reported as
                      unquoted_contact is not reported again. An approval line in the standard
                      form "Approved by <name>, <date>[, <what>]" (a whole line; a list marker
-                     allowed) records an approval and is not an attribution;
+                     allowed) records an approval and is not an attribution; so does the
+                     template's approval box ticked and dated, "Approved by <name>: [x]   Date:
+                     YYYY-MM-DD" (0.6.0, L48). The box unticked keeps its attribution check;
+  undated_approval   the box ticked with no date (an approval is recorded with its date);
   committed_names    the names list is in a git-tracked ``.claude/harness.json`` (it is meant to
                      stay local).
 
@@ -52,6 +55,10 @@ ATTRIBUTION_SPAN = 60  # characters between the name and the date, either order,
 HARNESS_JSON = ".claude/harness.json"
 # "Approved by <name>, <date>[, <what>]" as a whole line (Sebastian, 2026-11-15); a list marker is allowed
 APPROVAL = re.compile(r"^\s*(?:[-*]\s+)?Approved by ([^,\n]+?), \d{4}-\d{2}-\d{2}(?:, [^\n]+)?\s*$")
+# The template's approval box, ticked and dated: "Approved by <name>: [x]   Date: YYYY-MM-DD" (0.6.0, L48)
+APPROVAL_BOX = re.compile(r"^\s*(?:[-*]\s+)?Approved by ([^:\n]+?): \[[xX]\]\s+Date:\s*\d{4}-\d{2}-\d{2}\s*$")
+# A ticked box with no date is not a record of an approval (L48)
+APPROVAL_BOX_UNDATED = re.compile(r"^\s*(?:[-*]\s+)?Approved by [^:\n]+?: \[[xX]\]\s+Date:\s*$")
 
 
 def _paragraphs(text):
@@ -87,8 +94,8 @@ def _approval_lines(par, name_re):
   """``par`` with every standard-form approval line of a configured name blanked (offsets kept)."""
   out = []
   for line in par.split("\n"):
-    m = APPROVAL.match(line)
-    out.append(" " * len(line) if m and name_re.fullmatch(m.group(1)) else line)
+    m = APPROVAL.match(line) or APPROVAL_BOX.match(line)
+    out.append(" " * len(line) if m and name_re.fullmatch(m.group(1).strip()) else line)
   return "\n".join(out)
 
 
@@ -108,6 +115,10 @@ def check_text(text, path="<text>", min_quote_words=3, line_offset=0, names=()):
   found = []
   name_re = _name_pattern(names)
   for start, par in _paragraphs(text):
+    for k, line in enumerate(par.split("\n")):
+      if APPROVAL_BOX_UNDATED.match(line):
+        found.append({"path": str(path), "line": start + k + line_offset, "kind": "undated_approval",
+                      "excerpt": line.strip()[:160]})
     for m in UNCOMMITTED.finditer(par):
       line = start + par[:m.start()].count("\n") + line_offset
       found.append({"path": str(path), "line": line, "kind": "uncommitted_path",

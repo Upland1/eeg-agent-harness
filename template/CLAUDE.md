@@ -147,7 +147,8 @@ human's instruction is quoted, in its own words, in the committed file that reli
 contact number, a name with a date, or an `agent_runs/` path is never the only citation.
 `python -m eegharness.sources check` passes before a commit (the names it looks for are in the
 project's local `.claude/harness.json`, `sources.names`; an approval line in the form "Approved
-by <name>, <date>[, <what>]" is a record, not a citation). *Incident: audits found committed
+by <name>, <date>[, <what>]", or the template's box ticked and dated, "Approved by <name>: [x]
+Date: YYYY-MM-DD", is a record, not a citation; a ticked box needs its date). *Incident: audits found committed
 decisions pointing at local run files (L22); a committed paradigm cited Sebastian's decisions by
 contact number only, and settings by name and date only (L38).*
 

@@ -47,3 +47,48 @@ def test_l43_per_project_venv_is_documented_and_printed(tmp_path, capsys):
   step1 = norm((KIT / "README.md").read_text()).split("## How a project runs", 1)[1].split("2. Open Claude Code", 1)[0]
   assert "<dir>/.venv" in step1 and "the test hook runs `.venv/bin/python`" in step1
   assert '".venv" / "bin" / "python"' in (T / ".claude" / "hooks" / "run_tests.py").read_text()
+
+
+# L48: the template's approval box, ticked and dated, passes the sources check; the gates read the same form.
+
+from eegharness import sources  # noqa: E402
+
+BOX_FILES = ("agent_runs/_templates/onboarding/PARADIGM.md", "agent_runs/_templates/02_plan.md")
+
+
+def _box(rel):
+  return next(l for l in (T / rel).read_text().splitlines() if l.startswith("Approved by Sebastian"))
+
+
+@pytest.mark.parametrize("rel", BOX_FILES)
+def test_l48_ticked_dated_template_box_passes_and_others_are_reported(rel):
+  box = _box(rel)
+  assert box.startswith("Approved by Sebastian: [ ]") and box.rstrip().endswith("Date:")
+  ticked = box.replace("[ ]", "[x]").rstrip() + " 2026-11-19"
+  body = "# Title\n\n{}\n\nText.\n"
+  assert sources.check_text(body.format(ticked), names=["Sebastian"]) == []
+  unticked_dated = box.rstrip() + " 2026-11-19"
+  assert [f["kind"] for f in sources.check_text(body.format(unticked_dated), names=["Sebastian"])] == ["unquoted_attribution"]
+  ticked_undated = box.replace("[ ]", "[x]")
+  assert [f["kind"] for f in sources.check_text(body.format(ticked_undated), names=["Sebastian"])] == ["undated_approval"]
+  # an attribution elsewhere in the paragraph is still reported
+  assert sources.check_text(body.format(ticked + "\nSebastian said on 2026-11-19 to keep it."), names=["Sebastian"])
+
+
+def test_l48_ticked_box_in_a_committed_file_passes_the_repo_check(tmp_path):
+  subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+  (tmp_path / "docs").mkdir()
+  box = _box(BOX_FILES[0]).replace("[ ]", "[x]").rstrip() + " 2026-11-19"
+  (tmp_path / "docs" / "PARADIGM.md").write_text(f"# Paradigm\n\n{box}\n")
+  subprocess.run(["git", "-C", str(tmp_path), "add", "docs"], check=True)
+  assert sources.check_repo(tmp_path, names=["Sebastian"]) == []
+
+
+def test_l48_gates_read_the_template_box():
+  gate = "Approved by Sebastian: [x]"
+  for rel in BOX_FILES:
+    assert _box(rel).replace("[ ]", "[x]").startswith(gate)
+  for rel in ("skills/assignment/SKILL.md", "skills/apply-pipeline/SKILL.md", "skills/onboard/SKILL.md",
+              "agents/pipeline-engineer.md"):
+    assert gate in (T / ".claude" / rel).read_text()
+  assert "the template's box ticked and dated" in read("CLAUDE.md")

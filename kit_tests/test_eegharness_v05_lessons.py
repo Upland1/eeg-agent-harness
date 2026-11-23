@@ -282,7 +282,9 @@ def test_standard_approval_lines_pass_and_an_unquoted_instruction_is_still_flagg
   assert kinds(CP_APPROVED_R4, names=n) == [] and kinds(CP_APPROVED_R5, names=n) == []
   assert kinds("Approved by Sebastian, 2026-11-12\n", names=n) == []          # <what> is optional
   assert kinds("- Approved by Sebastian, 2026-11-12, Revision 4\n", names=n) == []
-  assert kinds(CP_APPROVED_BOX, names=n) == ["unquoted_attribution"]         # not the standard form
+  # 0.6.0 (L48, approved 2026-11-23): the template's box ticked and dated is a record too; unticked it is not
+  assert kinds(CP_APPROVED_BOX, names=n) == []
+  assert kinds(CP_APPROVED_BOX.replace("[x]", "[ ]"), names=n) == ["unquoted_attribution"]
   # an approval line does not hide an unquoted instruction in the same paragraph
   assert kinds(CP_APPROVED_R4 + CP_CHOICE, names=n) == ["unquoted_attribution"]
   assert kinds(CP_APPROVED_R4 + CP_COMPUTE, names=n) == ["unquoted_attribution"]
