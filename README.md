@@ -186,7 +186,7 @@ outside the repository (e.g. `~/.venvs/eeg-harness-kit`).
 
 ## Release and privacy
 
-This repository is private. Public release must come from a clean export; the private
-history contains unredacted transcripts (commit `6c3d48c`) and, up to `e73ec49`, the raw run archives
-of `docs/validation/v0.2.0_e2e/`, removed from the tree on 2026-11-24. Export the current `main`
-(`git archive main`), never push this history to a public remote.
+This public repository is a cleaned copy of the private development repository: the history
+was rewritten (2026-11-24) to remove the raw run archives of `docs/validation/v0.2.0_e2e/` and
+personal paths, addresses and folder names. Commit hashes cited in BACKLOG.md, CHANGELOG.md and the
+docs are the original ones; `docs/COMMIT_MAP.md` maps each to its commit here. Tags keep their names.
