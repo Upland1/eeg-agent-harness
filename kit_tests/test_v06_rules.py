@@ -223,7 +223,8 @@ def test_l45_cost_per_round_from_running_totals_on_the_real_onboarding_log(tmp_p
 
 # L42 + L46: /onboard does not start while inputs/ holds a template placeholder or an unquoted report of a
 # person's words. Fixtures: imagined-speech-eeg inputs/request.md at e147a9a (whole file, template text only),
-# b71401a and 4c72438 (header lines only; the professor's notes are not copied into the kit).
+# b71401a and 4c72438 (header lines only; the requester's notes are not copied into the kit; the role
+# name in the three fixtures is the kit's public wording, "requester", otherwise verbatim).
 
 INPUTS = KIT / "kit_tests" / "golden" / "l42_l46_inputs"
 
@@ -247,7 +248,7 @@ def _check_inputs(p):
 def test_l42_template_request_with_placeholders_is_refused(tmp_path):
   rc, out = _check_inputs(_inputs_project(tmp_path, "e147a9a_request.md"))
   assert rc == 1
-  assert "inputs/request.md:2: placeholder: <what the professor wants: e.g. decode which of the 5 words" in out
+  assert "inputs/request.md:2: placeholder: <what the requester wants: e.g. decode which of the 5 words" in out
   assert "inputs/request.md:3: placeholder: <anything known about how it was recorded" in out
 
 

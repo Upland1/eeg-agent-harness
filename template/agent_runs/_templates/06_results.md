@@ -65,7 +65,7 @@ anomaly: diagnose it before interpreting the results above. -->
 assume a bug until tests and audit say otherwise), any change in accepted or
 rejected epoch counts. -->
 
-## Summary for the professor
+## Summary for the requester
 
 <!-- At most 150 words, academic tone, per-participant numbers, limitations
 stated. Sebastian edits before presenting. -->

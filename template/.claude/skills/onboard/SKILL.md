@@ -40,7 +40,7 @@ in step 7.
    of `agent_runs/_templates/onboarding/` except `PARADIGM.md`, plus
    `agent_runs/_templates/log.md` and `agent_runs/_templates/human_contacts.md`.
    Fill `00_assignment.md`: list every file in `inputs/` and quote the
-   professor's request from it verbatim. Status: READY. Create the branch
+   requester's request from it verbatim. Status: READY. Create the branch
    `onboarding` from `main` (`git switch -c onboarding`).
 2. **Profile.** Run
    `python .harness/tools/run_profile.py --data data/raw --out docs/DATA_PROFILE`

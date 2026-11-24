@@ -5,8 +5,8 @@
 Reads every text file in ``inputs/`` (tracked or not; .md, .txt, .rst, .tex, .csv, .json, .yaml, .yml, .html)
 and reports:
 
-  placeholder         a template placeholder ``<...>`` (e.g. ``Goal: <what the professor wants: ...>``): a
-                      template filled in only partly is not the professor's request, and an example in it is
+  placeholder         a template placeholder ``<...>`` (e.g. ``Goal: <what the requester wants: ...>``): a
+                      template filled in only partly is not the requester's request, and an example in it is
                       not something anyone said (L42). HTML comments, autolinks (``<https://...>``), e-mail
                       addresses and common HTML tags are not placeholders;
   unquoted_contact /  text that reports a named person's words without quoting them, the check of

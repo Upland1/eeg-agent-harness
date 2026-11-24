@@ -4,7 +4,7 @@
 then a tone every 0.9-1.1 s: code 1 (standard, ~80 %) or code 2 (target, ~20 %, never two in a
 row). Targets carry a positive deflection peaking ~350 ms (Pz > Cz > Fz), 6 uV at Pz.
 Noise: pink-ish background + 10 Hz alpha. Also writes a lab-log .docx that is the only
-written source of the code meanings, and the professor's notes.
+written source of the code meanings, and the requester's notes.
 """
 
 import sys
@@ -59,8 +59,8 @@ with zipfile.ZipFile(raw_dir / "bitacora.docx", "w") as z:
   z.writestr("word/document.xml", f'<w:document xmlns:w="{w}"><w:body>{body}</w:body></w:document>')
 
 (proj / "inputs").mkdir(exist_ok=True)
-(proj / "inputs" / "professor_notes.md").write_text(
-  "# Notas del profesor\n\nTenemos registros EEG de un experimento auditivo con tres voluntarios. "
+(proj / "inputs" / "request_notes.md").write_text(
+  "# Notas de la solicitud\n\nTenemos registros EEG de un experimento auditivo con tres voluntarios. "
   "Antes de cualquier análisis, describan el conjunto de datos y el paradigma: qué eventos hay, "
   "qué se podría clasificar y cómo evaluarlo sin fugas de información. Los detalles del registro "
   "están en la carpeta de datos.\n")

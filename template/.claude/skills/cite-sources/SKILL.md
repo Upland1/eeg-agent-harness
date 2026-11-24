@@ -5,7 +5,7 @@ description: How every agent records the sources behind a solution — papers, d
 
 # Cite sources
 
-Every agent says where its solution came from. A reader (Sebastian, the professor,
+Every agent says where its solution came from. A reader (Sebastian, the requester,
 the methods-auditor) must be able to open each source and check the claim. This
 procedure implements CLAUDE.md **G6**.
 
@@ -44,7 +44,7 @@ Pick the line that matches the source type. Keep the type tag in front.
 | This project's code | `[n] OWN-CODE — path:line-line @ commit. Used for: …` |
 | Project rule | `[n] RULE — CLAUDE.md Gk` |
 | Audit / handoff | `[n] HANDOFF — agent_runs/<run>/05_audit.md, Round N, finding k` |
-| Request | `[n] REQUEST — 00_assignment.md (professor / Sebastian), quoted phrase` |
+| Request | `[n] REQUEST — 00_assignment.md (requester / Sebastian), quoted phrase` |
 | Data / output | `[n] DATA — path to CSV or log, command that produced it, commit` |
 | Own reasoning | `[own]` inline only, never in the list |
 

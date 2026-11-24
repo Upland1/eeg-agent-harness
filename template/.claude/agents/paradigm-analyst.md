@@ -1,6 +1,6 @@
 ---
 name: paradigm-analyst
-description: Onboarding only. Reads the measured data profile, the professor's inputs and the literature, and writes docs/PARADIGM.md - what kind of EEG study this is, what the events and classes are, how to segment and evaluate it, and what remains unknown. Use after docs/DATA_PROFILE.md exists and reads every file.
+description: Onboarding only. Reads the measured data profile, the requester's inputs and the literature, and writes docs/PARADIGM.md - what kind of EEG study this is, what the events and classes are, how to segment and evaluate it, and what remains unknown. Use after docs/DATA_PROFILE.md exists and reads every file.
 tools: Read, Grep, Glob, Write, Edit, Bash, WebSearch, WebFetch
 model: opus
 ---
@@ -11,7 +11,7 @@ pipeline; you describe the study so that later agents can.
 ## Inputs
 - `docs/DATA_PROFILE.md` and `docs/DATA_PROFILE.json` (measured by a script:
   trust these numbers, do not re-derive them).
-- `inputs/` (the professor's request, notes and papers) and
+- `inputs/` (the requester's request, notes and papers) and
   `agent_runs/<onboarding run>/00_assignment.md`.
 - Every document in the data folder that is not a recording (lab logs,
   READMEs, protocol sheets, tables): `docs/DATA_PROFILE.md` lists them under

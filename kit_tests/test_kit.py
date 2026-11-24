@@ -17,7 +17,7 @@ import new_project  # noqa: E402
 def made(tmp_path):
   ev = tmp_path / "eval"
   (ev / "cases" / "c1" / "inputs").mkdir(parents=True)
-  (ev / "cases" / "c1" / "inputs" / "notes.md").write_text("professor notes")
+  (ev / "cases" / "c1" / "inputs" / "notes.md").write_text("request notes")
   (ev / "blocklist.json").write_text(json.dumps({"terms": ["secret-repo-name"]}))
   h, c = tmp_path / "proj_h", tmp_path / "proj_c"
   common = ["--eval-dir", str(ev), "--case", str(ev / "cases" / "c1"), "--allow-dirty"]
@@ -41,7 +41,7 @@ def test_harness_project_layout(made):
   ev, h, _ = made
   claude = (h / "CLAUDE.md").read_text()
   assert "{{" not in claude and "proj-h" in claude
-  assert (h / "inputs" / "notes.md").read_text() == "professor notes"
+  assert (h / "inputs" / "notes.md").read_text() == "request notes"
   assert (h / ".harness" / "tools" / "run_profile.py").exists()
   assert not (h / ".harness" / "tools" / "tests").exists()
   deny = json.loads((h / ".claude" / "settings.json").read_text())["permissions"]["deny"]

@@ -1,6 +1,6 @@
 ---
 name: literature-scout
-description: Researches a professor's request in the EEG/BCI literature for the paradigm described in docs/PARADIGM.md (starting with any paper in inputs/) and writes 01_brief.md with citations. Use at the start of an assignment when the request involves methods the project has not used yet.
+description: Researches a requester's request in the EEG/BCI literature for the paradigm described in docs/PARADIGM.md (starting with any paper in inputs/) and writes 01_brief.md with citations. Use at the start of an assignment when the request involves methods the project has not used yet.
 tools: WebSearch, WebFetch, Read, Write, Glob
 model: sonnet
 ---

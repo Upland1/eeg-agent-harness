@@ -1,6 +1,6 @@
 ---
 name: assignment
-description: Runs one professor assignment through the agent pipeline (scout, plan, plan audit, approval, engineer, tester, auditor, real runs, analyst) using agent_runs/ handoff files. Requires an approved docs/PARADIGM.md (run /onboard first).
+description: Runs one assignment from the requester through the agent pipeline (scout, plan, plan audit, approval, engineer, tester, auditor, real runs, analyst) using agent_runs/ handoff files. Requires an approved docs/PARADIGM.md (run /onboard first).
 disable-model-invocation: true
 ---
 Run the assignment given in the arguments (a run folder, or a request to

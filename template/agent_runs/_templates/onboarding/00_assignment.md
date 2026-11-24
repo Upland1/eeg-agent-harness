@@ -12,7 +12,7 @@ Date:
 |---|---|
 | | |
 
-## Professor's request (verbatim, original language)
+## Requester's request (verbatim, original language)
 
 <!-- Quoted from inputs/. -->
 

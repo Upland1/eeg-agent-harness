@@ -104,4 +104,4 @@ RUN=agent_runs/$(date +%F)_<slug>
 mkdir -p "$RUN" && cp agent_runs/_templates/*.md "$RUN"/
 ```
 
-Then fill in `00_assignment.md` with the professor's request, verbatim.
+Then fill in `00_assignment.md` with the requester's request, verbatim.

@@ -192,9 +192,9 @@ never the only citation. `python -m eegharness.sources check` passes before a co
 
 ## L39 — a core limit is not a thermal limit (2026-11-17)
 
-**Proposed for the next version, not approved** (Sebastian, 2026-11-17: "add its thermal lesson ... and the
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices") with the edit ("eegpipe.settings.validate refuses n_jobs (and torch threads) above cpu_working_threads"), in 01cd8f6; known-answer tests `kit_tests/test_v06_rules.py::test_l39_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (Sebastian, 2026-11-17: "add its thermal lesson ... and the
 proposed G27 to the kit BACKLOG, as proposals for the next version, each citing its source run"). Template
-not changed.
+not changed then.
 
 Source run: cold-pressor `agent_runs/2026-11-12_apply-pipeline/harness_lessons.md` ("L-thermal", sha256
 701422bf0cd5b9211b0ad9a6518a8ca718560132447602c8fb2d515bca4ae4a5; git-ignored), with its temperature log
@@ -213,7 +213,7 @@ bound; and every long-run driver logs CPU (and GPU) temperature per minute along
 
 ## L40 — a group statistic took units by another method's validity flag (2026-11-17)
 
-**Proposed for the next version, not approved** (same instruction as L39). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in 2d8098f; known-answer tests `kit_tests/test_v06_rules.py::test_l40_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L39). Template not changed then.
 
 Source run: cold-pressor `agent_runs/2026-11-12_apply-pipeline/harness_lessons.md` ("G27", same sha256 as
 L39). Committed in the project: `docs/DECISIONS.md` D-011 (commit f312769) and the fix in
@@ -236,8 +236,8 @@ flag. Every unit left out is listed with its reason in that runner's output."
 
 ## L41 — new_project.py without --case leaves no data/ and no inputs/ (2026-11-17)
 
-**Proposed for the next version, not approved** (Sebastian, 2026-11-17: "Record as BACKLOG entries on
-v0.6-dev, all \"not approved\""). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in f29b0f2; known-answer tests `kit_tests/test_v06_rules.py::test_l41_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (Sebastian, 2026-11-17: "Record as BACKLOG entries on
+v0.6-dev, all \"not approved\""). Template not changed then.
 
 Source: imagined-speech-eeg, built with kit v0.5.0 (`.claude/harness.json`, created 2026-11-17T17:02:48-0600;
 skeleton commit 5b6e7d2). `new_project.py` creates `inputs/` only inside `copy_inputs`, which returns at once
@@ -248,21 +248,21 @@ without `--case`, and never creates `data/`. Its last line and README step 1 sti
 Proposal: `new_project.py` always creates `data/` and `inputs/` (harness and control arms, with or without
 `--case`). Known-answer test: build without `--case` and assert both folders exist.
 
-## L42 — a template request with placeholders committed as the professor's request (2026-11-17)
+## L42 — a template request with placeholders committed as the requester's request (2026-11-17)
 
-**Proposed for the next version, not approved** (same instruction as L41). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in 8a23e6e; known-answer tests `kit_tests/test_v06_rules.py::test_l42_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L41). Template not changed then.
 
 Source: imagined-speech-eeg commit e147a9a ("inputs: request") committed `inputs/request.md` with unfilled
-`<...>` placeholders, among them an example goal ("compare HI vs HP") that the professor never stated; it was
-replaced by the professor's notes verbatim in b71401a two minutes later, before `/onboard` ran. Had onboarding
-started, the example goal would have been read as the professor's request.
+`<...>` placeholders, among them an example goal ("compare HI vs HP") that the requester never stated; it was
+replaced by the requester's notes verbatim in b71401a two minutes later, before `/onboard` ran. Had onboarding
+started, the example goal would have been read as the requester's request.
 
 Proposal: `/onboard` refuses to start while any file in `inputs/` holds a `<...>` placeholder, and names the
 file and line. Same family as L35 (placeholder text logged as a human's answers; G16).
 
 ## L43 — the project made its own .venv instead of the kit's (2026-11-17)
 
-**Proposed for the next version, not approved** (same instruction as L41). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices") in the reduced form only (the --venv option waits), in 9d25e2a; known-answer tests `kit_tests/test_v06_rules.py::test_l43_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L41). Template not changed then.
 
 Source: imagined-speech-eeg created its own `.venv` (17:17), because there is no `python` on PATH (only
 `/usr/bin/python3`), and does not use `~/.venvs/eeg-harness-kit`. Nothing in the project records which
@@ -273,7 +273,7 @@ agents, or document the per-project `.venv` as the intended setup.
 
 ## L44 — recordings on a removable drive (2026-11-17)
 
-**Proposed for the next version, not approved** (same instruction as L41). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in e7c1c23; known-answer tests `kit_tests/test_v06_rules.py::test_l44_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L41). Template not changed then.
 
 Source: imagined-speech-eeg `data/raw` is a symlink to a folder on a removable exFAT drive
 (`/media/user/USBDRIVE`, `/dev/sda1`); the recordings take 38 GB, more than the 28 GB free on the local
@@ -286,8 +286,8 @@ each part, and stops if not.
 
 ## L45 — a wording-only audit failure stopped the reader step (2026-11-17)
 
-**Proposed for the next version, not approved** (Sebastian, 2026-11-17: "Add to BACKLOG on v0.6-dev, not
-approved"). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in 07055d1; known-answer tests `kit_tests/test_v06_rules.py::test_l45_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (Sebastian, 2026-11-17: "Add to BACKLOG on v0.6-dev, not
+approved"). Template not changed then.
 
 Source run: imagined-speech-eeg `agent_runs/2026-11-17_onboarding/` (git-ignored): `log.md` rows "3 Reader"
 to "3 Reader audit R2", `05_audit.md`, `cost.jsonl`.
@@ -322,7 +322,7 @@ Proposal:
 
 ## L46 — inputs/ text paraphrased a human without a quote (2026-11-17)
 
-**Proposed for the next version, not approved** (same instruction as L45). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in 8a23e6e; known-answer tests `kit_tests/test_v06_rules.py::test_l46_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L45). Template not changed then.
 
 Source: imagined-speech-eeg `inputs/request.md`, committed in b71401a, was written by the orchestrating session
 outside the project's agents. Line 3 reports Sebastian's words in paraphrase ("Sebastian says they are not the
@@ -336,8 +336,8 @@ fails.
 
 ## L47 — the auditor's own suggested wording failed its next audit (2026-11-17)
 
-**Proposed for the next version, not approved** (Sebastian, 2026-11-17: "L47 (not approved)"). Template not
-changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices") with the addition ("An auditor error is not counted against the agent, but every round counts toward a hard limit of 4 rounds per step, whoever caused the failure; at the limit, stop and ask me."), in 07055d1; known-answer tests `kit_tests/test_v06_rules.py::test_l45_l47_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (Sebastian, 2026-11-17: "L47 (not approved)"). Template not
+changed then.
 
 Source run: imagined-speech-eeg `agent_runs/2026-11-17_onboarding/` (git-ignored): `05_audit.md` (R2 required
 fix, R3 table and required fix), `log.md` rows "3 Reader fix R2 (round 3, approved)" and "3 Reader audit R3".
@@ -358,8 +358,8 @@ Proposal:
 
 ## L48 — the template's approval line fails the kit's own sources check (2026-11-19)
 
-**Proposed for the next version, not approved** (Sebastian, 2026-11-19: "L48 (not approved)"). Template not
-changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices") with the choice (the check accepts "Approved by <name>: [x]   Date: YYYY-MM-DD"; unticked or undated is still reported), in 9968244; known-answer tests `kit_tests/test_v06_rules.py::test_l48_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (Sebastian, 2026-11-19: "L48 (not approved)"). Template not
+changed then.
 
 Source: imagined-speech-eeg commit 23f8a5d (PARADIGM revisions 2-3, approved) changed the template line
 `Approved by Sebastian: [ ]   Date:` to `Approved by Sebastian, 2026-11-19, [x] docs/PARADIGM.md draft with
@@ -382,8 +382,8 @@ strings match the template form.
 
 ## L49 — a part's attempt counter missed two runs killed from outside (2026-11-23)
 
-**Proposed for the next version, not approved** (Sebastian, 2026-11-23: "Add L49–L55 to BACKLOG in the L39–L48
-format"). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in e1da0d5; known-answer tests `kit_tests/test_v06_rules.py::test_l49_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (Sebastian, 2026-11-23: "Add L49–L55 to BACKLOG in the L39–L48
+format"). Template not changed then.
 
 Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/` (git-ignored): `log.md` rows "Stage H
 CPU B_loro (interrupted)" (2026-11-20) and "(interrupted again)" (2026-11-21); `05_audit.md` note C5. Outputs:
@@ -409,7 +409,7 @@ both logs `_1`).
 
 ## L50 — the auditor's hook blocks the checks the template tells it to run (2026-11-23)
 
-**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in a18b6d6; known-answer tests `kit_tests/test_v06_rules.py::test_l50_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L49). Template not changed then.
 
 Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/05_audit.md:280-283` (results check r1:
 "BLOCKED for me by the hook: `.venv/bin/python -m eegharness.outputs check ...`") and `:100` (`eegharness.sources
@@ -432,7 +432,7 @@ b361f81 (both blocked).
 
 ## L51 — the orchestrator counted by hand (2026-11-23)
 
-**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in e5b7b0d; known-answer tests `kit_tests/test_v06_rules.py::test_l51_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L49). Template not changed then.
 
 Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/log.md` row "Correction (orchestrator)":
 the orchestrator recounted temperature batches from `outputs/stage2_logs/batches.tsv` by hand ("Pinned total
@@ -452,7 +452,7 @@ b361f81.
 
 ## L52 — a project wrapper for the outputs check split paths on whitespace (2026-11-23)
 
-**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in 58369fe; known-answer tests `kit_tests/test_v06_rules.py::test_l52_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L49). Template not changed then.
 
 Source: imagined-speech-eeg commit 46f18c9 (`outputs_check.py`, a project wrapper that runs `eegharness.outputs
 check` on a list of folders and records the result in a versioned output) reads the list with
@@ -474,7 +474,7 @@ command. Fails on b361f81 (no `--paths-file`).
 
 ## L53 — six report numbers left blocked by eegharness.numbers (2026-11-23)
 
-**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices"), in e5b7b0d; known-answer tests `kit_tests/test_v06_rules.py::test_l53_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L49). Template not changed then.
 
 Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/06_results.md` section "Derived numbers
 needed" (6 items, READY with them blocked by the auditor's ruling). Five are blocked by missing operations:
@@ -498,7 +498,7 @@ planted row count and sum, and a variant reading only the first file fails; 7200
 
 ## L54 — no memory limit in COMPUTE.md (2026-11-23)
 
-**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices") with the choice (memory_max_gb has no default; the pre-batch check refuses while it is unset), in e7c1c23; known-answer tests `kit_tests/test_v06_rules.py::test_l54_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L49). Template not changed then.
 
 Source run: imagined-speech-eeg `docs/COMPUTE.md` (from the skeleton, 5b6e7d2) sets `cpu_max_minutes`,
 `gpu_max_minutes` and `gpu_device`, and no memory figure; the template (`template/docs/COMPUTE.md`) has none
@@ -518,7 +518,7 @@ memory is planted below b × peak. Fails on b361f81.
 
 ## L55 — test suites take longer than G2's minute (2026-11-23)
 
-**Proposed for the next version, not approved** (same instruction as L49). Template not changed.
+**Approved and done in 0.6.0** (Sebastian, 2026-11-23: "Approved for v0.6: every item marked Rec, as worded, with these edits and choices") with option (a) (a `slow` marker; the full suite with `-m ""`), in 1ab7e2c; known-answer tests `kit_tests/test_v06_rules.py::test_l55_*`, failing on b361f81. Recorded first as a proposal for the next version, not approved (same instruction as L49). Template not changed then.
 
 Source run: imagined-speech-eeg `agent_runs/2026-11-19_hi-word-decoding/log.md`: 142 passed in 107 s and in
 112.6 s (plan audit rounds), later 194-200 passed in 73-85 s (4 torch tests skipped). G2 says `pytest tests/`

@@ -2,7 +2,7 @@
 
 Built with harness v{{HARNESS_VERSION}} (`.harness/VERSION`). An EEG research pipeline
 for the recordings in `data/raw/` and the request in `inputs/`. Results go to the
-supervising professor and into an academic write-up. **Correctness of the evaluation
+person who requested the study and into an academic write-up. **Correctness of the evaluation
 always outranks speed or headline accuracy.** Treat any surprising gain as a bug until a
 synthetic test and the methods audit say otherwise.
 
@@ -23,7 +23,7 @@ What the agents know about the data comes from two files only:
 Never assume a property of the data that is in neither file. If you need one, measure it
 with project code and add it to the record, or ask (see "When you don't know").
 
-Inputs given to this project (`inputs/`): the professor's request and notes, and any
+Inputs given to this project (`inputs/`): the request and notes of the person who asked for the study (the requester), and any
 papers named there. Use them; cite them (G6).
 
 ## When you don't know

@@ -7,11 +7,11 @@ Branch:
 
 ## Request (verbatim, original language)
 
-<!-- Paste the professor's request exactly as given. -->
+<!-- Paste the requester's request exactly as given. -->
 
 ## Context from Sebastian
 
-<!-- Anything the agents should know: deadlines, what the professor cares
+<!-- Anything the agents should know: deadlines, what the requester cares
 about, constraints, related earlier work. -->
 
 ## Out of scope
