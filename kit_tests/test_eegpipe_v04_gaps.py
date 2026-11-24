@@ -172,7 +172,7 @@ def test_union_feature_step_registers_itself_in_a_fresh_interpreter():
 
 
 def test_network_environment_records_the_torch_build(monkeypatch):
-  """Gap 7 (Sebastian, 2026-11-07): the run outputs record torch's version and build, so a CPU-only build is
+  """Gap 7 (the supervisor, 2026-11-07): the run outputs record torch's version and build, so a CPU-only build is
   visible; methods.run copies this into results.json["torch_environment"] for every network part."""
   import torch
 

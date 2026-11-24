@@ -1,7 +1,7 @@
 # 00 · Assignment
 
 Status: READY
-Author: Sebastian
+Author: the supervisor
 Date received:
 Branch:
 
@@ -9,7 +9,7 @@ Branch:
 
 <!-- Paste the requester's request exactly as given. -->
 
-## Context from Sebastian
+## Context from the supervisor
 
 <!-- Anything the agents should know: deadlines, what the requester cares
 about, constraints, related earlier work. -->

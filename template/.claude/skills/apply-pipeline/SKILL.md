@@ -1,11 +1,11 @@
 ---
 name: apply-pipeline
-description: Applies Sebastian's pipeline (eegpipe) to this study - adapter, settings from PARADIGM.md, plan, audit, development run, freeze, confirmatory stage, paired statistics, results - through agent_runs/ handoff files (G24, G25). Requires an approved docs/PARADIGM.md and a tested reader (run /onboard first).
+description: Applies the supervisor's pipeline (eegpipe) to this study - adapter, settings from PARADIGM.md, plan, audit, development run, freeze, confirmatory stage, paired statistics, results - through agent_runs/ handoff files (G24, G25). Requires an approved docs/PARADIGM.md and a tested reader (run /onboard first).
 disable-model-invocation: true
 ---
 Run "apply the pipeline" for the request in the arguments, through the handoff contract in
 `agent_runs/README.md` and the templates in `agent_runs/_templates/apply_pipeline/`. You are
-the orchestrator. Update `log.md` after every agent call; log every contact with Sebastian in
+the orchestrator. Update `log.md` after every agent call; log every contact with the supervisor in
 `human_contacts.md` (G16) before sending it. Cite the source of every choice (G6).
 
 **Agents.** Run each agent in the foreground and wait for its handoff before the next step or the end of the turn; a subagent still running when the turn ends is stopped.
@@ -19,11 +19,11 @@ required fix is held to G7/G26: any number in it is quoted from printed output w
 gives none. A failure on text the auditor proposed is recorded as an auditor error and is not
 counted as a round against the agent. An auditor error is not counted against the agent, but every
 round counts toward a hard limit of 4 rounds per step, whoever caused the failure; at the limit,
-stop and ask Sebastian. Per-round figures: `python .claude/hooks/log_cost.py --rounds
+stop and ask the supervisor. Per-round figures: `python .claude/hooks/log_cost.py --rounds
 agent_runs/<run>` (differences of the running totals); the kit's `cost_report.py` and `run_cost.py`
 give the reported totals after the run.
 
-**What is fixed and what is decided here.** The methods are Sebastian's, vendored in
+**What is fixed and what is decided here.** The methods are the supervisor's, vendored in
 `eegpipe/` (G24): never edited, never re-implemented. What this run decides, and justifies, is
 how they meet THIS study: the adapter (recording -> events -> labels and units), every
 setting in `configs/pipeline.json` with its source, the families and primaries, the
@@ -31,7 +31,7 @@ development data, the confirmatory selection rule and the statistics budget (G19
 Read `eegpipe/__init__.py`, `eegpipe/settings.py`, `eegpipe/runner/__init__.py` (adapter
 contract) and the module of every family the plan enables before writing anything.
 
-**Preconditions.** `docs/PARADIGM.md` has "Approved by Sebastian: [x]" and a section "Pipeline
+**Preconditions.** `docs/PARADIGM.md` has "Approved by the supervisor: [x]" and a section "Pipeline
 settings this study needs" (classes, exchangeable unit, label rule, timing and windows,
 frequencies or bands, contrast for connectivity, development data, participants reported
 separately), and the reader has passing tests. Otherwise stop and say what is missing.
@@ -59,7 +59,7 @@ C. **Plan** (pipeline-engineer, `02_plan.md` + the section of
 D. **Plan audit** (methods-auditor, `02b_plan_audit.md` with the rows of
    `_templates/apply_pipeline/02b_audit_rows.md`): G1-G27; every profile default confirmed;
    unit and strata argued (G13); development and confirmatory data disjoint (G19); label
-   scheme matches PARADIGM. FAIL -> back to C ("Audit rounds" above). **STOP: Sebastian approves the plan and the
+   scheme matches PARADIGM. FAIL -> back to C ("Audit rounds" above). **STOP: the supervisor approves the plan and the
    settings.**
 
 E. **Gates and smoke** (orchestrator): the part runner on the development data part
@@ -74,14 +74,14 @@ F. **Development run** (orchestrator, within COMPUTE.md): every enabled part on 
 G. **Freeze.** `python -m eegpipe.runner.select --config configs/pipeline.json --out
    configs/selection`; set `stage.selection_output` to that folder and `stage.name` to
    "confirmation"; commit settings, selection and code on the run branch.
-   **STOP: Sebastian approves the freeze** (commit hash, selection, parts plan from
+   **STOP: the supervisor approves the freeze** (commit hash, selection, parts plan from
    `eegpipe.runner.stage --dry-run`).
 
 H. **Confirmatory stage** (orchestrator runs the parts within COMPUTE.md, in the background,
-   waiting for each to finish; Sebastian runs the rest as exact commands):
+   waiting for each to finish; the supervisor runs the rest as exact commands):
    `python -m eegpipe.runner.stage --config configs/pipeline.json --out outputs/stage2
    --parts cpu` then `--parts gpu`. Never edit tracked files while it runs. A provenance stop
-   goes to Sebastian with the log; rerun only with `--rerun-after-provenance` after his
+   goes to the supervisor with the log; rerun only with `--rerun-after-provenance` after his
    decision (logged).
 
 I. **Statistics** (results-analyst): `python -m eegpipe.runner.collect --stage <root> --out
@@ -91,7 +91,7 @@ I. **Statistics** (results-analyst): `python -m eegpipe.runner.collect --stage <
 J. **Results** (results-analyst `06_results.md` with `_templates/apply_pipeline/06_results_pipeline.md`;
    methods-auditor results check in `05_audit.md`): per-participant tables (G3), seed spread
    (G18), the paired tests with path, HL and interval, Holm and verdict, failures and pending
-   parts, exploratory results apart, and the comparison Sebastian asked for in the request.
+   parts, exploratory results apart, and the comparison the supervisor asked for in the request.
 
 Close: summary in `log.md` (tokens, time, contacts, what was caught) and a one-message report
-to Sebastian with the verdicts and the output paths.
+to the supervisor with the verdicts and the output paths.

@@ -351,14 +351,14 @@ def check_bash_fallback(cmd: str, cwd: str) -> None:
   if re.search(r"(^|[\s;&|])(rm|mv|cp|tee|sed\s+-i|touch)\b[^;&|]*\.harness/", cmd) or re.search(r">\s*\S*\.harness/", cmd):
     block(".harness/ is the frozen harness; never change it.")
   if re.search(r"\bgit\b[^;&|]*\bpush\b", cmd):
-    block("agents never push; Sebastian pushes.")
+    block("agents never push; the supervisor pushes.")
   if re.search(r"\bgit\b[^;&|]*(\brebase\b|\bfilter-branch\b|--amend\b|\breset\s+--hard\b)", cmd):
     block("rewriting git history is not allowed.")
   if re.search(r"\bgit\b[^;&|]*\badd\b", cmd) and (re.search(r"\s(-f|--force|-A|--all|\.)(\s|$)", cmd) or PRIVATE.search(cmd)):
     block("add files by explicit path; CLAUDE.md, .claude/, .harness/, agent_runs/ and data stay out of git.")
   if re.search(r"\bgit\b[^;&|]*\b(commit|merge)\b", cmd):
     if current_branch(cwd) == "main" or re.search(r"\b(checkout|switch)\s+main\b", cmd):
-      block("never commit or merge on main from Claude; Sebastian merges into main.")
+      block("never commit or merge on main from Claude; the supervisor merges into main.")
     if re.search(r"claude|anthropic|co-authored-by", cmd, re.I):
       block("commit messages must not mention Claude, Anthropic or a co-author (this command could not be parsed; "
             "write the message with -m and keep other text out of the command).")
@@ -457,7 +457,7 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
     if name == "git":
       sub, sargs = git_sub(args)
       if sub == "push":
-        block("agents never push; Sebastian pushes." if not raw_only else "pushing is not allowed in this project.")
+        block("agents never push; the supervisor pushes." if not raw_only else "pushing is not allowed in this project.")
     if raw_only:
       continue
     # .harness/ and the vendored eegharness/ are frozen
@@ -493,7 +493,7 @@ def check_bash(cmd: str, cwd: str, root: Path, raw_only: bool = False) -> None:
     if sub in ("commit", "merge"):
       effective = branch if branch is not None else current_branch(cwd)
       if effective == "main":
-        block("never commit or merge on main from Claude; Sebastian merges into main.")
+        block("never commit or merge on main from Claude; the supervisor merges into main.")
     if sub == "commit":
       msg = commit_message(sargs, heredocs, bodies, cwd)
       if re.search(r"claude|anthropic|co-authored-by", msg, re.I):

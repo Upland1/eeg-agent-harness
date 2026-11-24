@@ -1,9 +1,9 @@
-"""Family F2: EEGNet and ShallowConvNet, Sebastian's trainer, and grouped cross-validation (torch).
+"""Family F2: EEGNet and ShallowConvNet, the supervisor's trainer, and grouped cross-validation (torch).
 
 Ported from P300 ``p300/networks.py`` @ cd5db15 (itself ported from ``mas-ssvep-eeg-xai`` v1.0.4,
 f725369: ``src/models/cnn/eegnet.py::EEGNetSSVEP``, ``shallow_conv_net.py::ShallowConvNet``,
 ``training.py::fit_network``, ``src/preprocessing/dataset/augmentation.py``), generalised to k
-classes (Sebastian's decision D5): labels 0..k-1, balanced class weights w_c = n / (k n_c) over
+classes (the supervisor's decision D5): labels 0..k-1, balanced class weights w_c = n / (k n_c) over
 the fitting epochs, softmax over k outputs. Everything else is the P300 code:
   EEGNet with the Lawhern et al. 2018 corrections of the P300 audit (dense max-norm on the
   classifier rows, 'same' padding: left (K-1)//2, right K//2); ShallowConvNet with kernel and

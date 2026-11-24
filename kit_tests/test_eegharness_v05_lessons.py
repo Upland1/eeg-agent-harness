@@ -9,6 +9,8 @@ cited only from git-ignored ``agent_runs/``. Fails on v0.4.1: no check existed; 
 search for ``agent_runs/``) misses a bare "contact #3", as committed in cold-pressor's PARADIGM.md.
 """
 
+# "Alex" (and "Alexis") is a made-up configured name: these tests check the names list of eegharness.sources.
+
 import json
 import math
 import subprocess
@@ -117,7 +119,7 @@ def test_compare_runs_records_compute_time(tmp_path):
 
 # ---------------------------------------------------------------- L38: instruction sources
 
-CP_PARADIGM = ("- Sidedness: **two-sided, by Sebastian's decision** (onboarding contact #3, 2026-11-11). Reasoning\n"
+CP_PARADIGM = ("- Sidedness: **two-sided, by Alex's decision** (onboarding contact #3, 2026-11-11). Reasoning\n"
                "  follows below.\n")  # cold-pressor docs/PARADIGM.md l.908 @ a558941, as committed
 SSVEP_D015 = ("- Date: 2026-11-10. Plan revision 5 (`agent_runs/2026-11-07_apply-pipeline/02_plan.md`, git-excluded)\n"
               "  holds it; its text is copied here verbatim.\n")  # ssvep-apply D-015 @ d0e8ee9 (Round 7 R5)
@@ -134,7 +136,7 @@ def test_real_incidents_are_found_and_g15_alone_misses_the_first():
 
 
 def test_quoted_instruction_passes_and_short_or_missing_quotes_fail():
-  ok = ('Sidedness: two-sided (Sebastian, onboarding contact #3, 2026-11-11: "two-sided, because a reversal\n'
+  ok = ('Sidedness: two-sided (Alex, onboarding contact #3, 2026-11-11: "two-sided, because a reversal\n'
         'would also tell us something").\n')
   assert kinds(ok) == []
   assert kinds('Two-sided (contact #3: "two-sided").') == ["unquoted_contact"]
@@ -153,8 +155,8 @@ def test_agent_runs_path_is_found_even_when_quoted():
 
 def test_json_values_are_checked_one_by_one_and_json_quotes_do_not_count(tmp_path):
   p = tmp_path / "pipeline.json"
-  p.write_text(json.dumps({"permutation": {"n_jobs": 3, "n_jobs_source": "Sebastian, contact 5, 2026-11-10"},
-                           "ok_source": 'Sebastian, contact 6: "Classical at n_jobs 3; I will keep it ventilated."',
+  p.write_text(json.dumps({"permutation": {"n_jobs": 3, "n_jobs_source": "Alex, contact 5, 2026-11-10"},
+                           "ok_source": 'Alex, contact 6: "Classical at n_jobs 3; I will keep it ventilated."',
                            "plan": ["see agent_runs/run/02_plan.md"]}))
   found = src.check_file(p, "configs/pipeline.json")
   assert sorted((f["path"], f["kind"]) for f in found) == [
@@ -193,31 +195,31 @@ def test_repo_check_reads_only_committed_files_and_skips_vendored(tmp_path, caps
 # ---------------------------------------------------------------- L38: attributions by name and date
 # Real lines, as committed: ssvep-apply configs/pipeline.json "primary_source" @ f2e7f68 (a JSON string
 # value) and cold-pressor docs/DECISIONS.md l.521 and docs/COMPUTE.md l.14 @ its HEAD of 2026-11-15.
-SSVEP_PRIMARY_SOURCE = ("Decision 3 = B (Sebastian 2026-11-07): his MAS flagship, FBCSP + FBCCA features -> shrinkage LDA. "
+SSVEP_PRIMARY_SOURCE = ("Decision 3 = B (Alex 2026-11-07): his MAS flagship, FBCSP + FBCCA features -> shrinkage LDA. "
                         "Chosen from his earlier pipeline: this study is a reproduction, not a blind test")
-CP_CHOICE = "- **Choice (Sebastian, 2026-11-13).** 8 cores per job; GPU allowed through the CUDA build of torch\n"
-CP_COMPUTE = "The SSVEP study's run has finished (Sebastian, 2026-11-13); the 2-core cap of 2026-11-10 is\n"
-SSVEP_NO_DATE = "MAS (Sebastian's earlier pipeline, commit f725369) shallow_conv_net.py l.26-28"
+CP_CHOICE = "- **Choice (Alex, 2026-11-13).** 8 cores per job; GPU allowed through the CUDA build of torch\n"
+CP_COMPUTE = "The SSVEP study's run has finished (Alex, 2026-11-13); the 2-core cap of 2026-11-10 is\n"
+SSVEP_NO_DATE = "MAS (Alex's earlier pipeline, commit f725369) shallow_conv_net.py l.26-28"
 
 
 def test_attribution_needs_configured_names_and_is_found_on_real_lines():
   for t in (SSVEP_PRIMARY_SOURCE, CP_CHOICE, CP_COMPUTE):
     assert kinds(t) == []  # no names configured: the check is off (the 0.5-dev default)
-    assert kinds(t, names=["Sebastian"]) == ["unquoted_attribution"], t
-  assert kinds(SSVEP_NO_DATE, names=["Sebastian"]) == []  # a name without a date is not an attribution
+    assert kinds(t, names=["Alex"]) == ["unquoted_attribution"], t
+  assert kinds(SSVEP_NO_DATE, names=["Alex"]) == []  # a name without a date is not an attribution
   assert kinds(CP_CHOICE, names=["Someone"]) == []
 
 
 def test_attribution_window_order_and_quote():
-  n = ["Sebastian"]
-  assert kinds("Set on 2026-11-13 by Sebastian.", names=n) == ["unquoted_attribution"]  # date before the name
-  far = "Sebastian " + "x" * (src.ATTRIBUTION_SPAN + 5) + " 2026-11-13"
+  n = ["Alex"]
+  assert kinds("Set on 2026-11-13 by Alex.", names=n) == ["unquoted_attribution"]  # date before the name
+  far = "Alex " + "x" * (src.ATTRIBUTION_SPAN + 5) + " 2026-11-13"
   assert kinds(far, names=n) == []
-  assert kinds("Sebastian, 2026-11-13:\n> 8 cores per job, and the GPU is allowed.\n", names=n) == []
-  assert kinds('Sebastian 2026-11-07: "his MAS flagship, FBCSP plus FBCCA".', names=n) == []
-  assert kinds("Sebastiano 2026-11-13 chose it.", names=n) == []  # whole names only
+  assert kinds("Alex, 2026-11-13:\n> 8 cores per job, and the GPU is allowed.\n", names=n) == []
+  assert kinds('Alex 2026-11-07: "his MAS flagship, FBCSP plus FBCCA".', names=n) == []
+  assert kinds("Alexis 2026-11-13 chose it.", names=n) == []  # whole names only
   # a contact citation in the same paragraph is reported once, as unquoted_contact
-  assert kinds("Sebastian's decision (onboarding contact #3, 2026-11-11).", names=n) == ["unquoted_contact"]
+  assert kinds("Alex's decision (onboarding contact #3, 2026-11-11).", names=n) == ["unquoted_contact"]
 
 
 def _project(tmp_path, harness_json=None, commit_config=False):
@@ -237,19 +239,19 @@ def _project(tmp_path, harness_json=None, commit_config=False):
 def test_names_come_from_the_local_harness_json_and_the_command_line(tmp_path, capsys):
   root = _project(tmp_path)  # no harness.json: off
   assert src.main(["check", "--root", str(root)]) == 0
-  assert src.main(["check", "--root", str(root), "--name", "Sebastian"]) == 1
-  root = _project(tmp_path / "b", {"mode": "harness", "sources": {"names": ["Sebastian"]}})
+  assert src.main(["check", "--root", str(root), "--name", "Alex"]) == 1
+  root = _project(tmp_path / "b", {"mode": "harness", "sources": {"names": ["Alex"]}})
   assert [f["kind"] for f in src.check_repo(root)] == ["unquoted_attribution"]
   assert src.main(["check", "--root", str(root)]) == 1
   out = capsys.readouterr().out
   assert "docs/COMPUTE.md:1: unquoted_attribution" in out and "committed_names" not in out
-  bad = _project(tmp_path / "c", {"sources": {"names": "Sebastian"}})
+  bad = _project(tmp_path / "c", {"sources": {"names": "Alex"}})
   with pytest.raises(ValueError, match="list"):
     src.check_repo(bad)
 
 
 def test_a_committed_names_list_is_reported(tmp_path, capsys):
-  root = _project(tmp_path, {"sources": {"names": ["Sebastian"]}}, commit_config=True)
+  root = _project(tmp_path, {"sources": {"names": ["Alex"]}}, commit_config=True)
   assert sorted(f["kind"] for f in src.check_repo(root)) == ["committed_names", "unquoted_attribution"]
   assert src.main(["check", "--root", str(root)]) == 1
   assert ".claude/harness.json: committed_names" in capsys.readouterr().out
@@ -260,28 +262,28 @@ def test_new_project_update_keeps_the_names_list(tmp_path):
   import new_project
   dest = tmp_path / "p"
   (dest / ".claude").mkdir(parents=True)
-  (dest / ".claude" / "harness.json").write_text(json.dumps({"mode": "harness", "sources": {"names": ["Sebastian"]}}))
+  (dest / ".claude" / "harness.json").write_text(json.dumps({"mode": "harness", "sources": {"names": ["Alex"]}}))
   new_project.write_build(dest, {"version": "0.5.0"}, "harness", None, None)
   cfg = json.loads((dest / ".claude" / "harness.json").read_text())
-  assert cfg["sources"] == {"names": ["Sebastian"]} and cfg["harness"] == {"version": "0.5.0"}
+  assert cfg["sources"] == {"names": ["Alex"]} and cfg["harness"] == {"version": "0.5.0"}
   fresh = tmp_path / "q"
   fresh.mkdir()
   new_project.write_build(fresh, {"version": "0.5.0"}, "harness", None, None)
   assert "sources" not in json.loads((fresh / ".claude" / "harness.json").read_text())
 
 
-# Approval lines in the standard form "Approved by <name>, <date>[, <what>]" (Sebastian, 2026-11-15).
+# Approval lines in the standard form "Approved by <name>, <date>[, <what>]" (Alex, 2026-11-15).
 # Real lines: cold-pressor docs/PARADIGM.md l.7-8 (standard form) and l.6 (not), @ its HEAD of 2026-11-15.
-CP_APPROVED_R4 = "Approved by Sebastian, 2026-11-12, Revision 4\n"
-CP_APPROVED_R5 = "Approved by Sebastian, 2026-11-13, Revision 5\n"
-CP_APPROVED_BOX = "Approved by Sebastian: [x]   Date: 2026-11-12\n"
+CP_APPROVED_R4 = "Approved by Alex, 2026-11-12, Revision 4\n"
+CP_APPROVED_R5 = "Approved by Alex, 2026-11-13, Revision 5\n"
+CP_APPROVED_BOX = "Approved by Alex: [x]   Date: 2026-11-12\n"
 
 
 def test_standard_approval_lines_pass_and_an_unquoted_instruction_is_still_flagged():
-  n = ["Sebastian"]
+  n = ["Alex"]
   assert kinds(CP_APPROVED_R4, names=n) == [] and kinds(CP_APPROVED_R5, names=n) == []
-  assert kinds("Approved by Sebastian, 2026-11-12\n", names=n) == []          # <what> is optional
-  assert kinds("- Approved by Sebastian, 2026-11-12, Revision 4\n", names=n) == []
+  assert kinds("Approved by Alex, 2026-11-12\n", names=n) == []          # <what> is optional
+  assert kinds("- Approved by Alex, 2026-11-12, Revision 4\n", names=n) == []
   # 0.6.0 (L48, approved 2026-11-23): the template's box ticked and dated is a record too; unticked it is not
   assert kinds(CP_APPROVED_BOX, names=n) == []
   assert kinds(CP_APPROVED_BOX.replace("[x]", "[ ]"), names=n) == ["unquoted_attribution"]
@@ -289,8 +291,8 @@ def test_standard_approval_lines_pass_and_an_unquoted_instruction_is_still_flagg
   assert kinds(CP_APPROVED_R4 + CP_CHOICE, names=n) == ["unquoted_attribution"]
   assert kinds(CP_APPROVED_R4 + CP_COMPUTE, names=n) == ["unquoted_attribution"]
   # the form is the whole line: an approval sentence inside an instruction is not exempt
-  assert kinds("Set to 8 cores. Approved by Sebastian, 2026-11-13, on the call.\n", names=n) == ["unquoted_attribution"]
+  assert kinds("Set to 8 cores. Approved by Alex, 2026-11-13, on the call.\n", names=n) == ["unquoted_attribution"]
   assert kinds("Approved by Someone, 2026-11-12, Revision 4\n" + CP_COMPUTE, names=n) == ["unquoted_attribution"]
-  assert kinds("Approved by Sebastian, 2026-11-13 to use 8 cores per job.\n", names=n) == ["unquoted_attribution"]
+  assert kinds("Approved by Alex, 2026-11-13 to use 8 cores per job.\n", names=n) == ["unquoted_attribution"]
   # only the configured person's own approval line is exempt
-  assert kinds("Approved by the lab manager, 2026-11-13, as Sebastian asked\n", names=n) == ["unquoted_attribution"]
+  assert kinds("Approved by the lab manager, 2026-11-13, as Alex asked\n", names=n) == ["unquoted_attribution"]

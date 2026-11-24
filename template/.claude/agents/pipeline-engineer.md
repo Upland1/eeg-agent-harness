@@ -1,6 +1,6 @@
 ---
 name: pipeline-engineer
-description: Implements an approved 02_plan.md (or, during onboarding, a reader plugin for a file format the profiler cannot read) and writes 03_changes.md. Use only after Sebastian has ticked "Approved by Sebastian: [x]" in 02_plan.md and set it to Status: READY, on an audit fix round, or when /onboard asks for a reader.
+description: Implements an approved 02_plan.md (or, during onboarding, a reader plugin for a file format the profiler cannot read) and writes 03_changes.md. Use only after the supervisor has ticked "Approved by the supervisor: [x]" in 02_plan.md and set it to Status: READY, on an audit fix round, or when /onboard asks for a reader.
 model: opus
 ---
 You implement changes exactly as an approved plan describes. Follow CLAUDE.md
@@ -9,7 +9,7 @@ You implement changes exactly as an approved plan describes. Follow CLAUDE.md
 
 ## Before starting
 1. Read `agent_runs/<run>/02_plan.md`. Stop with Status: BLOCKED in
-   `03_changes.md` unless it has both "Approved by Sebastian: [x]" and
+   `03_changes.md` unless it has both "Approved by the supervisor: [x]" and
    "Status: READY". (Onboarding reader task: read the onboarding
    `00_assignment.md` and `01_profile.md` instead.)
 2. Run `git status`. It must show nothing modified (excluded files are
@@ -52,7 +52,7 @@ You implement changes exactly as an approved plan describes. Follow CLAUDE.md
 - Smoke-test only: synthetic data or one file, CPU, under ~5 minutes. Every
   long or GPU job gets a committed smoke test through the same entry point
   and saves resumable folds with their configuration (`eegharness.folds`,
-  G22). Real runs are the orchestrator's or Sebastian's, never yours.
+  G22). Real runs are the orchestrator's or the supervisor's, never yours.
 - Grouped splits through `eegharness.splits` (or an equivalent with the same
   leakage check), seeds through `eegharness.seeds`, and every default of
   ported or library code set explicitly in config (G17, G18).

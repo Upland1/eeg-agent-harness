@@ -51,8 +51,8 @@ not a method ranking. See `examples/ssvep_synthetic/README.md`.
 | Path | What |
 |---|---|
 | `VERSION` | harness version; every project records the version that built it |
-| `template/` | copied into each project: `CLAUDE.md` (general rules G1–G26), `.claude/` (6 agents; skills `onboard`, `assignment`, `apply-pipeline`, `cite-sources` and the method checklists `deep-learning`, `connectivity`, `compute-jobs`; guard, test and cost hooks), `agent_runs/` (handoff contract and templates, including the plan audit and the human-contact log), `tests/conftest.py`, `docs/COMPUTE.md` (per-job CPU/GPU limits, set by Sebastian) |
-| `tools/` | deterministic tools: the dataset profiler `run_profile.py` and its reader registry (`eegprofile/`), copied to `<project>/.harness/tools/`; the `eegharness` package (versioned output folders with provenance, `compare_runs` regression check, `numbers` (derived report numbers with stable keys from a committed spec, G23); core: grouped `splits` with a leakage check, unit-level `permutation`, `chance` levels; optional for deep learning: `seeds`, resumable `folds`; numpy only, torch never required), **vendored** as committed code to `<project>/eegharness/`; the `eegpipe` package (Sebastian's pipeline: classical suite and baseline, EEGNet/ShallowConvNet with the trainer, phase features, condition-level connectivity with debiased wPLI, BH-FDR and NBS, the edge-gated GNN, grouped folds with leakage gates, the settings validator and profiles, the dev → freeze → confirm runner, paired statistics, and the SSVEP option FBCCA, FBCSP, CCNN, DualBranchFusionCNN; numpy, scipy, scikit-learn; torch for the networks), **vendored** to `<project>/eegpipe/` and protected by the guard (G24) |
+| `template/` | copied into each project: `CLAUDE.md` (general rules G1–G26), `.claude/` (6 agents; skills `onboard`, `assignment`, `apply-pipeline`, `cite-sources` and the method checklists `deep-learning`, `connectivity`, `compute-jobs`; guard, test and cost hooks), `agent_runs/` (handoff contract and templates, including the plan audit and the human-contact log), `tests/conftest.py`, `docs/COMPUTE.md` (per-job CPU/GPU limits, set by the supervisor) |
+| `tools/` | deterministic tools: the dataset profiler `run_profile.py` and its reader registry (`eegprofile/`), copied to `<project>/.harness/tools/`; the `eegharness` package (versioned output folders with provenance, `compare_runs` regression check, `numbers` (derived report numbers with stable keys from a committed spec, G23); core: grouped `splits` with a leakage check, unit-level `permutation`, `chance` levels; optional for deep learning: `seeds`, resumable `folds`; numpy only, torch never required), **vendored** as committed code to `<project>/eegharness/`; the `eegpipe` package (the supervisor's pipeline: classical suite and baseline, EEGNet/ShallowConvNet with the trainer, phase features, condition-level connectivity with debiased wPLI, BH-FDR and NBS, the edge-gated GNN, grouped folds with leakage gates, the settings validator and profiles, the dev → freeze → confirm runner, paired statistics, and the SSVEP option FBCCA, FBCSP, CCNN, DualBranchFusionCNN; numpy, scipy, scikit-learn; torch for the networks), **vendored** to `<project>/eegpipe/` and protected by the guard (G24) |
 | `new_project.py` | creates or updates a project (harness arm or control arm) |
 | `check_install.py` | install check: packages, tools, smoke tests and the worked example |
 | `examples/ssvep_synthetic/` | the worked example (synthetic SSVEP study, select → stage → collect → numbers) |
@@ -80,13 +80,13 @@ checks that.
      classes, analysis unit, expected signal, metrics, typical mistakes, UNKNOWNs;
    - the paradigm-analyst's measurement requests and frozen label sanity check are
      built, tested and run, and PARADIGM is revised with their outputs;
-   - Sebastian answers, in one message, the questions only a human can answer
+   - the supervisor answers, in one message, the questions only a human can answer
      (after the agents searched every written source, G16) and approves; the
      approved docs are committed.
 3. `/assignment` for each request: scout → plan → plan audit → approval → engineer →
    tester → auditor → real runs (short ones by the orchestrator, long or GPU ones by
-   Sebastian) → results.
-4. `/apply-pipeline` to apply Sebastian's pipeline (`eegpipe`, v0.4): adapter
+   the supervisor) → results.
+4. `/apply-pipeline` to apply the supervisor's pipeline (`eegpipe`, v0.4): adapter
    (`adapter.py`: recording → event table) → settings (`configs/pipeline.json` from the
    `erp` or `ssvep` profile, every value with its source, `eegpipe.settings.validate`) →
    plan → plan audit → approval → gates and smoke → development run → freeze
@@ -102,7 +102,7 @@ without a quote.
 
 Every run logs tokens and time per agent (`cost.jsonl`) and every human contact with its
 category (`human_contacts.md`: approval / human-only fact / should-have-found, confirmed
-by Sebastian).
+by the supervisor).
 
 ## Readers
 
@@ -146,7 +146,7 @@ that file, not the state of `main`. Tested on 2026-11-05 with `v0.2.0` (`011a8b4
 
 ## Measured costs
 
-From the first full application (ssvep-apply: Sebastian's SSVEP pipeline on 35 confirmatory
+From the first full application (ssvep-apply: the supervisor's SSVEP pipeline on 35 confirmatory
 participants plus 4 development participants, 4 runs each, v0.4.1), on a laptop with an Intel
 i5-12500H (16 threads), 23 GB RAM and an RTX 3050 Laptop GPU:
 

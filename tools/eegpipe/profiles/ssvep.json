@@ -1,6 +1,6 @@
 {
  "profile": "ssvep",
- "source": "mas-ssvep-eeg-xai v1.0.4 (f725369), the values of Sebastian's SSVEP pipeline; every value a starting draft the plan confirms or changes (G17 i). Frequencies, harmonics response, window and channels have NO default: from PARADIGM.md.",
+ "source": "mas-ssvep-eeg-xai v1.0.4 (f725369), the values of the supervisor's SSVEP pipeline; every value a starting draft the plan confirms or changes (G17 i). Frequencies, harmonics response, window and channels have NO default: from PARADIGM.md.",
  "label_scheme": "unit_label",
  "ssvep": {
   "enabled": true,

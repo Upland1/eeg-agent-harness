@@ -1,4 +1,4 @@
-"""Known-answer tests for v0.4.1: MAS's P20 within-subject network protocol in eegpipe (Sebastian 2026-11-10, ssvep-apply
+"""Known-answer tests for v0.4.1: MAS's P20 within-subject network protocol in eegpipe (the supervisor, 2026-11-10, ssvep-apply
 D-009). The reference is MAS's own code, copied verbatim into ``mas_p20_reference.py`` (f725369); eegpipe must match it
 bit for bit where it ports it (augmentation, EEGNetSSVEP, fit_network, broadband filter). Plus: windows, folds grouped by
 trial, trial aggregation, the settings rules (seed spacing, protocol keys), a positive control (planted SSVEP at the five
@@ -225,7 +225,7 @@ def test_settings_refuse_seed_bases_that_share_fold_seeds_and_accept_spacing_of_
 # ------------------------------------------------------------------ positive control
 @pytest.mark.parametrize("net", ["eegnet", "shallowconvnet"])
 def test_positive_control_planted_ssvep_is_learned_under_p20(net):
-  """Known answer (positive control, Sebastian 2026-11-10): 40 synthetic 4 s trials, 8 per class at the five study
+  """Known answer (positive control, the supervisor, 2026-11-10): 40 synthetic 4 s trials, 8 per class at the five study
   frequencies plus the 2nd harmonic (amplitude 1 in unit noise): trial BA >= 0.9 under the P20 protocol (13 windows
   per trial, 5 grouped folds, MAS trainer and augmentation); epochs lowered to 40 for test time only."""
   X, y = ssvep_trials(4, amp=1.0)

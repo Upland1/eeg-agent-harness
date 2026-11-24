@@ -1,6 +1,6 @@
 ---
 name: onboard
-description: First run of every project. Profiles the recordings with the harness script, gets a reader plugin built if a format is unreadable, has the paradigm-analyst write docs/PARADIGM.md, runs its measurement requests and frozen label sanity check, and asks Sebastian for one approval.
+description: First run of every project. Profiles the recordings with the harness script, gets a reader plugin built if a format is unreadable, has the paradigm-analyst write docs/PARADIGM.md, runs its measurement requests and frozen label sanity check, and asks the supervisor for one approval.
 disable-model-invocation: true
 ---
 You are the orchestrator of the onboarding run (`agent_runs/README.md`,
@@ -19,23 +19,23 @@ required fix is held to G7/G26: any number in it is quoted from printed output w
 gives none. A failure on text the auditor proposed is recorded as an auditor error and is not
 counted as a round against the agent. An auditor error is not counted against the agent, but every
 round counts toward a hard limit of 4 rounds per step, whoever caused the failure; at the limit,
-stop and ask Sebastian. Per-round figures: `python .claude/hooks/log_cost.py --rounds
+stop and ask the supervisor. Per-round figures: `python .claude/hooks/log_cost.py --rounds
 agent_runs/<run>` (differences of the running totals); the kit's `cost_report.py` and `run_cost.py`
 give the reported totals after the run.
 
-**Contacts with Sebastian.** Before any question, apply G16 (CLAUDE.md, "When
+**Contacts with the supervisor.** Before any question, apply G16 (CLAUDE.md, "When
 you don't know"): inputs in full, documents in the data folder,
 documentation the inputs point to, measurement. Log every contact (question,
 approval, request) in `human_contacts.md` before sending it, with a proposed
-category; Sebastian confirms the category. Aim for one contact: the approval
+category; the supervisor confirms the category. Aim for one contact: the approval
 in step 7.
 
 0. **Inputs are the human's own words (L42, L46).** Run `python .harness/tools/check_inputs.py`. Do not
    start while it reports a finding: a template placeholder `<...>` left in `inputs/` (a template filled
    in only partly is not the request, and its examples are nobody's words), or a person's words reported
-   without a verbatim quote and its date. Tell Sebastian the file and line, and wait for the corrected,
+   without a verbatim quote and its date. Tell the supervisor the file and line, and wait for the corrected,
    committed inputs; never fill or reword them yourself. If it notes that `sources.names` is empty, ask
-   Sebastian for the names to put in `.claude/harness.json` (local) before going on.
+   the supervisor for the names to put in `.claude/harness.json` (local) before going on.
 1. **Set up.** Create `agent_runs/<YYYY-MM-DD>_onboarding/` and copy the files
    of `agent_runs/_templates/onboarding/` except `PARADIGM.md`, plus
    `agent_runs/_templates/log.md` and `agent_runs/_templates/human_contacts.md`.
@@ -50,7 +50,7 @@ in step 7.
    data folder: the paradigm-analyst must read every one, in full, with
    `python .harness/tools/read_document.py <path>` (it refuses recordings).
    If one cannot be converted (exit 4, e.g. a legacy .doc), say so in
-   `01_profile.md`; that is a request for Sebastian, logged as such.
+   `01_profile.md`; that is a request for the supervisor, logged as such.
 3. **Reader (only if recordings have no reader or reader errors).** Documents
    are not recordings and need no reader. Write the problem in
    `01_profile.md` (extensions, counts, error messages), then ask the
@@ -68,7 +68,7 @@ in step 7.
      versioned outputs (G9), the synthetic-tester for known-answer tests (G12),
      and the methods-auditor for a short audit.
    - Run them yourself if each fits the CPU limit in `docs/COMPUTE.md`
-     (G22); otherwise list them for Sebastian.
+     (G22); otherwise list them for the supervisor.
    - Ask the paradigm-analyst for a revision (`## Revision N`) with the
      logged outputs, the label check reported per participant and session
      (G14).
@@ -78,17 +78,17 @@ in step 7.
 6. **Before asking.** Check every question in PARADIGM section 10: does it
    list the sources searched? Could a document in the data folder or the
    documentation an input names answer it? If so, send it back to the
-   paradigm-analyst instead of to Sebastian.
-7. **STOP for Sebastian (one message).** Show the paradigm family with its
+   paradigm-analyst instead of to the supervisor.
+7. **STOP for the supervisor (one message).** Show the paradigm family with its
    evidence, the label sanity result per participant, the UNKNOWN items and
    the questions only a human can answer, each with its sources checked.
-   Sebastian answers in `02_paradigm_review.md` (with a category per
-   question) and ticks "Approved by Sebastian: [x]" in `docs/PARADIGM.md`.
-   If his answers change claims, ask the paradigm-analyst for a revision.
+   The supervisor answers in `02_paradigm_review.md` (with a category per
+   question) and ticks "Approved by the supervisor: [x]" in `docs/PARADIGM.md`.
+   If the answers change claims, ask the paradigm-analyst for a revision.
 8. **Commit at approval.** Commit `docs/PARADIGM.md`, `docs/DATA_PROFILE.*`,
    `docs/DECISIONS.md` and any reader plugin and its test on `onboarding`,
    by explicit path, so later branches start from a clean tree. Tell
-   Sebastian the branch is ready for him to merge into `main`.
+   the supervisor the branch is ready to merge into `main`.
 9. **Close.** Log the outcome, the totals from `cost.jsonl`, and the counts
    per category from `human_contacts.md`. Assignments (`/assignment`) may
    start only when `docs/PARADIGM.md` is approved.

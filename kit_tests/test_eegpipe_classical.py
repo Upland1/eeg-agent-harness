@@ -2,7 +2,7 @@
 
 Moved from the P300 project (tests @ d833264, ``tests/test_ssvep_methods_step1.py`` sections
 5-8 and the convergence tests of ``step2``), generalised to k classes, plus 5-class known
-answers (Sebastian's decision D5)."""
+answers (the supervisor's decision D5)."""
 
 import copy
 import json

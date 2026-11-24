@@ -1,7 +1,7 @@
 """Cross-validated evaluation, k-class metrics and per-stratum permutation tests (G1, G3, G4, G13).
 
 Ported from P300 ``p300/evaluate.py`` and ``p300/session_eval.py`` @ cd5db15, generalised
-from two classes (target / non-target) to k classes (Sebastian's decision D5, 2026-11-07).
+from two classes (target / non-target) to k classes (the supervisor's decision D5, 2026-11-07).
 
 Metrics (``class_metrics``): recall of every class c (``ca_<name>``) and balanced accuracy
 BA = mean of the k recalls. A class absent from the evaluated epochs gives NaN for its

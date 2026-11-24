@@ -3,7 +3,7 @@
 Status: DRAFT
 Author: paradigm-analyst
 Reads: docs/DATA_PROFILE.md, inputs/, literature
-Approved by Sebastian: [ ]   Date:
+Approved by the supervisor: [ ]   Date:
 
 Every claim carries its evidence and one tag: `measured` (profile field and value),
 `from inputs` (quoted), `from literature` ([n]) or `inferred` (with the reasoning).

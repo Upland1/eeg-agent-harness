@@ -2,7 +2,7 @@
 
 ## 0.6.0 — 2026-11-23 (tag v0.6.0 at 446b65c)
 
-BACKLOG L39-L55, approved by Sebastian on 2026-11-23 ("Approved for v0.6: every item marked Rec, as worded,
+BACKLOG L39-L55, approved by the supervisor on 2026-11-23 ("Approved for v0.6: every item marked Rec, as worded,
 with these edits and choices"), one commit per item or approved pair, and L56 (below; approved 2026-11-23, added
 on 2026-11-24). Known-answer tests in
 `kit_tests/test_v06_rules.py`: of the 49 tests for L39-L55, 42 fail or error on b361f81 (the v0.6-dev commit before them);
@@ -20,7 +20,7 @@ the other 7 are L50's refusal cases, which pass on both (they guard the widening
 - Audit rounds (L45, L47) in `/onboard`, `/assignment` and `/apply-pipeline`: fixes labelled code/test or
   wording; a wording-only failure gets one round limited to the named lines, outside the two-round limit; an
   auditor's suggested wording is held to G7/G26 and a failure on it is an auditor error; every round counts
-  toward a hard limit of 4 per step, then stop and ask Sebastian; cost per round from running totals
+  toward a hard limit of 4 per step, then stop and ask the supervisor; cost per round from running totals
   (`log_cost.py --rounds`), cost figures never from adding up rows. The 05_audit fix table has a Kind column.
 - `/onboard` step 0 runs the new `tools/check_inputs.py` (shipped in `.harness/tools/`): no start while
   `inputs/` holds a template placeholder `<...>` or a person's words reported without a verbatim quote (L42,
@@ -46,7 +46,7 @@ the other 7 are L50's refusal cases, which pass on both (they guard the widening
   specs are unchanged.
 - Template `tests/conftest.py` (L55): a `slow` marker, left out of `pytest tests/`, run with `-m ""`. New
   projects only (`--update` keeps an existing conftest).
-- Plan audit (L56, approved by Sebastian on 2026-11-23, added to 0.6.0 on 2026-11-24): "Every quantity a plan's
+- Plan audit (L56, approved by the supervisor on 2026-11-23, added to 0.6.0 on 2026-11-24): "Every quantity a plan's
   gate or decision rule uses must be named with the code path and output field that records it; the plan
   auditor checks that the field exists." New plan-template section "Gate and rule inputs"; new
   `tools/check_plan_fields.py` (shipped in `.harness/tools/`; MISSING when the named code does not write the
@@ -82,11 +82,11 @@ Data handling, the workflow skills, the paradigm-analyst), and the release files
 `kit_tests/test_eegharness_v05_lessons.py`, `kit_tests/test_v05_rules.py`, `kit_tests/test_worked_example.py`
 and `kit_tests/test_check_install.py`.
 
-- Rules: **G15 amended** (L38, approved by Sebastian on 2026-11-16, applied from v0.5 on, no fixes to
+- Rules: **G15 amended** (L38, approved by the supervisor on 2026-11-16, applied from v0.5 on, no fixes to
   past commits): an orchestrator's or a human's instruction is quoted in the committed file that relies
   on it; a contact number, a name with a date or an `agent_runs/` path is never the only citation;
   `python -m eegharness.sources check` passes before a commit.
-- Rules approved by Sebastian on 2026-11-16 ("Approved, all seven as worded"), with known-answer tests
+- Rules approved by the supervisor on 2026-11-16 ("Approved, all seven as worded"), with known-answer tests
   in `kit_tests/test_v05_rules.py` that fail on 03c00f6:
   - G22 (L37): every measurement and reporting output records its compute time; the auditor runs
     `python -m eegharness.outputs check` on the outputs a result cites (results check).
@@ -129,7 +129,7 @@ and `kit_tests/test_check_install.py`.
 
 ## 0.4.1 — 2026-11-10 (tag v0.4.1 at 3233ff4)
 
-MAS's P20 within-subject network protocol in `eegpipe` (Sebastian's decisions 2026-11-10; ssvep-apply D-008/D-009).
+MAS's P20 within-subject network protocol in `eegpipe` (the supervisor's decisions 2026-11-10; ssvep-apply D-008/D-009).
 Every ported piece is checked bit for bit against MAS's own code, copied verbatim into
 `kit_tests/mas_p20_reference.py` from mas-ssvep-eeg-xai @ f725369 (`kit_tests/test_eegpipe_v041_p20.py`).
 
@@ -169,13 +169,13 @@ Every ported piece is checked bit for bit against MAS's own code, copied verbati
   trials, the study folds and augmentation OFF, which matches no MAS network result.
 - Correction to `networks.AugmentedDataset` (docstring): it is not MAS's augmentation (order, mixup lambda,
   shift rounding). The P300 golden outputs are unchanged.
-- Positive control (Sebastian 2026-11-10): planted SSVEP at the five study frequencies reaches trial BA
+- Positive control (the supervisor 2026-11-10): planted SSVEP at the five study frequencies reaches trial BA
   >= 0.9 with both networks under P20, and noise stays near chance.
 - `eegharness` 0.4.1: version number only.
 
 ## 0.4.0 — 2026-11-09 (tag v0.4.0 at f6c238c; P300 Stage-2 ended and its suite ran once, spec §0 D3)
 
-Applies Sebastian's pipeline to any EEG study (spec: `docs/v0.4_spec_draft.md`, decisions §0).
+Applies the supervisor's pipeline to any EEG study (spec: `docs/v0.4_spec_draft.md`, decisions §0).
 
 - New vendored package `eegpipe` (ported from the P300 project's `p300/ssvep-methods`, code
   @ cd5db15, tests @ d833264, and from mas-ssvep-eeg-xai v1.0.4 @ f725369), generalised to k
@@ -285,7 +285,7 @@ permutation/FDR/NBS statistics, and graph neural networks. Spec: `docs/v0.3_spec
   statistics), G21 (filter continuous data, metadata from the file, channels by name),
   G22 (long and GPU jobs: limits per project in `docs/COMPUTE.md`; the orchestrator runs
   CPU and local GPU jobs within them after a committed smoke test; longer or remote jobs
-  go to Sebastian; resumable folds), G23 (derivations through committed, tested tools; no
+  go to the supervisor; resumable folds), G23 (derivations through committed, tested tools; no
   READY handoff citing a path outside the repository — L27).
 - Method checklists (skills) `deep-learning`, `connectivity`, `compute-jobs`, read by the
   agents when a plan uses those methods; no new agents.
@@ -315,7 +315,7 @@ From the first project's lessons L1–L26 (general ones only).
   things), G16 (use every written source before asking a human).
 - Workflow: plan audit (`02b_plan_audit.md`) by the methods-auditor before approval;
   one batched approval per stop; human-contact log `human_contacts.md` (agent
-  proposes the category, Sebastian confirms); measurement requests and a frozen,
+  proposes the category, the supervisor confirms); measurement requests and a frozen,
   per-participant label sanity check in onboarding; approved docs committed at
   approval; short CPU runs by the orchestrator; rejection section required in results.
 - Agents: methods-auditor gets a read-only shell; paradigm-analyst reads documents

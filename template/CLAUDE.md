@@ -18,7 +18,7 @@ What the agents know about the data comes from two files only:
 | File | Written by | Contains |
 |---|---|---|
 | `docs/DATA_PROFILE.md` / `.json` | the profiler script (`.harness/tools/run_profile.py`) | what was **measured**: formats, sampling rates, channels, event codes, counts, intervals, transitions, folder and file-name structure |
-| `docs/PARADIGM.md` | paradigm-analyst, approved by Sebastian | what it **means**: paradigm family, events, classes, analysis unit, timing, metrics, typical mistakes, and what is still unknown |
+| `docs/PARADIGM.md` | paradigm-analyst, approved by the supervisor | what it **means**: paradigm family, events, classes, analysis unit, timing, metrics, typical mistakes, and what is still unknown |
 
 Never assume a property of the data that is in neither file. If you need one, measure it
 with project code and add it to the record, or ask (see "When you don't know").
@@ -31,7 +31,7 @@ papers named there. Use them; cite them (G6).
 - Recognize what the evidence supports, and stop where it ends. Write **UNKNOWN —
   needs a human** instead of forcing a fit: an unexplained event code, a paradigm
   that matches no family you can justify, a contradiction between the notes and the data.
-- **Investigate before you ask (G16).** Before a question goes to Sebastian, search, in
+- **Investigate before you ask (G16).** Before a question goes to the supervisor, search, in
   this order: (1) every input in full, including appendices, supplementary material,
   tables and figure captions; (2) every document in the data folder (through
   `.harness/tools/read_document.py`, which refuses recordings) and in `inputs/` (lab logs,
@@ -39,13 +39,13 @@ papers named there. Use them; cite them (G6).
   point to (a named public dataset's description, a device or software manual, a cited
   paper); (4) a measurement with project code. Record what each source said, including
   "searched, not found".
-- Only facts that none of these sources answers are questions for Sebastian (what a
+- Only facts that none of these sources answers are questions for the supervisor (what a
   code means when nothing written says it, how the experiment was run). Ask them once,
   grouped, in the handoff file, each with the sources you checked, what you measured and
   the options you see.
-- Every contact with Sebastian (a question, an approval, a request to run something) is
+- Every contact with the supervisor (a question, an approval, a request to run something) is
   logged in the run's `human_contacts.md` (G16). The agent proposes the category;
-  Sebastian confirms it.
+  the supervisor confirms it.
 - If you recognize these recordings as a specific public dataset, say so in your handoff
   ("contamination flag") and do not use what you remember about it; work only from
   the files, the inputs and sources you open.
@@ -150,22 +150,22 @@ contact number, a name with a date, or an `agent_runs/` path is never the only c
 project's local `.claude/harness.json`, `sources.names`; an approval line in the form "Approved
 by <name>, <date>[, <what>]", or the template's box ticked and dated, "Approved by <name>: [x]
 Date: YYYY-MM-DD", is a record, not a citation; a ticked box needs its date). *Incident: audits found committed
-decisions pointing at local run files (L22); a committed paradigm cited Sebastian's decisions by
+decisions pointing at local run files (L22); a committed paradigm cited the supervisor's decisions by
 contact number only, and settings by name and date only (L38).*
 
 **G16. Use every written source before asking a human.** Before any question goes to
-Sebastian, the agents check, and record what each said ("searched, not found" included):
+the supervisor, the agents check, and record what each said ("searched, not found" included):
 (a) every input in full, including appendices, supplementary material, tables and figure
 captions; (b) every document in the data folder that is not a recording (lab logs,
 READMEs, protocol sheets, spreadsheets), read through
 `.harness/tools/read_document.py`; (c) the documentation the inputs point to (a named
 dataset's description, a device or software manual, a cited paper); (d) a measurement
-with project code. A question goes to Sebastian only if none of these answers it, and it
+with project code. A question goes to the supervisor only if none of these answers it, and it
 lists the sources checked. Every human contact (question, approval, request) is logged
 in the run's `human_contacts.md` as **approval**, **human-only fact** or
 **should-have-found** (the answer was in a source in reach); the agent proposes the
-category and Sebastian confirms it. Only an explicit answer is logged as an answer; template text, placeholders or suggested defaults are logged as 'no answer', and the agent asks once more, grouped. *Incident: in onboarding, several questions sent to
-Sebastian were answered by the input paper's appendix, the public documentation the
+category and the supervisor confirms it. Only an explicit answer is logged as an answer; template text, placeholders or suggested defaults are logged as 'no answer', and the agent asks once more, grouped. *Incident: in onboarding, several questions sent to
+the supervisor were answered by the input paper's appendix, the public documentation the
 paper names, or the lab log in the data folder (L25); bracketed defaults in a reply were
 logged as answers (L35).*
 
@@ -242,12 +242,12 @@ position. Extends G5. *Incident: an earlier study filtered each short window and
 a sampling rate that was not the recorded one.*
 
 **G22. Long and GPU jobs.** Every job in a plan states its device, expected runtime, seeds
-and output folder. The limits per job are in `docs/COMPUTE.md` (set by Sebastian). The
+and output folder. The limits per job are in `docs/COMPUTE.md` (set by the supervisor). The
 orchestrator runs a job itself, after the audit PASS, only if it fits the CPU or GPU limit
 there **and** a committed smoke test (synthetic data or one fold, under 5 minutes, CPU)
 has passed through the same entry point. Longer work is split into resumable parts (per
 fold, seed or session) that each fit the limit; a part that cannot fit, and anything on
-remote hardware, goes to Sebastian as exact commands with expected runtime and the
+remote hardware, goes to the supervisor as exact commands with expected runtime and the
 outputs to return. Long jobs
 save each fold with its configuration (`eegharness.folds`); a rerun with a different
 configuration on the same folder is refused. Runtime and device are reported per job.
@@ -266,12 +266,12 @@ A handoff that cites a path outside the repository cannot be READY. The tool is
 (`configs/numbers/<run>.json`), derived into a versioned folder, and cited in the report as
 `<text> [num:key]`; `python -m eegharness.numbers check` verifies every citation. The auditor
 checks both in a results check. A number the orchestrator derives from outputs for `log.md` or
-for Sebastian comes from `eegharness.numbers` or a committed tool. Otherwise it is sent marked
+for the supervisor comes from `eegharness.numbers` or a committed tool. Otherwise it is sent marked
 `(hand count, not derived)` with the tool gap named, and it is never corrected by another hand count
 (L51). Extends G11. *Incident: the results-analyst computed write-up
 numbers with scratch scripts in a temporary folder although G11 existed (L27).*
 
-**G24. The pipeline library is configured, never edited.** `eegpipe/` (Sebastian's pipeline:
+**G24. The pipeline library is configured, never edited.** `eegpipe/` (the supervisor's pipeline:
 classical suite, EEGNet/ShallowConvNet and their trainer, phase features and connectivity
 with debiased wPLI, FDR and NBS, the edge-gated GNN, grouped folds with leakage gates, the
 stage runner and paired statistics, and a frequency-tagging option) is vendored code like
@@ -284,7 +284,7 @@ re-implemented its methods per script, and two versions of one estimator drifted
 **G25. Confirmatory runs only from a frozen commit.** The data used to develop, tune or debug
 (named in the settings, G19) are separated before any confirmatory number exists; the
 confirmatory selection is label-free and seeded (`eegpipe.runner.select`), committed with the
-settings (the freeze, approved by Sebastian); `eegpipe.runner.stage` refuses a dirty tree,
+settings (the freeze, approved by the supervisor); `eegpipe.runner.stage` refuses a dirty tree,
 checks HEAD and the tree before and after every job, and refuses outputs whose commit,
 settings hash or epochs/folds hashes disagree; `eegpipe.runner.collect` refuses an incomplete
 root unless the analysis is stamped INTERIM. Nothing computed before the freeze is reported as
@@ -299,7 +299,7 @@ alternatives its test did not check; three audit rounds to make the entry and th
 validity flag and left out one whose estimate was a structural zero at one trial, with no reason row (L40).*
 
 **Rules grow from experience.** When a test or the auditor catches a new kind of mistake,
-the orchestrator writes up the incident and proposes a new rule (G28, G29, …). Sebastian
+the orchestrator writes up the incident and proposes a new rule (G28, G29, …). The supervisor
 approves it before it is added here, with a one-line reference to the incident. Rules
 that apply to any EEG study are also proposed to the harness (next version, never the
 running one).
@@ -316,14 +316,14 @@ running one).
   (`permutation`), chance levels (`chance`), seeding (`seeds`), resumable folds
   (`folds`) and derived report numbers with stable keys (`python -m eegharness.numbers`, G23). torch is never required by `eegharness`. Project code imports only committed
   files, never `.harness/`.
-- Sebastian's pipeline is vendored, committed code in `eegpipe/` (G24): configured in
+- the supervisor's pipeline is vendored, committed code in `eegpipe/` (G24): configured in
   `configs/pipeline.json` (`eegpipe.settings`; one profile per design family), read through the
   project's `adapter.py` (recording -> event table), run with `eegpipe.runner` (G25). It needs
   numpy, scipy and scikit-learn; torch only for the networks and the GNN.
 - Committed files never quote or paraphrase a participant's own answers, comments or free text, or personal details from forms; protocol facts from such documents are stated in the agent's own words, without per-participant content; the paradigm-analyst and the auditor check it. *Incident: a draft commit quoted a filled protocol form, and a paradigm
   description paraphrased one participant's sensations (L33).*
 - Jobs run under the limits in `docs/COMPUTE.md` (G22); longer or remote jobs are listed in
-  the plan's "Runs" section for Sebastian.
+  the plan's "Runs" section for the supervisor.
 
 ## Never do
 
@@ -349,13 +349,13 @@ running one).
 
 1. **Onboarding first** (`/onboard`): profiler → reader plugin if a format is unreadable →
    paradigm-analyst writes `docs/PARADIGM.md` (with a frozen label sanity check) →
-   Sebastian approves → approved docs are committed.
+   the supervisor approves → approved docs are committed.
 2. **Then one run per assignment** (`/assignment`): 00_assignment → 01_brief → 02_plan →
-   02b_plan_audit → [Sebastian approves] → 03_changes → 04_tests → 05_audit →
+   02b_plan_audit → [the supervisor approves] → 03_changes → 04_tests → 05_audit →
    runs (G22) → 06_results → results check (G23, in 05_audit).
-3. **Applying Sebastian's pipeline** (`/apply-pipeline`, G24, G25): adapter → settings →
-   02_plan → 02b_plan_audit → [Sebastian approves] → gates and smoke → development run →
-   freeze [Sebastian approves] → confirmatory stage → statistics → 06_results → results check.
+3. **Applying the supervisor's pipeline** (`/apply-pipeline`, G24, G25): adapter → settings →
+   02_plan → 02b_plan_audit → [the supervisor approves] → gates and smoke → development run →
+   freeze [the supervisor approves] → confirmatory stage → statistics → 06_results → results check.
 
 Every run keeps `log.md` (one row per agent call, with tokens and time),
 `human_contacts.md` (G16) and `cost.jsonl` (written by a hook).

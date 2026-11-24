@@ -44,7 +44,7 @@ rules (G1–G8) that are at risk. -->
 <!-- Where the literature offers more than one approach, list them with
 trade-offs. Do not choose; the plan chooses. -->
 
-## Open questions for Sebastian
+## Open questions for the supervisor
 
 ## Sources
 

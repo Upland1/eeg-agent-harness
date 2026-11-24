@@ -1,7 +1,7 @@
 # 00 · Assignment: apply the pipeline
 
 Status: READY
-Author: Sebastian
+Author: the supervisor
 Date received:
 Branch:
 
@@ -20,7 +20,7 @@ Branch:
 
 ## Comparison asked for
 
-<!-- E.g. "compare with my earlier results in ...": what, on which numbers, as given by Sebastian. -->
+<!-- E.g. "compare with my earlier results in ...": what, on which numbers, as given by the supervisor. -->
 
 ## Inputs
 

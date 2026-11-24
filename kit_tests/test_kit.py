@@ -151,7 +151,7 @@ def test_templates_carry_v03_rules_and_files():
 def test_v03_checklists_rows_and_compute_limits():
   """Known answer: the three method checklists exist and are named in CLAUDE.md and the agents that
   apply them; plan/audit templates carry G17-G23 rows; COMPUTE.md has the three limits; no agent
-  or template still points at the v0.2 'What Sebastian will run' section."""
+  or template still points at the v0.2 'What the supervisor will run' section."""
   t = KIT / "template"
   claude = (t / "CLAUDE.md").read_text()
   for name in ("deep-learning", "connectivity", "compute-jobs"):
@@ -172,13 +172,13 @@ def test_v03_checklists_rows_and_compute_limits():
   compute = (t / "docs" / "COMPUTE.md").read_text()
   for key in ("cpu_max_minutes:", "gpu_max_minutes:", "gpu_device:"):
     assert key in compute
-  stale = [str(f.relative_to(KIT)) for f in t.rglob("*.md") if "What Sebastian will run" in f.read_text()]
+  stale = [str(f.relative_to(KIT)) for f in t.rglob("*.md") if "What the supervisor will run" in f.read_text()]
   assert stale == []
 
 
 def test_kit_is_paradigm_neutral():
   """Known answer: no paradigm or lab-specific term in the kit outside the paradigm-analyst's list of families."""
-  pat = re.compile(r"p300|ssvep|motor imagery|\.ebr|happy smile|ssvep-eeg-xai|sebastian.s ssvep", re.I)
+  pat = re.compile(r"p300|ssvep|motor imagery|\.ebr|happy smile|ssvep-eeg-xai|supervisor.s ssvep", re.I)
   allowed = {"paradigm-analyst.md", "PARADIGM.md"}
   hits = []
   for f in (KIT / "template").rglob("*"):
@@ -206,7 +206,7 @@ def test_v04_apply_pipeline_skill_templates_and_rules():
   skill = (t / ".claude" / "skills" / "apply-pipeline" / "SKILL.md").read_text()
   assert skill.startswith("---\nname: apply-pipeline\n")
   for step in ("eegpipe.runner.select", "eegpipe.runner.stage", "eegpipe.runner.collect", "eegpipe.settings.validate",
-               "STOP: Sebastian approves the plan", "STOP: Sebastian approves the freeze", "--interim"):
+               "STOP: the supervisor approves the plan", "STOP: the supervisor approves the freeze", "--interim"):
     assert step in skill, step
   tpl = t / "agent_runs" / "_templates"
   for f in ("00_assignment.md", "02_plan_pipeline.md", "02b_audit_rows.md", "06_results_pipeline.md"):

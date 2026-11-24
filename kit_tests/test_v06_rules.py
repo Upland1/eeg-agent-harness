@@ -1,4 +1,4 @@
-"""Known-answer tests for the 0.6.0 items Sebastian approved on 2026-11-23 ("Approved for v0.6: every item
+"""Known-answer tests for the 0.6.0 items the supervisor approved on 2026-11-23 ("Approved for v0.6: every item
 marked Rec, as worded, with these edits and choices"), BACKLOG L39-L55. Each test fails on b361f81 (the
 v0.6-dev commit before them) and passes with its item.
 """
@@ -57,22 +57,22 @@ BOX_FILES = ("agent_runs/_templates/onboarding/PARADIGM.md", "agent_runs/_templa
 
 
 def _box(rel):
-  return next(l for l in (T / rel).read_text().splitlines() if l.startswith("Approved by Sebastian"))
+  return next(l for l in (T / rel).read_text().splitlines() if l.startswith("Approved by the supervisor"))
 
 
 @pytest.mark.parametrize("rel", BOX_FILES)
 def test_l48_ticked_dated_template_box_passes_and_others_are_reported(rel):
   box = _box(rel)
-  assert box.startswith("Approved by Sebastian: [ ]") and box.rstrip().endswith("Date:")
+  assert box.startswith("Approved by the supervisor: [ ]") and box.rstrip().endswith("Date:")
   ticked = box.replace("[ ]", "[x]").rstrip() + " 2026-11-19"
   body = "# Title\n\n{}\n\nText.\n"
-  assert sources.check_text(body.format(ticked), names=["Sebastian"]) == []
+  assert sources.check_text(body.format(ticked), names=["the supervisor"]) == []
   unticked_dated = box.rstrip() + " 2026-11-19"
-  assert [f["kind"] for f in sources.check_text(body.format(unticked_dated), names=["Sebastian"])] == ["unquoted_attribution"]
+  assert [f["kind"] for f in sources.check_text(body.format(unticked_dated), names=["the supervisor"])] == ["unquoted_attribution"]
   ticked_undated = box.replace("[ ]", "[x]")
-  assert [f["kind"] for f in sources.check_text(body.format(ticked_undated), names=["Sebastian"])] == ["undated_approval"]
+  assert [f["kind"] for f in sources.check_text(body.format(ticked_undated), names=["the supervisor"])] == ["undated_approval"]
   # an attribution elsewhere in the paragraph is still reported
-  assert sources.check_text(body.format(ticked + "\nSebastian said on 2026-11-19 to keep it."), names=["Sebastian"])
+  assert sources.check_text(body.format(ticked + "\nthe supervisor said on 2026-11-19 to keep it."), names=["the supervisor"])
 
 
 def test_l48_ticked_box_in_a_committed_file_passes_the_repo_check(tmp_path):
@@ -81,11 +81,11 @@ def test_l48_ticked_box_in_a_committed_file_passes_the_repo_check(tmp_path):
   box = _box(BOX_FILES[0]).replace("[ ]", "[x]").rstrip() + " 2026-11-19"
   (tmp_path / "docs" / "PARADIGM.md").write_text(f"# Paradigm\n\n{box}\n")
   subprocess.run(["git", "-C", str(tmp_path), "add", "docs"], check=True)
-  assert sources.check_repo(tmp_path, names=["Sebastian"]) == []
+  assert sources.check_repo(tmp_path, names=["the supervisor"]) == []
 
 
 def test_l48_gates_read_the_template_box():
-  gate = "Approved by Sebastian: [x]"
+  gate = "Approved by the supervisor: [x]"
   for rel in BOX_FILES:
     assert _box(rel).replace("[ ]", "[x]").startswith(gate)
   for rel in ("skills/assignment/SKILL.md", "skills/apply-pipeline/SKILL.md", "skills/onboard/SKILL.md",
@@ -176,7 +176,7 @@ L47 = ("A suggested wording in a required fix is held to G7/G26: any number in i
        "its line, or it gives none. A failure on text the auditor proposed is recorded as an auditor error and is not "
        "counted as a round against the agent. An auditor error is not counted against the agent, but every round "
        "counts toward a hard limit of 4 rounds per step, whoever caused the failure; at the limit, stop and ask "
-       "Sebastian.")
+       "the supervisor.")
 
 
 @pytest.mark.parametrize("skill", ["onboard", "assignment", "apply-pipeline"])
@@ -229,7 +229,7 @@ def test_l45_cost_per_round_from_running_totals_on_the_real_onboarding_log(tmp_p
 INPUTS = KIT / "kit_tests" / "golden" / "l42_l46_inputs"
 
 
-def _inputs_project(tmp_path, fixture, names=("Sebastian",)):
+def _inputs_project(tmp_path, fixture, names=("Alex",)):
   p = tmp_path / "proj"
   new_project.main([str(p), "--name", "p"])
   (p / "inputs" / "request.md").write_text((INPUTS / fixture).read_text())
@@ -346,7 +346,7 @@ def test_l39_validate_refuses_n_jobs_above_working_threads(tmp_path):
 def test_l39_unset_working_threads_is_refused_and_no_compute_md_checks_nothing(tmp_path, compute):
   _compute_md(tmp_path / "p", None)
   assert compute.read_limits(tmp_path / "p")["cpu_working_threads"] is None
-  assert _thread_refusals(_cfg(1), tmp_path / "p") == ["docs/COMPUTE.md: cpu_working_threads is not set (Sebastian sets it, L39)"]
+  assert _thread_refusals(_cfg(1), tmp_path / "p") == ["docs/COMPUTE.md: cpu_working_threads is not set (the supervisor sets it, L39)"]
   assert _thread_refusals(_cfg(12), tmp_path / "none") == []  # not a project: no COMPUTE.md
 
 
@@ -436,7 +436,7 @@ def test_l54_unset_memory_limit_refuses_and_template_has_no_default(tmp_path, co
   assert compute.parse_limits((T / "docs" / "COMPUTE.md").read_text())["memory_max_gb"] is None
   p, _ = _batch_project(tmp_path, None)
   assert compute.precheck(p, 1, 5.7, meminfo=MEMINFO.format(20_000_000)) == [
-    "docs/COMPUTE.md: memory_max_gb is not set (Sebastian sets it, L54)"]
+    "docs/COMPUTE.md: memory_max_gb is not set (the supervisor sets it, L54)"]
   r = subprocess.run([sys.executable, "-m", "eegharness.compute", "precheck", "--parts", "1", "--peak-gb", "5.7",
                       "--root", str(p)], capture_output=True, text=True, cwd=KIT / "tools")
   assert r.returncode == 1 and "STOP: docs/COMPUTE.md: memory_max_gb is not set" in r.stdout
@@ -708,7 +708,7 @@ def test_l53_all_equal_over_json_files(tmp_path):
 
 
 def test_l51_orchestrator_numbers_from_the_tool_or_marked_as_hand_counts(tmp_path):
-  assert ("A number the orchestrator derives from outputs for `log.md` or for Sebastian comes from "
+  assert ("A number the orchestrator derives from outputs for `log.md` or for the supervisor comes from "
           "`eegharness.numbers` or a committed tool. Otherwise it is sent marked `(hand count, not derived)` with "
           "the tool gap named, and it is never corrected by another hand count (L51).") in read("CLAUDE.md")
   # the count the orchestrator made by hand (imagined-speech-eeg: pinned batches >= 95 °C), now derivable

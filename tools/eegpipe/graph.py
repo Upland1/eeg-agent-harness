@@ -1,4 +1,4 @@
-"""Family F4: Sebastian's edge-gated GNN on the complete electrode graph (torch).
+"""Family F4: the supervisor's edge-gated GNN on the complete electrode graph (torch).
 
 Ported from P300 ``p300/graph.py`` @ cd5db15, itself from ``mas-ssvep-eeg-xai`` v1.0.4
 (``src/models/graph/connectivity_gnn.py``: ``EdgeGatedLayer``, ``ConnectivityGNN``;

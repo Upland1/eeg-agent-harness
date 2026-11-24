@@ -1,4 +1,4 @@
-"""Known-answer tests for the rule wordings Sebastian approved for 0.5.0 on 2026-11-16 ("Approved, all
+"""Known-answer tests for the rule wordings the supervisor approved for 0.5.0 on 2026-11-16 ("Approved, all
 seven as worded"): L37 (G22), L29 (skills), L32 (G10), L33 (Data handling), L34 (new G26), L35 (G16),
 L36 (paradigm-analyst Edit for docs/PARADIGM.md only). Each fails on 03c00f6 (the 0.5.0 candidate before
 them): the wording is absent there, the paradigm-analyst has no Edit, and check_frozen_text.py does not exist.
@@ -151,7 +151,7 @@ def test_frozen_text_check_known_answers(tmp_path, capsys):
   root = tmp_path / "p"
   (root / "docs").mkdir(parents=True)
   f = root / "docs" / "PARADIGM.md"
-  f.write_text("# Paradigm\n\nApproved by Sebastian: [ ]\n\n" + R3)
+  f.write_text("# Paradigm\n\nApproved by the supervisor: [ ]\n\n" + R3)
   _git(root, "init", "-q", "-b", "main")
   _git(root, "add", "-A")
   _git(root, "commit", "-qm", "r3")
@@ -159,14 +159,14 @@ def test_frozen_text_check_known_answers(tmp_path, capsys):
   assert cft.main(args) == 0
   f.write_text(f.read_text() + "\n## Revision 4\n\nR4.1 New text.\n")  # appended revision
   assert cft.main(args) == 0
-  f.write_text("# Paradigm\n\nApproved by Sebastian, 2026-11-12, Revision 4\nApproved by Sebastian: [ ]\n\n" + R3)
+  f.write_text("# Paradigm\n\nApproved by the supervisor, 2026-11-12, Revision 4\nApproved by the supervisor: [ ]\n\n" + R3)
   assert cft.main(args) == 0  # an inserted approval line
-  f.write_text("# Paradigm\n\nApproved by Sebastian: [ ]\n\n" + R3_REWORDED)
+  f.write_text("# Paradigm\n\nApproved by the supervisor: [ ]\n\n" + R3_REWORDED)
   assert cft.main(args) == 1
   assert "l.7: R3.4 The rest windows are measured from the cue." in capsys.readouterr().out
-  f.write_text("# Paradigm\n\nApproved by Sebastian: [ ]\n\n## Revision 3\n")  # a deleted frozen line
+  f.write_text("# Paradigm\n\nApproved by the supervisor: [ ]\n\n## Revision 3\n")  # a deleted frozen line
   assert cft.main(args) == 1
-  f.write_text("# Paradigm\n\nApproved by Sebastian: [x]\n\n" + R3)  # ticking the box changes a frozen line too
+  f.write_text("# Paradigm\n\nApproved by the supervisor: [x]\n\n" + R3)  # ticking the box changes a frozen line too
   assert cft.main(args) == 1
   assert cft.main(["docs/MISSING.md", "--base", "HEAD", "--root", str(root)]) == 1
 

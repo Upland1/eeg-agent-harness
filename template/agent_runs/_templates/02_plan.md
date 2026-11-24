@@ -3,7 +3,7 @@
 Status: DRAFT
 Author: orchestrator
 Reads: 00_assignment.md, 01_brief.md, CLAUDE.md
-Approved by Sebastian: [ ]   Date:
+Approved by the supervisor: [ ]   Date:
 
 ## Goal
 
@@ -27,7 +27,7 @@ comparable across runs that use the same source (CLAUDE.md G3). -->
 ## Changes
 
 <!-- Source: where the solution came from — 01_brief.md [n], CLAUDE.md Gn,
-05_audit.md finding, code path:line, Sebastian's request, or [own] with a
+05_audit.md finding, code path:line, the supervisor's request, or [own] with a
 reason. Formats: .claude/skills/cite-sources/SKILL.md (G6). Name the
 reference implementation the engineer should study for each change. -->
 
@@ -115,13 +115,13 @@ Confirmatory data:
 
 <!-- One row per job. Device: cpu / local GPU / remote. Runtime estimated from the smoke
 test. Who: "orchestrator" only if it fits the limit for its device in docs/COMPUTE.md and its
-committed smoke test passed; otherwise "Sebastian". Checklist: .claude/skills/compute-jobs/SKILL.md. -->
+committed smoke test passed; otherwise "the supervisor". Checklist: .claude/skills/compute-jobs/SKILL.md. -->
 
 | Job | Exact command | Device | Expected runtime (basis) | Seeds | Smoke test | Output folder | Who |
 |---|---|---|---|---|---|---|---|
 | | | | | | | | |
 
-Outputs Sebastian drops into this folder (each a versioned folder `<out>/<UTC>_<commit>/`, G9):
+Outputs the supervisor drops into this folder (each a versioned folder `<out>/<UTC>_<commit>/`, G9):
 
 ## Sources
 

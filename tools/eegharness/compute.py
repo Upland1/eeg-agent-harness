@@ -1,4 +1,4 @@
-"""Compute limits of a project (``docs/COMPUTE.md``, set by Sebastian) and the checks around long jobs (G22).
+"""Compute limits of a project (``docs/COMPUTE.md``, set by the supervisor) and the checks around long jobs (G22).
 
 0.6.0, BACKLOG L39: a core limit is not a thermal limit. ``cpu_working_threads`` is the number of threads the
 jobs of a long run use (below the per-job core limit), enforced on the settings before freeze 1
@@ -11,7 +11,7 @@ temperature next to its job table (``templog``).
         # appends one row per interval (utc, cpu_c, gpu_c) until PID exits (or until stopped)
     python -m eegharness.compute precheck --parts B --peak-gb G [--root .]   # before each batch; exit 1 = stop
 
-0.6.0, L54 and L44: ``memory_max_gb`` (no default; Sebastian sets it) is the memory the orchestrator's jobs may
+0.6.0, L54 and L44: ``memory_max_gb`` (no default; the supervisor sets it) is the memory the orchestrator's jobs may
 use together. ``precheck`` runs before each batch of B parts whose measured peak memory (maximum RSS in the
 development run) is G GB each: it refuses while memory_max_gb is unset, when B x G exceeds it, when the
 available memory (MemAvailable) is below B x G, when ``data/raw`` does not resolve, and when a file the
@@ -80,12 +80,12 @@ def _walk(obj, path=""):
 
 def thread_problems(cfg, limits):
   """Problems with the worker/thread settings of ``cfg`` under ``limits`` (L39). ``limits`` None (no
-  COMPUTE.md) checks nothing. Unset ``cpu_working_threads`` is a problem: Sebastian sets it."""
+  COMPUTE.md) checks nothing. Unset ``cpu_working_threads`` is a problem: the supervisor sets it."""
   if limits is None:
     return []
   w = limits.get("cpu_working_threads")
   if not isinstance(w, int) or w < 1:
-    return ["docs/COMPUTE.md: cpu_working_threads is not set (Sebastian sets it, L39)"]
+    return ["docs/COMPUTE.md: cpu_working_threads is not set (the supervisor sets it, L39)"]
   probs = []
   for path, v in _walk(cfg):
     last = path.rsplit(".", 1)[-1]
@@ -150,7 +150,7 @@ def precheck(root=".", parts=1, peak_gb=None, meminfo=None):
   mx = limits.get("memory_max_gb")
   need = None if peak_gb is None else int(parts) * float(peak_gb)
   if not isinstance(mx, (int, float)) or isinstance(mx, bool) or mx <= 0:
-    probs.append("docs/COMPUTE.md: memory_max_gb is not set (Sebastian sets it, L54)")
+    probs.append("docs/COMPUTE.md: memory_max_gb is not set (the supervisor sets it, L54)")
   elif need is None:
     probs.append("the parts' peak memory is not given (measure it in the development run, L54)")
   elif need > mx + 1e-9:

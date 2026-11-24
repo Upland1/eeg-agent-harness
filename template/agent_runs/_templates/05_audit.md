@@ -28,7 +28,7 @@ Verdict: PASS / FAIL
 | G13 Exchangeability unit stated and argued; nulls can draw the observed labelling | | |
 | G14 Quality/rejection/label claims per participant and session, with comparison set and absolute measures | | |
 | G15 No committed file references an uncommitted file (`agent_runs/`, scratchpads) | | |
-| G16 Questions to Sebastian list the written sources checked | | |
+| G16 Questions to the supervisor list the written sources checked | | |
 | G17 Training and preprocessing inside the training data; test transforms label-free; defaults set explicitly | | |
 | G18 Seeds set before each model; at least 3 seeds; per-seed values saved; train accuracy and parameter count | | |
 | G19 Only primary comparisons can be significant; development data not in the confirmatory test | | |
@@ -70,7 +70,7 @@ checked. -->
 ### Non-blocking notes
 
 <!-- On a fix round, append "## Round 2" with the same structure. After two failed rounds, set Status: BLOCKED
-and hand to Sebastian; a wording-only round and an auditor error do not count toward the two, but every round
+and hand to the supervisor; a wording-only round and an auditor error do not count toward the two, but every round
 counts toward the hard limit of 4 per step (L45, L47). -->
 
 ## Results check (after 06_results.md, G23)

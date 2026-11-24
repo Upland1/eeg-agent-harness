@@ -1,4 +1,4 @@
-"""Sebastian's EEG pipeline as a configurable library (harness v0.4, G24).
+"""The supervisor's EEG pipeline as a configurable library (harness v0.4, G24).
 
 Classical ML suite, EEGNet and ShallowConvNet with their trainer, phase features and
 condition-level connectivity (debiased wPLI, BH-FDR, NBS), the edge-gated GNN, grouped

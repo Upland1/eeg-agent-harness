@@ -1,7 +1,7 @@
 # 02 · Paradigm review
 
 Status: DRAFT
-Author: Sebastian
+Author: the supervisor
 Reads: docs/PARADIGM.md
 
 ## Answers to the questions only a human can answer
@@ -19,7 +19,7 @@ valid answer. -->
 
 ## Decision
 
-Approved: [ ]   (also tick "Approved by Sebastian" in docs/PARADIGM.md)
+Approved: [ ]   (also tick "Approved by the supervisor" in docs/PARADIGM.md)
 
 <!-- After approval the orchestrator commits docs/PARADIGM.md, docs/DATA_PROFILE.*,
 docs/DECISIONS.md and any reader plugin with its test, so later branches start from a

@@ -1,4 +1,4 @@
-"""Family F1: the 10-model scikit-learn suite of Sebastian's pipeline, and the baseline.
+"""Family F1: the 10-model scikit-learn suite of the supervisor's pipeline, and the baseline.
 
 Ported from P300 ``p300/classical.py`` and ``p300/evaluate.py::make_estimator`` @ cd5db15,
 itself a port of ``get_sklearn_model_suite`` of ``mas-ssvep-eeg-xai`` v1.0.4 (f725369,

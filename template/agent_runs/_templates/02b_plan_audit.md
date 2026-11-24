@@ -5,7 +5,7 @@ Author: methods-auditor
 Reads: 02_plan.md, 01_brief.md, docs/PARADIGM.md, docs/DATA_PROFILE.md, CLAUDE.md, the code the plan touches
 
 The plan is audited **before any code exists**, so that a design error is fixed in the
-plan rather than after it has been built. Sebastian sees this file together with the plan.
+plan rather than after it has been built. The supervisor sees this file together with the plan.
 
 ## Round 1
 

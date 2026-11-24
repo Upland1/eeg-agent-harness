@@ -11,9 +11,9 @@ agent_runs/
   2026-11-01_onboarding/      always the first run of a project (/onboard)
     00_assignment.md
     01_profile.md             what the profiler measured, and reader problems
-    02_paradigm_review.md     Sebastian's approval of docs/PARADIGM.md
+    02_paradigm_review.md     the supervisor's approval of docs/PARADIGM.md
     log.md
-    human_contacts.md         every contact with Sebastian, categorized (G16)
+    human_contacts.md         every contact with the supervisor, categorized (G16)
     cost.jsonl                tokens and time per agent call (hook)
   2026-11-03_<slug>/          one folder per assignment: <YYYY-MM-DD>_<slug>
     00_assignment.md
@@ -35,24 +35,24 @@ agent_runs/
 | Missing file reader | pipeline-engineer + synthetic-tester, only if the profiler reports a format it cannot read | a reader plugin with a round-trip test (rule G2), then the profiler runs again | tests pass |
 | Paradigm description | paradigm-analyst | `docs/PARADIGM.md`, with a frozen label sanity check (8b) and measurement requests (12) | — |
 | Measurements and label check | pipeline-engineer + synthetic-tester + methods-auditor; orchestrator runs short jobs | committed scripts, versioned outputs (G9); the analyst revises PARADIGM with them | criteria committed before the run (G10); tests pass (G12) |
-| Approval | Sebastian | `02_paradigm_review.md` | **one message: approval and the questions only a human can answer (G16)**; then the approved docs are committed |
+| Approval | The supervisor | `02_paradigm_review.md` | **one message: approval and the questions only a human can answer (G16)**; then the approved docs are committed |
 
 No assignment run starts before `docs/PARADIGM.md` is approved
-(`Approved by Sebastian: [x]`). Every later agent reads it.
+(`Approved by the supervisor: [x]`). Every later agent reads it.
 
 ## Who reads and writes what
 
 | File | Written by | Reads | Gate |
 |---|---|---|---|
-| `00_assignment.md` | Sebastian | — | — |
+| `00_assignment.md` | The supervisor | — | — |
 | `01_brief.md` | literature-scout | 00 | — |
 | `02_plan.md` | orchestrator (main session) | 00, 01 | — |
 | `02b_plan_audit.md` | methods-auditor | 02, 01, the code the plan touches | PASS required before approval |
-| (approval) | Sebastian | 02, 02b | **Sebastian approves before any code changes** |
+| (approval) | The supervisor | 02, 02b | **The supervisor approves before any code changes** |
 | `03_changes.md` | pipeline-engineer | 02 (and 05 on a fix round) | — |
 | `04_tests.md` | synthetic-tester | 02, 03 | tests must pass |
 | `05_audit.md` | methods-auditor (read-only shell: git, pytest, compare_runs) | 02, 02b, 03, 04, and the changed files | PASS required |
-| (runs) | orchestrator within `docs/COMPUTE.md` limits after a smoke test; Sebastian for longer or remote jobs (G22) | 02 "Runs" | audit PASS first |
+| (runs) | orchestrator within `docs/COMPUTE.md` limits after a smoke test; the supervisor for longer or remote jobs (G22) | 02 "Runs" | audit PASS first |
 | `06_results.md` | results-analyst | 02, the logged outputs of the runs | runs finished |
 | `05_audit.md` `## Results check` | methods-auditor | 06 and the outputs it cites | **PASS before the close** (G23) |
 
@@ -65,20 +65,20 @@ No assignment run starts before `docs/PARADIGM.md` is approved
 3. **Cite, don't paraphrase, rules.** Reference methodological rules by their
    `CLAUDE.md` number (G1–G27, and any G28+) so the audit can be checked mechanically.
    **Cite every source** (G6): papers, documentation, code examples and
-   Sebastian's code, in the formats of `.claude/skills/cite-sources/SKILL.md`,
+   the supervisor's code, in the formats of `.claude/skills/cite-sources/SKILL.md`,
    with a `## Sources` list at the end of the file.
 4. **Evidence over claims.** "Verified" means a command was run and its output is
    summarized. Code claims carry `path:line` references.
 5. **Audit loop.** On `FAIL`, the engineer reads `05_audit.md`, fixes the issues,
    and appends a `## Round N` section to `03_changes.md`. The auditor then appends
    its own `## Round N` to `05_audit.md`. After two failed rounds, stop and
-   hand the problem to Sebastian.
+   hand the problem to the supervisor.
 6. **Real data stays where it is.** Agents may read `data/raw/` through project
    code (to build the dataset, and smoke runs on one file), but never modify,
    copy, upload or commit it. Subagents never run full benchmarks. After the
    audit PASS, the orchestrator runs the plan's jobs that fit the CPU or GPU
    limit in `docs/COMPUTE.md` and whose committed smoke test passed (G22);
-   longer or remote jobs are given to Sebastian as exact commands, and he
+   longer or remote jobs are given to the supervisor as exact commands, and the supervisor
    drops the outputs into the run folder. Every output is a new versioned
    folder (G9).
 7. **Runs are kept locally, never committed.** The run folder is the audit
@@ -93,7 +93,7 @@ No assignment run starts before `docs/PARADIGM.md` is approved
 9. **Log every human contact** in `human_contacts.md` before it is sent
    (G16): the question or request, the written sources checked and what each
    said, a proposed category (approval / human-only fact /
-   should-have-found). Sebastian confirms the category.
+   should-have-found). The supervisor confirms the category.
 10. **No background work left behind.** No agent starts a background job it
     does not wait for.
 

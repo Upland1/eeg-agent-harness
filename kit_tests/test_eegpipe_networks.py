@@ -1,6 +1,6 @@
 """Known-answer tests for eegpipe.networks (torch), moved from the P300 project (tests @ d833264,
 ``tests/test_ssvep_methods_step2.py`` sections 4-11 and the D-013 EEGNet tests), generalised to
-k classes, plus 5-class known answers (Sebastian's decision D5). Data sizes are reduced where a
+k classes, plus 5-class known answers (the supervisor's decision D5). Data sizes are reduced where a
 test only needs a planted effect to be learnable; the ERP data have the P300 tests' size (3 files x 8 units x 40 epochs)."""
 
 import copy

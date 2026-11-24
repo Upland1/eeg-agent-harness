@@ -12,7 +12,7 @@ committed (git-tracked) text files of a project and reports:
                      ``min_quote_words`` words ("...", “...”, or a ``>`` block-quote line) in the
                      same paragraph;
   unquoted_attribution  a paragraph that attributes something to a named person with a date
-                     ("Sebastian 2026-11-10: ...", "(Sebastian, 2026-11-13)": the name and an ISO
+                     ("the supervisor 2026-11-10: ...", "(the supervisor, 2026-11-13)": the name and an ISO
                      date within ``ATTRIBUTION_SPAN`` characters, either order) without quoting
                      them, as above. Only with names configured; a paragraph already reported as
                      unquoted_contact is not reported again. An approval line in the standard
@@ -25,7 +25,7 @@ committed (git-tracked) text files of a project and reports:
                      stay local).
 
 Names are not in the code: they come from the project's local, uncommitted ``.claude/harness.json``
-(``{"sources": {"names": ["Sebastian"]}}``; none by default, so the attribution check is off) and
+(``{"sources": {"names": ["the supervisor"]}}``; none by default, so the attribution check is off) and
 from ``--name`` on the command line.
 
 A paragraph is a block of lines between blank lines. In a JSON file every string value is checked
@@ -53,7 +53,7 @@ GIT_CONFIG = {".gitignore", ".gitattributes", ".gitmodules"}  # name agent_runs/
 DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
 ATTRIBUTION_SPAN = 60  # characters between the name and the date, either order, in the paragraph's text
 HARNESS_JSON = ".claude/harness.json"
-# "Approved by <name>, <date>[, <what>]" as a whole line (Sebastian, 2026-11-15); a list marker is allowed
+# "Approved by <name>, <date>[, <what>]" as a whole line (the supervisor, 2026-11-15); a list marker is allowed
 APPROVAL = re.compile(r"^\s*(?:[-*]\s+)?Approved by ([^,\n]+?), \d{4}-\d{2}-\d{2}(?:, [^\n]+)?\s*$")
 # The template's approval box, ticked and dated: "Approved by <name>: [x]   Date: YYYY-MM-DD" (0.6.0, L48)
 APPROVAL_BOX = re.compile(r"^\s*(?:[-*]\s+)?Approved by ([^:\n]+?): \[[xX]\]\s+Date:\s*\d{4}-\d{2}-\d{2}\s*$")

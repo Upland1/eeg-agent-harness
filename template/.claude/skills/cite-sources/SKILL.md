@@ -1,11 +1,11 @@
 ---
 name: cite-sources
-description: How every agent records the sources behind a solution — papers, documentation, external code examples, Sebastian's own code, rules — in its handoff file. Use before writing or finishing any handoff file, and whenever a decision, formula, parameter or piece of code comes from somewhere.
+description: How every agent records the sources behind a solution — papers, documentation, external code examples, the supervisor's own code, rules — in its handoff file. Use before writing or finishing any handoff file, and whenever a decision, formula, parameter or piece of code comes from somewhere.
 ---
 
 # Cite sources
 
-Every agent says where its solution came from. A reader (Sebastian, the requester,
+Every agent says where its solution came from. A reader (the supervisor, the requester,
 the methods-auditor) must be able to open each source and check the claim. This
 procedure implements CLAUDE.md **G6**.
 
@@ -44,7 +44,7 @@ Pick the line that matches the source type. Keep the type tag in front.
 | This project's code | `[n] OWN-CODE — path:line-line @ commit. Used for: …` |
 | Project rule | `[n] RULE — CLAUDE.md Gk` |
 | Audit / handoff | `[n] HANDOFF — agent_runs/<run>/05_audit.md, Round N, finding k` |
-| Request | `[n] REQUEST — 00_assignment.md (requester / Sebastian), quoted phrase` |
+| Request | `[n] REQUEST — 00_assignment.md (requester / the supervisor), quoted phrase` |
 | Data / output | `[n] DATA — path to CSV or log, command that produced it, commit` |
 | Own reasoning | `[own]` inline only, never in the list |
 

@@ -68,4 +68,4 @@ rejected epoch counts. -->
 ## Summary for the requester
 
 <!-- At most 150 words, academic tone, per-participant numbers, limitations
-stated. Sebastian edits before presenting. -->
+stated. The supervisor edits before presenting. -->

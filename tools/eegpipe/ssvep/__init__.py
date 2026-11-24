@@ -1,4 +1,4 @@
-"""SSVEP option of eegpipe (Sebastian's decision, 2026-11-07): FBCCA, FBCSP (+ LDA), CCNN and
+"""SSVEP option of eegpipe (the supervisor's decision, 2026-11-07): FBCCA, FBCSP (+ LDA), CCNN and
 DualBranchFusionCNN, ported from ``mas-ssvep-eeg-xai`` v1.0.4 (f725369). Everything that was a
 module constant there (stimulus frequencies, harmonics, sub-band edges, fs, channels, window)
 is a setting filled from PARADIGM.md (``ssvep`` profile). Filter banks run on the continuous

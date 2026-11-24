@@ -20,27 +20,27 @@ required fix is held to G7/G26: any number in it is quoted from printed output w
 gives none. A failure on text the auditor proposed is recorded as an auditor error and is not
 counted as a round against the agent. An auditor error is not counted against the agent, but every
 round counts toward a hard limit of 4 rounds per step, whoever caused the failure; at the limit,
-stop and ask Sebastian. Per-round figures: `python .claude/hooks/log_cost.py --rounds
+stop and ask the supervisor. Per-round figures: `python .claude/hooks/log_cost.py --rounds
 agent_runs/<run>` (differences of the running totals); the kit's `cost_report.py` and `run_cost.py`
 give the reported totals after the run.
 
 **Precondition.** `docs/PARADIGM.md` exists and has
-"Approved by Sebastian: [x]". Otherwise stop and say to run `/onboard`.
+"Approved by the supervisor: [x]". Otherwise stop and say to run `/onboard`.
 
 **Cite the source of every solution** (G6). Whenever you propose or report a
 solution (in `02_plan.md`, in a STOP message, in the close summary), name
 what it came from: a numbered source in `01_brief.md` (`[n]`, with authors
 and year), a CLAUDE.md rule (G1–G27, G28+), an audit finding (`02b_plan_audit.md`
 or `05_audit.md` round and item), `docs/PARADIGM.md` or `docs/DATA_PROFILE.md`
-(section and value), the code it follows (`path:line`), or Sebastian's
+(section and value), the code it follows (`path:line`), or the supervisor's
 request. If a choice rests only on your own reasoning, mark it `[own]` with
 the reason. Never cite from memory something nobody opened.
 
-**Contacts with Sebastian** (G16). Before any question: inputs in full,
+**Contacts with the supervisor** (G16). Before any question: inputs in full,
 documents in the data folder, documentation the inputs point to, a
 measurement. Log every contact in `human_contacts.md` before sending it,
-with the sources checked and a proposed category; Sebastian confirms it.
-Batch: one message per STOP, everything he must decide in it.
+with the sources checked and a proposed category; the supervisor confirms it.
+Batch: one message per STOP, everything the supervisor must decide in it.
 
 1. **Set up.** If the run folder does not exist, create
    `agent_runs/<YYYY-MM-DD>_<slug>/`, copy the `*.md` files from
@@ -67,11 +67,11 @@ Batch: one message per STOP, everything he must decide in it.
    `compute-jobs`).
 4. **Plan audit.** Ask the methods-auditor for `02b_plan_audit.md`, naming
    the run folder. On FAIL, revise the plan (`## Revision N` at its end) and
-   ask for the next round. After two failed rounds ("Audit rounds" above), stop and show Sebastian
+   ask for the next round. After two failed rounds ("Audit rounds" above), stop and show the supervisor
    both files.
 5. **STOP for approval (one message).** Show the plan, the plan-audit
-   verdict and its non-blocking notes, and every decision Sebastian must
-   make. Continue only when `02_plan.md` has "Approved by Sebastian: [x]" and
+   verdict and its non-blocking notes, and every decision the supervisor must
+   make. Continue only when `02_plan.md` has "Approved by the supervisor: [x]" and
    "Status: READY".
 6. **Implement.** Ask the pipeline-engineer, naming the run folder.
 7. **Test.** Ask the synthetic-tester, naming the run folder.
@@ -79,13 +79,13 @@ Batch: one message per STOP, everything he must decide in it.
    - FAIL: send the engineer back with `05_audit.md` (fix round), then tester
      and auditor again. After two failed rounds ("Audit rounds" above) set the run BLOCKED and stop.
    - A mistake that fits no G rule: write the incident in `log.md` and
-     propose a new rule (G17, …) to Sebastian. Do not add it yourself.
+     propose a new rule (G17, …) to the supervisor. Do not add it yourself.
 9. **Real runs** (G22, `.claude/skills/compute-jobs/SKILL.md`). After the
    audit PASS, run yourself, in the foreground, each job whose expected
    runtime fits its device's limit in `docs/COMPUTE.md` and whose committed
    smoke test passed; log device, runtime and exit status. Longer or remote
-   jobs: show Sebastian the exact commands (one message, logged in
-   `human_contacts.md`) and wait until he drops the outputs in the run folder. Every output is a versioned folder
+   jobs: show the supervisor the exact commands (one message, logged in
+   `human_contacts.md`) and wait until the supervisor drops the outputs in the run folder. Every output is a versioned folder
    (G9). If an earlier run of the same pipeline exists, run
    `python -m eegharness.compare_runs --a <old> --b <new> --out <run folder>/regression`
    and log its exit status.
@@ -94,10 +94,10 @@ Batch: one message per STOP, everything he must decide in it.
     (G23), run it, and ask again.
 10b. **Results check.** Ask the methods-auditor for the results check
     (`## Results check` in `05_audit.md`, G23). On FAIL, fix and repeat.
-11. **Close.** Summarize for Sebastian: branch, commit, test and audit
+11. **Close.** Summarize for the supervisor: branch, commit, test and audit
     verdicts (plan audit, audit, results check), the main numbers per
     participant, the source behind each
     solution, the totals from `cost.jsonl`, the contacts per category from
-    `human_contacts.md`, and that merging and pushing are his to do.
+    `human_contacts.md`, and that merging and pushing are the supervisor's to do.
 
 At every step, if an agent sets Status: BLOCKED, stop and report why.
