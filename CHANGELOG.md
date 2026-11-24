@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.0 — 2026-11-23 (not tagged; Sebastian tags after 2026-11-26)
+## 0.6.0 — 2026-11-23 (tag v0.6.0 at 446b65c)
 
 BACKLOG L39-L55, approved by Sebastian on 2026-11-23 ("Approved for v0.6: every item marked Rec, as worded,
 with these edits and choices"), one commit per item or approved pair, and L56 (below; approved 2026-11-23, added
